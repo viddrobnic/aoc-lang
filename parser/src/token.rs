@@ -42,6 +42,7 @@ pub enum TokenKind {
     Fn,
     Use,
     Eol, // \n
+    Comment(String),
 }
 
 impl TokenKind {

@@ -168,6 +168,51 @@ impl<'a> Lexer<'a> {
 
         Ok(TokenKind::String(string))
     }
+
+    /// Read comment where first / is already read.
+    fn read_comment(&mut self) -> Result<TokenKind> {
+        // Read the second /
+        let Some((pos, ch)) = self.chars.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                position: self.position,
+            });
+        };
+
+        if ch != '/' {
+            return Err(Error {
+                kind: ErrorKind::InvalidChar(ch),
+                position: self.position,
+            });
+        }
+
+        // Increase position after possible error returning,
+        // to ensure correct position is in the error.
+        self.position.character += ch.len_utf8();
+
+        // Read comment string
+        let start = pos + ch.len_utf8();
+        let mut end = start;
+
+        loop {
+            let Some((_, ch)) = self.chars.peek() else {
+                break;
+            };
+
+            if *ch == '\n' {
+                break;
+            }
+
+            let len = ch.len_utf8();
+            self.chars.next();
+
+            self.position.character += len;
+            end += len;
+        }
+
+        let comment = &self.input[start..end];
+        Ok(TokenKind::Comment(comment.trim().to_string()))
+    }
 }
 
 impl Iterator for Lexer<'_> {
@@ -191,7 +236,6 @@ impl Iterator for Lexer<'_> {
             '+' => TokenKind::Plus,
             '-' => TokenKind::Minus,
             '*' => TokenKind::Mult,
-            '/' => TokenKind::Div,
             '%' => TokenKind::Modulo,
             '&' => TokenKind::And,
             '|' => TokenKind::Or,
@@ -210,6 +254,14 @@ impl Iterator for Lexer<'_> {
             '"' => match self.read_string() {
                 Ok(token) => token,
                 Err(err) => return Some(Err(err)),
+            },
+            '/' => match self.chars.peek() {
+                None => TokenKind::Div,
+                Some((_, ch)) if *ch != '/' => TokenKind::Div,
+                _ => match self.read_comment() {
+                    Ok(token) => token,
+                    Err(err) => return Some(Err(err)),
+                },
             },
             ch if ch.is_ascii_digit() => {
                 self.position.character -= ch.len_utf8();
@@ -333,6 +385,8 @@ mod test {
             true false if else while for break continue return fn use
             foo bar1 bar_1 bar_baz
             "normal string" "\n\t\\\""
+            // line comment
+            false //inline comment
         "#;
 
         let lexer = Lexer::new(input);
@@ -397,6 +451,11 @@ mod test {
                 Position::new(7, 12),
                 Position::new(7, 28),
                 Position::new(7, 38),
+                Position::new(8, 12),
+                Position::new(8, 27),
+                Position::new(9, 12),
+                Position::new(9, 18),
+                Position::new(9, 34),
             ]
         );
 
@@ -453,6 +512,11 @@ mod test {
                 TokenKind::Eol,
                 TokenKind::String("normal string".to_string()),
                 TokenKind::String("\n\t\\\"".to_string()),
+                TokenKind::Eol,
+                TokenKind::Comment("line comment".to_string()),
+                TokenKind::Eol,
+                TokenKind::False,
+                TokenKind::Comment("inline comment".to_string()),
                 TokenKind::Eol,
             ]
         );
