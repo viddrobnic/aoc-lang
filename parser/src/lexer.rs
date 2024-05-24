@@ -1,7 +1,7 @@
 use crate::{
     error::{Error, ErrorKind, Result},
     position::Position,
-    token::{Token, TokenType},
+    token::{Token, TokenKind},
 };
 
 pub struct Lexer<'a> {
@@ -39,9 +39,9 @@ impl<'a> Lexer<'a> {
     fn peek_parse(
         &mut self,
         expected: char,
-        token: TokenType,
-        default_token: TokenType,
-    ) -> TokenType {
+        token: TokenKind,
+        default_token: TokenKind,
+    ) -> TokenKind {
         match self.chars.peek() {
             Some((_, ch)) if *ch == expected => {
                 self.chars.next();
@@ -54,7 +54,7 @@ impl<'a> Lexer<'a> {
 
     // Read number where the first digit is at `self.input[start]`
     // and `end` is start + utf8 len of first digit.
-    fn read_number(&mut self, start: usize, mut end: usize) -> Result<TokenType> {
+    fn read_number(&mut self, start: usize, mut end: usize) -> Result<TokenKind> {
         loop {
             let Some((_, ch)) = self.chars.peek() else {
                 break;
@@ -84,7 +84,7 @@ impl<'a> Lexer<'a> {
                 }
             })?;
 
-            Ok(TokenType::Float(float))
+            Ok(TokenKind::Float(float))
         } else {
             let int: i64 = number.parse().map_err(|_| {
                 let mut pos = self.position;
@@ -95,13 +95,13 @@ impl<'a> Lexer<'a> {
                 }
             })?;
 
-            Ok(TokenType::Integer(int))
+            Ok(TokenKind::Integer(int))
         }
     }
 
     // Read ident or keywoard, where the first char is at `self.input[start]`
     // and `end` is start + utf8 len of first char
-    fn read_ident(&mut self, start: usize, mut end: usize) -> TokenType {
+    fn read_ident(&mut self, start: usize, mut end: usize) -> TokenKind {
         loop {
             let Some((_, ch)) = self.chars.peek() else {
                 break;
@@ -119,11 +119,11 @@ impl<'a> Lexer<'a> {
         self.position.character += end - start;
 
         let ident = &self.input[start..end];
-        TokenType::from_ident(ident).unwrap_or_else(|| TokenType::Ident(ident.to_string()))
+        TokenKind::from_ident(ident).unwrap_or_else(|| TokenKind::Ident(ident.to_string()))
     }
 
     // Read string, where `"` is already read.
-    fn read_string(&mut self) -> Result<TokenType> {
+    fn read_string(&mut self) -> Result<TokenKind> {
         let mut string = String::new();
 
         loop {
@@ -166,7 +166,7 @@ impl<'a> Lexer<'a> {
             string.push(escaped);
         }
 
-        Ok(TokenType::String(string))
+        Ok(TokenKind::String(string))
     }
 }
 
@@ -182,31 +182,31 @@ impl Iterator for Lexer<'_> {
         self.position.character += ch.len_utf8();
 
         let token_type = match ch {
-            '[' => TokenType::LSquare,
-            ']' => TokenType::RSquare,
-            '(' => TokenType::LBracket,
-            ')' => TokenType::RBracket,
-            '{' => TokenType::LCurly,
-            '}' => TokenType::RCurly,
-            '+' => TokenType::Plus,
-            '-' => TokenType::Minus,
-            '*' => TokenType::Mult,
-            '/' => TokenType::Div,
-            '%' => TokenType::Modulo,
-            '&' => TokenType::And,
-            '|' => TokenType::Or,
-            ';' => TokenType::Semicolon,
-            ',' => TokenType::Comma,
-            '.' => TokenType::Dot,
+            '[' => TokenKind::LSquare,
+            ']' => TokenKind::RSquare,
+            '(' => TokenKind::LBracket,
+            ')' => TokenKind::RBracket,
+            '{' => TokenKind::LCurly,
+            '}' => TokenKind::RCurly,
+            '+' => TokenKind::Plus,
+            '-' => TokenKind::Minus,
+            '*' => TokenKind::Mult,
+            '/' => TokenKind::Div,
+            '%' => TokenKind::Modulo,
+            '&' => TokenKind::And,
+            '|' => TokenKind::Or,
+            ';' => TokenKind::Semicolon,
+            ',' => TokenKind::Comma,
+            '.' => TokenKind::Dot,
             '\n' => {
                 self.position.line += 1;
                 self.position.character = 0;
-                TokenType::Eol
+                TokenKind::Eol
             }
-            '<' => self.peek_parse('=', TokenType::Leq, TokenType::Le),
-            '>' => self.peek_parse('=', TokenType::Geq, TokenType::Ge),
-            '=' => self.peek_parse('=', TokenType::Eq, TokenType::Assign),
-            '!' => self.peek_parse('=', TokenType::Neq, TokenType::Bang),
+            '<' => self.peek_parse('=', TokenKind::Leq, TokenKind::Le),
+            '>' => self.peek_parse('=', TokenKind::Geq, TokenKind::Ge),
+            '=' => self.peek_parse('=', TokenKind::Eq, TokenKind::Assign),
+            '!' => self.peek_parse('=', TokenKind::Neq, TokenKind::Bang),
             '"' => match self.read_string() {
                 Ok(token) => token,
                 Err(err) => return Some(Err(err)),
@@ -232,7 +232,7 @@ impl Iterator for Lexer<'_> {
         };
 
         Some(Ok(Token {
-            token_type,
+            kind: token_type,
             position: current_position,
         }))
     }
@@ -243,7 +243,7 @@ mod test {
     use crate::{
         error::{Error, ErrorKind},
         position::Position,
-        token::{Token, TokenType},
+        token::{Token, TokenKind},
     };
 
     use super::Lexer;
@@ -270,7 +270,7 @@ mod test {
         assert_eq!(
             tokens,
             vec![Token {
-                token_type: TokenType::Integer(123),
+                kind: TokenKind::Integer(123),
                 position: Position::new(0, 0)
             }]
         );
@@ -336,10 +336,10 @@ mod test {
         "#;
 
         let lexer = Lexer::new(input);
-        let (tokens, positions): (Vec<TokenType>, Vec<Position>) = lexer
+        let (tokens, positions): (Vec<TokenKind>, Vec<Position>) = lexer
             .map(|token| {
                 let token = token.unwrap();
-                (token.token_type, token.position)
+                (token.kind, token.position)
             })
             .unzip();
 
@@ -403,57 +403,57 @@ mod test {
         assert_eq!(
             tokens,
             vec![
-                TokenType::Eol,
-                TokenType::LSquare,
-                TokenType::RSquare,
-                TokenType::LBracket,
-                TokenType::RBracket,
-                TokenType::LCurly,
-                TokenType::RCurly,
-                TokenType::Le,
-                TokenType::Leq,
-                TokenType::Eol,
-                TokenType::Ge,
-                TokenType::Geq,
-                TokenType::Eq,
-                TokenType::Neq,
-                TokenType::Eol,
-                TokenType::Bang,
-                TokenType::Plus,
-                TokenType::Minus,
-                TokenType::Mult,
-                TokenType::Div,
-                TokenType::Modulo,
-                TokenType::And,
-                TokenType::Or,
-                TokenType::Assign,
-                TokenType::Semicolon,
-                TokenType::Comma,
-                TokenType::Dot,
-                TokenType::Eol,
-                TokenType::Integer(123),
-                TokenType::Float(1.234),
-                TokenType::Eol,
-                TokenType::True,
-                TokenType::False,
-                TokenType::If,
-                TokenType::Else,
-                TokenType::While,
-                TokenType::For,
-                TokenType::Break,
-                TokenType::Continue,
-                TokenType::Return,
-                TokenType::Fn,
-                TokenType::Use,
-                TokenType::Eol,
-                TokenType::Ident("foo".to_string()),
-                TokenType::Ident("bar1".to_string()),
-                TokenType::Ident("bar_1".to_string()),
-                TokenType::Ident("bar_baz".to_string()),
-                TokenType::Eol,
-                TokenType::String("normal string".to_string()),
-                TokenType::String("\n\t\\\"".to_string()),
-                TokenType::Eol,
+                TokenKind::Eol,
+                TokenKind::LSquare,
+                TokenKind::RSquare,
+                TokenKind::LBracket,
+                TokenKind::RBracket,
+                TokenKind::LCurly,
+                TokenKind::RCurly,
+                TokenKind::Le,
+                TokenKind::Leq,
+                TokenKind::Eol,
+                TokenKind::Ge,
+                TokenKind::Geq,
+                TokenKind::Eq,
+                TokenKind::Neq,
+                TokenKind::Eol,
+                TokenKind::Bang,
+                TokenKind::Plus,
+                TokenKind::Minus,
+                TokenKind::Mult,
+                TokenKind::Div,
+                TokenKind::Modulo,
+                TokenKind::And,
+                TokenKind::Or,
+                TokenKind::Assign,
+                TokenKind::Semicolon,
+                TokenKind::Comma,
+                TokenKind::Dot,
+                TokenKind::Eol,
+                TokenKind::Integer(123),
+                TokenKind::Float(1.234),
+                TokenKind::Eol,
+                TokenKind::True,
+                TokenKind::False,
+                TokenKind::If,
+                TokenKind::Else,
+                TokenKind::While,
+                TokenKind::For,
+                TokenKind::Break,
+                TokenKind::Continue,
+                TokenKind::Return,
+                TokenKind::Fn,
+                TokenKind::Use,
+                TokenKind::Eol,
+                TokenKind::Ident("foo".to_string()),
+                TokenKind::Ident("bar1".to_string()),
+                TokenKind::Ident("bar_1".to_string()),
+                TokenKind::Ident("bar_baz".to_string()),
+                TokenKind::Eol,
+                TokenKind::String("normal string".to_string()),
+                TokenKind::String("\n\t\\\"".to_string()),
+                TokenKind::Eol,
             ]
         );
     }

@@ -1,7 +1,7 @@
 use crate::position::Position;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum TokenType {
+pub enum TokenKind {
     Ident(String),
     Integer(i64),
     Float(f64),
@@ -44,7 +44,7 @@ pub enum TokenType {
     Eol, // \n
 }
 
-impl TokenType {
+impl TokenKind {
     pub fn from_ident(ident: &str) -> Option<Self> {
         let token = match ident {
             "true" => Self::True,
@@ -67,6 +67,6 @@ impl TokenType {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
-    pub token_type: TokenType,
+    pub kind: TokenKind,
     pub position: Position,
 }
