@@ -93,6 +93,39 @@ impl<'a> Lexer<'a> {
         let ident = &self.input[start..end];
         Ok(TokenType::from_ident(ident).unwrap_or_else(|| TokenType::Ident(ident.to_string())))
     }
+
+    // Read string, where `"` is already read.
+    fn read_string(&mut self) -> Result<TokenType, ()> {
+        let mut string = String::new();
+
+        loop {
+            let (_, ch) = self.chars.next().ok_or(())?;
+            self.position.character += ch.len_utf8();
+
+            if ch == '"' {
+                break;
+            }
+
+            if ch != '\\' {
+                string.push(ch);
+                continue;
+            }
+
+            let (_, ch) = self.chars.next().ok_or(())?;
+            self.position.character += ch.len_utf8();
+
+            let escaped = match ch {
+                'n' => '\n',
+                't' => '\t',
+                '"' => '"',
+                '\\' => '\\',
+                _ => return Err(()),
+            };
+            string.push(escaped);
+        }
+
+        Ok(TokenType::String(string))
+    }
 }
 
 impl Iterator for Lexer<'_> {
@@ -122,6 +155,7 @@ impl Iterator for Lexer<'_> {
             '|' => TokenType::Or,
             ';' => TokenType::Semicolon,
             ',' => TokenType::Comma,
+            '.' => TokenType::Dot,
             '\n' => {
                 self.position.line += 1;
                 self.position.character = 0;
@@ -131,6 +165,10 @@ impl Iterator for Lexer<'_> {
             '>' => self.peek_parse('=', TokenType::Geq, TokenType::Ge),
             '=' => self.peek_parse('=', TokenType::Eq, TokenType::Assign),
             '!' => self.peek_parse('=', TokenType::Neq, TokenType::Bang),
+            '"' => match self.read_string() {
+                Ok(token) => token,
+                Err(err) => return Some(Err(err)),
+            },
             ch if ch.is_ascii_digit() => {
                 self.position.character -= ch.len_utf8();
 
@@ -183,10 +221,11 @@ mod test {
         let input = r#"
             [ ] (){} < <=
             > >= == !=
-            !+-*/%&|=;,
+            !+-*/%&|=;,.
             123 1.234
             true false if else while for break continue return fn use
             foo bar1 bar_1 bar_baz
+            "normal string" "\n\t\\\""
         "#;
 
         let lexer = Lexer::new(input);
@@ -227,6 +266,7 @@ mod test {
                 Position::new(3, 21),
                 Position::new(3, 22),
                 Position::new(3, 23),
+                Position::new(3, 24),
                 Position::new(4, 12),
                 Position::new(4, 16),
                 Position::new(4, 21),
@@ -247,6 +287,9 @@ mod test {
                 Position::new(6, 21),
                 Position::new(6, 27),
                 Position::new(6, 34),
+                Position::new(7, 12),
+                Position::new(7, 28),
+                Position::new(7, 38),
             ]
         );
 
@@ -279,6 +322,7 @@ mod test {
                 TokenType::Assign,
                 TokenType::Semicolon,
                 TokenType::Comma,
+                TokenType::Dot,
                 TokenType::Eol,
                 TokenType::Integer(123),
                 TokenType::Float(1.234),
@@ -299,6 +343,9 @@ mod test {
                 TokenType::Ident("bar1".to_string()),
                 TokenType::Ident("bar_1".to_string()),
                 TokenType::Ident("bar_baz".to_string()),
+                TokenType::Eol,
+                TokenType::String("normal string".to_string()),
+                TokenType::String("\n\t\\\"".to_string()),
                 TokenType::Eol,
             ]
         );

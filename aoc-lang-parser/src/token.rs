@@ -31,6 +31,7 @@ pub enum TokenType {
     Assign,    // =
     Semicolon, // ;
     Comma,     // ,
+    Dot,       // .
     If,
     Else,
     While,
