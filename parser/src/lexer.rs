@@ -1,4 +1,5 @@
 use crate::{
+    error::{Error, ErrorKind, Result},
     position::Position,
     token::{Token, TokenType},
 };
@@ -52,54 +53,84 @@ impl<'a> Lexer<'a> {
     }
 
     // Read number where the first digit is at `self.input[start]`
-    fn read_number(&mut self, start: usize) -> Result<TokenType, ()> {
-        let end = loop {
-            let (pos, ch) = self.chars.peek().ok_or(())?;
+    // and `end` is start + utf8 len of first digit.
+    fn read_number(&mut self, start: usize, mut end: usize) -> Result<TokenType> {
+        loop {
+            let Some((_, ch)) = self.chars.peek() else {
+                break;
+            };
 
             if ch.is_ascii_digit() || *ch == '.' {
-                self.chars.next();
+                // We know it is Some(_), so it's safe to unwrap.
+                let (_, ch) = self.chars.next().unwrap();
+                end += ch.len_utf8();
             } else {
-                break *pos;
+                break;
             }
-        };
+        }
 
-        self.position.character += end - start;
+        let len = end - start;
+        self.position.character += len;
 
         let number = &self.input[start..end];
 
         if number.contains('.') {
-            let float: f64 = number.parse().map_err(|_| ())?;
+            let float: f64 = number.parse().map_err(|_| {
+                let mut pos = self.position;
+                pos.character -= len;
+                Error {
+                    kind: ErrorKind::InvalidNumber(number.to_string()),
+                    position: pos,
+                }
+            })?;
+
             Ok(TokenType::Float(float))
         } else {
-            let int: i64 = number.parse().map_err(|_| ())?;
+            let int: i64 = number.parse().map_err(|_| {
+                let mut pos = self.position;
+                pos.character -= len;
+                Error {
+                    kind: ErrorKind::InvalidNumber(number.to_string()),
+                    position: pos,
+                }
+            })?;
+
             Ok(TokenType::Integer(int))
         }
     }
 
     // Read ident or keywoard, where the first char is at `self.input[start]`
-    fn read_ident(&mut self, start: usize) -> Result<TokenType, ()> {
-        let end = loop {
-            let (pos, ch) = self.chars.peek().ok_or(())?;
+    // and `end` is start + utf8 len of first char
+    fn read_ident(&mut self, start: usize, mut end: usize) -> TokenType {
+        loop {
+            let Some((_, ch)) = self.chars.peek() else {
+                break;
+            };
 
             if ch.is_alphabetic() || ch.is_ascii_digit() || *ch == '_' {
-                self.chars.next();
+                // We know it is Some(_), so it's safe to unwrap.
+                let (_, ch) = self.chars.next().unwrap();
+                end += ch.len_utf8();
             } else {
-                break *pos;
+                break;
             }
-        };
+        }
 
         self.position.character += end - start;
 
         let ident = &self.input[start..end];
-        Ok(TokenType::from_ident(ident).unwrap_or_else(|| TokenType::Ident(ident.to_string())))
+        TokenType::from_ident(ident).unwrap_or_else(|| TokenType::Ident(ident.to_string()))
     }
 
     // Read string, where `"` is already read.
-    fn read_string(&mut self) -> Result<TokenType, ()> {
+    fn read_string(&mut self) -> Result<TokenType> {
         let mut string = String::new();
 
         loop {
-            let (_, ch) = self.chars.next().ok_or(())?;
+            let (_, ch) = self.chars.next().ok_or(Error {
+                kind: ErrorKind::UnexpectedEof,
+                position: self.position,
+            })?;
             self.position.character += ch.len_utf8();
 
             if ch == '"' {
@@ -111,7 +142,10 @@ impl<'a> Lexer<'a> {
                 continue;
             }
 
-            let (_, ch) = self.chars.next().ok_or(())?;
+            let (_, ch) = self.chars.next().ok_or(Error {
+                kind: ErrorKind::UnexpectedEof,
+                position: self.position,
+            })?;
             self.position.character += ch.len_utf8();
 
             let escaped = match ch {
@@ -119,7 +153,15 @@ impl<'a> Lexer<'a> {
                 't' => '\t',
                 '"' => '"',
                 '\\' => '\\',
-                _ => return Err(()),
+                ch => {
+                    let mut position = self.position;
+                    position.character -= ch.len_utf8();
+
+                    return Err(Error {
+                        kind: ErrorKind::InvalidEscapeChar(ch),
+                        position,
+                    });
+                }
             };
             string.push(escaped);
         }
@@ -129,7 +171,7 @@ impl<'a> Lexer<'a> {
 }
 
 impl Iterator for Lexer<'_> {
-    type Item = Result<Token, ()>;
+    type Item = Result<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
@@ -172,20 +214,21 @@ impl Iterator for Lexer<'_> {
             ch if ch.is_ascii_digit() => {
                 self.position.character -= ch.len_utf8();
 
-                match self.read_number(start) {
+                match self.read_number(start, start + ch.len_utf8()) {
                     Ok(token) => token,
                     Err(err) => return Some(Err(err)),
                 }
             }
             ch if ch.is_alphabetic() => {
                 self.position.character -= ch.len_utf8();
-
-                match self.read_ident(start) {
-                    Ok(token) => token,
-                    Err(err) => return Some(Err(err)),
-                }
+                self.read_ident(start, start + ch.len_utf8())
             }
-            _ => return Some(Err(())),
+            ch => {
+                return Some(Err(Error {
+                    kind: ErrorKind::InvalidChar(ch),
+                    position: current_position,
+                }))
+            }
         };
 
         Some(Ok(Token {
@@ -197,7 +240,11 @@ impl Iterator for Lexer<'_> {
 
 #[cfg(test)]
 mod test {
-    use crate::{position::Position, token::TokenType};
+    use crate::{
+        error::{Error, ErrorKind},
+        position::Position,
+        token::{Token, TokenType},
+    };
 
     use super::Lexer;
 
@@ -214,6 +261,66 @@ mod test {
         assert_eq!(lexer.chars.peek(), Some((3, '\n')).as_ref());
         assert_eq!(lexer.position.line, 0);
         assert_eq!(lexer.position.character, 3);
+    }
+
+    #[test]
+    fn parse_number() {
+        let lexer = Lexer::new("123");
+        let tokens = lexer.collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token {
+                token_type: TokenType::Integer(123),
+                position: Position::new(0, 0)
+            }]
+        );
+    }
+
+    #[test]
+    fn errors() {
+        let tests = [
+            (
+                "1.2.3",
+                Error {
+                    kind: ErrorKind::InvalidNumber("1.2.3".to_string()),
+                    position: Position::new(0, 0),
+                },
+            ),
+            (
+                "\"asdf",
+                Error {
+                    kind: ErrorKind::UnexpectedEof,
+                    position: Position::new(0, 5),
+                },
+            ),
+            (
+                "\"asdf\\",
+                Error {
+                    kind: ErrorKind::UnexpectedEof,
+                    position: Position::new(0, 6),
+                },
+            ),
+            (
+                "\"asdf\\a",
+                Error {
+                    kind: ErrorKind::InvalidEscapeChar('a'),
+                    position: Position::new(0, 6),
+                },
+            ),
+            (
+                "123 $",
+                Error {
+                    kind: ErrorKind::InvalidChar('$'),
+                    position: Position::new(0, 4),
+                },
+            ),
+        ];
+
+        for (input, expected) in tests {
+            let lexer = Lexer::new(input);
+            let result: Result<Vec<_>, _> = lexer.collect();
+            assert_eq!(result, Err(expected));
+        }
     }
 
     #[test]
