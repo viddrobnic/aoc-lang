@@ -37,7 +37,7 @@ For the language to be almost operational it should have:
 - [ ] arithmetic operations (`+`, `-`, `*`, `/`, `%`)
 - [ ] bit-wise operations (`&`, `|`, `!`)
 - [ ] comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
-- [ ] logical operations (`!`, `&&`, `||`)
+- [ ] logical operations (`!`, `&`, `|`)
 - [ ] variables
 - [ ] if/else statements
 - [ ] while loop
