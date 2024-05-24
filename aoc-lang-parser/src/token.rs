@@ -43,6 +43,27 @@ pub enum TokenType {
     Eol, // \n
 }
 
+impl TokenType {
+    pub fn from_ident(ident: &str) -> Option<Self> {
+        let token = match ident {
+            "true" => Self::True,
+            "false" => Self::False,
+            "if" => Self::If,
+            "else" => Self::Else,
+            "while" => Self::While,
+            "for" => Self::For,
+            "break" => Self::Break,
+            "continue" => Self::Continue,
+            "return" => Self::Return,
+            "fn" => Self::Fn,
+            "use" => Self::Use,
+            _ => return None,
+        };
+
+        Some(token)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub token_type: TokenType,
