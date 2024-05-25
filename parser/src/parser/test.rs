@@ -94,3 +94,63 @@ fn one_node_per_line() {
         })
     )
 }
+
+#[test]
+fn prefix_operator() -> Result<()> {
+    let tests = [
+        (
+            "!false",
+            ast::Node {
+                value: ast::NodeValue::PrefixOperator {
+                    operator: ast::PrefixOperatorKind::Not,
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(false),
+                        position: Position::new(0, 1),
+                    }),
+                },
+                position: Position::new(0, 0),
+            },
+        ),
+        (
+            "-42",
+            ast::Node {
+                value: ast::NodeValue::PrefixOperator {
+                    operator: ast::PrefixOperatorKind::Negative,
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(42),
+                        position: Position::new(0, 1),
+                    }),
+                },
+                position: Position::new(0, 0),
+            },
+        ),
+        (
+            "--1",
+            ast::Node {
+                value: ast::NodeValue::PrefixOperator {
+                    operator: ast::PrefixOperatorKind::Negative,
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::PrefixOperator {
+                            operator: ast::PrefixOperatorKind::Negative,
+                            right: Box::new(ast::Node {
+                                value: ast::NodeValue::IntegerLiteral(1),
+                                position: Position::new(0, 2),
+                            }),
+                        },
+                        position: Position::new(0, 1),
+                    }),
+                },
+                position: Position::new(0, 0),
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}

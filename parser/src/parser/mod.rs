@@ -1,5 +1,5 @@
 use crate::{
-    ast,
+    ast::{self, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
     position::Position,
@@ -142,6 +142,8 @@ impl Parser<'_> {
             TokenKind::True => ast::NodeValue::BoolLiteral(true),
             TokenKind::False => ast::NodeValue::BoolLiteral(false),
             TokenKind::String(string) => ast::NodeValue::StringLiteral(string),
+            TokenKind::Bang => self.parse_prefix_operator(PrefixOperatorKind::Not)?,
+            TokenKind::Minus => self.parse_prefix_operator(PrefixOperatorKind::Negative)?,
             TokenKind::LBracket => todo!("parse grouped"),
             TokenKind::LSquare => todo!("parse array literal"),
             TokenKind::LCurly => todo!("parse hash map literal"),
@@ -171,5 +173,13 @@ impl Parser<'_> {
 
     fn parse_infix(&mut self, left: ast::Node) -> Result<ast::Node> {
         todo!()
+    }
+
+    fn parse_prefix_operator(&mut self, operator: PrefixOperatorKind) -> Result<ast::NodeValue> {
+        let right = self.parse_node(Precedence::Prefix)?;
+        Ok(ast::NodeValue::PrefixOperator {
+            operator,
+            right: Box::new(right),
+        })
     }
 }
