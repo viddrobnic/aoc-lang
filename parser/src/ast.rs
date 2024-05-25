@@ -7,8 +7,8 @@ pub struct Program {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Node {
-    value: NodeValue,
-    position: Position,
+    pub value: NodeValue,
+    pub position: Position,
 }
 
 #[derive(Debug, PartialEq, Clone)]

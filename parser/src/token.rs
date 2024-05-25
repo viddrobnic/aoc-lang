@@ -64,6 +64,29 @@ impl TokenKind {
 
         Some(token)
     }
+
+    pub fn is_infix(&self) -> bool {
+        matches!(
+            self,
+            Self::LSquare
+                | Self::LBracket
+                | Self::Le
+                | Self::Leq
+                | Self::Ge
+                | Self::Geq
+                | Self::Eq
+                | Self::Neq
+                | Self::Plus
+                | Self::Minus
+                | Self::Mult
+                | Self::Div
+                | Self::Modulo
+                | Self::And
+                | Self::Or
+                | Self::Assign
+                | Self::Dot
+        )
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
