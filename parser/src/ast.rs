@@ -7,12 +7,12 @@ pub struct Program {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Node {
-    kind: NodeKind,
+    value: NodeValue,
     position: Position,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum NodeKind {
+pub enum NodeValue {
     Identifier(String),
     IntegerLiteral(i64),
     FloatLiteral(f64),
@@ -95,4 +95,31 @@ pub enum InfixOperatorKind {
     Geq,
     Eq,
     Neq,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum NodeKind {
+    Expression,
+    Statement,
+}
+
+impl Node {
+    pub fn kind(&self) -> NodeKind {
+        self.value.kind()
+    }
+}
+
+impl NodeValue {
+    pub fn kind(&self) -> NodeKind {
+        match self {
+            NodeValue::Assign { .. } => NodeKind::Statement,
+            NodeValue::While { .. } => NodeKind::Statement,
+            NodeValue::For { .. } => NodeKind::Statement,
+            NodeValue::Break => NodeKind::Statement,
+            NodeValue::Continue => NodeKind::Statement,
+            NodeValue::Return(_) => NodeKind::Statement,
+            NodeValue::Comment(_) => NodeKind::Statement,
+            _ => NodeKind::Expression,
+        }
+    }
 }
