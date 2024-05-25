@@ -171,7 +171,7 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_infix(&mut self, left: ast::Node) -> Result<ast::Node> {
+    fn parse_infix(&mut self, _left: ast::Node) -> Result<ast::Node> {
         todo!()
     }
 
