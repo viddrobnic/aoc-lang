@@ -154,3 +154,79 @@ fn prefix_operator() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn infix_opeartor() -> Result<()> {
+    let tests = [
+        (
+            "1+2",
+            ast::Node {
+                value: ast::NodeValue::InfixOperator {
+                    operator: ast::InfixOperatorKind::Add,
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        position: Position::new(0, 0),
+                    }),
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        position: Position::new(0, 2),
+                    }),
+                },
+                position: Position::new(0, 1),
+            },
+        ),
+        (
+            "1 & 2",
+            ast::Node {
+                value: ast::NodeValue::InfixOperator {
+                    operator: ast::InfixOperatorKind::And,
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        position: Position::new(0, 0),
+                    }),
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        position: Position::new(0, 4),
+                    }),
+                },
+                position: Position::new(0, 2),
+            },
+        ),
+        (
+            "1 & 2 + 3",
+            ast::Node {
+                value: ast::NodeValue::InfixOperator {
+                    operator: ast::InfixOperatorKind::And,
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        position: Position::new(0, 0),
+                    }),
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::InfixOperator {
+                            operator: ast::InfixOperatorKind::Add,
+                            left: Box::new(ast::Node {
+                                value: ast::NodeValue::IntegerLiteral(2),
+                                position: Position::new(0, 4),
+                            }),
+                            right: Box::new(ast::Node {
+                                value: ast::NodeValue::IntegerLiteral(3),
+                                position: Position::new(0, 8),
+                            }),
+                        },
+                        position: Position::new(0, 6),
+                    }),
+                },
+                position: Position::new(0, 2),
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}

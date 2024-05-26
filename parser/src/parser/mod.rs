@@ -1,5 +1,5 @@
 use crate::{
-    ast::{self, PrefixOperatorKind},
+    ast::{self, InfixOperatorKind, NodeKind, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
     position::Position,
@@ -171,14 +171,104 @@ impl Parser<'_> {
         })
     }
 
-    fn parse_infix(&mut self, _left: ast::Node) -> Result<ast::Node> {
-        todo!()
+    fn parse_infix(&mut self, left: ast::Node) -> Result<ast::Node> {
+        let Some(token) = self.lexer.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                position: Position::default(),
+            });
+        };
+        let token = token?;
+        let Token {
+            kind: tkn_kind,
+            position,
+        } = &token;
+
+        let node_value = match tkn_kind {
+            TokenKind::LSquare | TokenKind::Dot => todo!("parse index"),
+            TokenKind::LBracket => todo!("parse function call"),
+            TokenKind::Le => self.parse_infix_operation(left, InfixOperatorKind::Le, &token)?,
+            TokenKind::Leq => self.parse_infix_operation(left, InfixOperatorKind::Leq, &token)?,
+            TokenKind::Ge => self.parse_infix_operation(left, InfixOperatorKind::Ge, &token)?,
+            TokenKind::Geq => self.parse_infix_operation(left, InfixOperatorKind::Geq, &token)?,
+            TokenKind::Eq => self.parse_infix_operation(left, InfixOperatorKind::Eq, &token)?,
+            TokenKind::Neq => self.parse_infix_operation(left, InfixOperatorKind::Neq, &token)?,
+            TokenKind::Plus => self.parse_infix_operation(left, InfixOperatorKind::Add, &token)?,
+            TokenKind::Minus => {
+                self.parse_infix_operation(left, InfixOperatorKind::Subtract, &token)?
+            }
+            TokenKind::Mult => {
+                self.parse_infix_operation(left, InfixOperatorKind::Multiply, &token)?
+            }
+            TokenKind::Div => {
+                self.parse_infix_operation(left, InfixOperatorKind::Divide, &token)?
+            }
+            TokenKind::Modulo => {
+                self.parse_infix_operation(left, InfixOperatorKind::Modulo, &token)?
+            }
+            TokenKind::And => self.parse_infix_operation(left, InfixOperatorKind::And, &token)?,
+            TokenKind::Or => self.parse_infix_operation(left, InfixOperatorKind::Or, &token)?,
+            TokenKind::Assign => todo!("parse assign"),
+
+            _ => return Ok(left),
+        };
+
+        Ok(ast::Node {
+            value: node_value,
+            position: *position,
+        })
     }
 
     fn parse_prefix_operator(&mut self, operator: PrefixOperatorKind) -> Result<ast::NodeValue> {
         let right = self.parse_node(Precedence::Prefix)?;
+
+        if right.kind() != NodeKind::Expression {
+            return Err(Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: NodeKind::Expression,
+                    got: right.kind(),
+                },
+                position: right.position,
+            });
+        }
+
         Ok(ast::NodeValue::PrefixOperator {
             operator,
+            right: Box::new(right),
+        })
+    }
+
+    fn parse_infix_operation(
+        &mut self,
+        left: ast::Node,
+        operator: InfixOperatorKind,
+        token: &Token,
+    ) -> Result<ast::NodeValue> {
+        let right = self.parse_node(token.into())?;
+
+        if left.kind() != NodeKind::Expression {
+            return Err(Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: NodeKind::Expression,
+                    got: left.kind(),
+                },
+                position: left.position,
+            });
+        }
+
+        if right.kind() != NodeKind::Expression {
+            return Err(Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: NodeKind::Expression,
+                    got: right.kind(),
+                },
+                position: right.position,
+            });
+        }
+
+        Ok(ast::NodeValue::InfixOperator {
+            operator,
+            left: Box::new(left),
             right: Box::new(right),
         })
     }

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use crate::{position::Position, token::TokenKind};
+use crate::{ast::NodeKind, position::Position, token::TokenKind};
 
 #[derive(Debug, PartialEq)]
 pub enum ErrorKind {
@@ -12,6 +12,7 @@ pub enum ErrorKind {
     InvalidChar(char),
     InvalidExpression(TokenKind),
     ExpectedEol,
+    InvalidNodeKind { expected: NodeKind, got: NodeKind },
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -37,6 +38,9 @@ impl Display for ErrorKind {
             ErrorKind::InvalidChar(ch) => write!(f, "invalid char '{ch}'"),
             ErrorKind::InvalidExpression(token) => write!(f, "not a valid expression: {:?}", token),
             ErrorKind::ExpectedEol => write!(f, "expression must end with new line"),
+            ErrorKind::InvalidNodeKind { expected, got } => {
+                write!(f, "invalid node kind, expected: {expected:?}, got: {got:?}")
+            }
         }
     }
 }

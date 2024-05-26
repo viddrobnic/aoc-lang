@@ -24,7 +24,7 @@ pub enum NodeValue {
         operator: PrefixOperatorKind,
         right: Box<Node>,
     },
-    BinaryOperator {
+    InfixOperator {
         operator: InfixOperatorKind,
         left: Box<Node>,
         right: Box<Node>,
