@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::position::Range;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
@@ -92,5 +92,5 @@ impl TokenKind {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub kind: TokenKind,
-    pub position: Position,
+    pub range: Range,
 }

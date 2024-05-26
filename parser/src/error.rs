@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use crate::{ast::NodeKind, position::Position, token::TokenKind};
+use crate::{ast::NodeKind, position::Range, token::TokenKind};
 
 #[derive(Debug, PartialEq)]
 pub enum ErrorKind {
@@ -18,7 +18,7 @@ pub enum ErrorKind {
 #[derive(Debug, Error, PartialEq)]
 pub struct Error {
     pub kind: ErrorKind,
-    pub position: Position,
+    pub range: Range,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

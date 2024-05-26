@@ -12,3 +12,20 @@ impl Position {
         Self { line, character }
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+pub struct Range {
+    /// Range start position, inclusive.
+    pub start: Position,
+
+    /// Range end position, exclusive.
+    /// To represent range that contains eol, set end position
+    /// to start of next line.
+    pub end: Position,
+}
+
+impl Range {
+    pub fn new(start: Position, end: Position) -> Self {
+        Self { start, end }
+    }
+}

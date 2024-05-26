@@ -2,7 +2,7 @@ use crate::{
     ast::{self, InfixOperatorKind, NodeKind, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
-    position::Position,
+    position::{Position, Range},
     token::{Token, TokenKind},
 };
 
@@ -63,19 +63,19 @@ impl Parser<'_> {
         loop {
             self.skip_eol()?;
 
-            // If there is no more tokens, we reached EOF.
-            if self.lexer.peek().is_none() {
+            let Some(token) = self.lexer.next() else {
+                // If there is no more tokens, we reached EOF.
                 break;
-            }
+            };
 
-            let stmt = self.parse_node(Precedence::Lowest)?;
+            let stmt = self.parse_node(token?, Precedence::Lowest)?;
             statements.push(stmt);
 
             peek_token!(self, token, break);
             if !matches!(token.kind, TokenKind::Eol | TokenKind::Comment(_)) {
                 return Err(Error {
                     kind: ErrorKind::ExpectedEol,
-                    position: token.position,
+                    range: token.range,
                 });
             }
         }
@@ -97,8 +97,12 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_node(&mut self, precedence: Precedence) -> Result<ast::Node> {
-        let mut left = self.parse_prefix()?;
+    // Parse node with recursive descent. Takes first token as argument,
+    // which makes the caller responsible for handling Eof. This way we can
+    // append nice range information to the Eof errors. Similar approach is taken
+    // for helper methods.
+    fn parse_node(&mut self, start_token: Token, precedence: Precedence) -> Result<ast::Node> {
+        let mut left = self.parse_prefix(start_token)?;
 
         loop {
             peek_token!(self, token, break);
@@ -117,97 +121,81 @@ impl Parser<'_> {
                 break;
             }
 
-            left = self.parse_infix(left)?;
+            // We can safely unwrap, because we know it's Some(Ok(_)),
+            // since peek_token! already handles those cases.
+            let token = self.lexer.next().unwrap().unwrap();
+            left = self.parse_infix(token, left)?;
         }
 
         Ok(left)
     }
 
-    fn parse_prefix(&mut self) -> Result<ast::Node> {
-        let Some(token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                position: Position::default(),
-            });
-        };
+    fn parse_prefix(&mut self, start_token: Token) -> Result<ast::Node> {
         let Token {
             kind: tkn_kind,
-            position,
-        } = token?;
+            range,
+        } = start_token;
 
-        let node_value = match tkn_kind {
-            TokenKind::Ident(ident) => ast::NodeValue::Identifier(ident),
-            TokenKind::Integer(int) => ast::NodeValue::IntegerLiteral(int),
-            TokenKind::Float(flt) => ast::NodeValue::FloatLiteral(flt),
-            TokenKind::True => ast::NodeValue::BoolLiteral(true),
-            TokenKind::False => ast::NodeValue::BoolLiteral(false),
-            TokenKind::String(string) => ast::NodeValue::StringLiteral(string),
-            TokenKind::Bang => self.parse_prefix_operator(PrefixOperatorKind::Not)?,
-            TokenKind::Minus => self.parse_prefix_operator(PrefixOperatorKind::Negative)?,
+        let (node_value, end) = match tkn_kind {
+            TokenKind::Ident(ident) => (ast::NodeValue::Identifier(ident), range.end),
+            TokenKind::Integer(int) => (ast::NodeValue::IntegerLiteral(int), range.end),
+            TokenKind::Float(flt) => (ast::NodeValue::FloatLiteral(flt), range.end),
+            TokenKind::True => (ast::NodeValue::BoolLiteral(true), range.end),
+            TokenKind::False => (ast::NodeValue::BoolLiteral(false), range.end),
+            TokenKind::String(string) => (ast::NodeValue::StringLiteral(string), range.end),
+            TokenKind::Bang | TokenKind::Minus => self.parse_prefix_operator(Token {
+                kind: tkn_kind,
+                range,
+            })?,
             TokenKind::LBracket => todo!("parse grouped"),
             TokenKind::LSquare => todo!("parse array literal"),
             TokenKind::LCurly => todo!("parse hash map literal"),
             TokenKind::If => todo!("parse if statement"),
             TokenKind::While => todo!("parse while loop"),
             TokenKind::For => todo!("parse for loop"),
-            TokenKind::Break => ast::NodeValue::Break,
-            TokenKind::Continue => ast::NodeValue::Continue,
+            TokenKind::Break => (ast::NodeValue::Break, range.end),
+            TokenKind::Continue => (ast::NodeValue::Continue, range.end),
             TokenKind::Return => todo!("parse return statement"),
             TokenKind::Fn => todo!("parse function literal"),
             TokenKind::Use => todo!("parse use"),
-            TokenKind::Comment(comment) => ast::NodeValue::Comment(comment),
+            TokenKind::Comment(comment) => (ast::NodeValue::Comment(comment), range.end),
 
             token => {
                 return Err(Error {
                     kind: ErrorKind::InvalidExpression(token),
-                    position,
+                    range,
                 })
             }
         };
 
         Ok(ast::Node {
             value: node_value,
-            position,
+            range: Range {
+                start: range.start,
+                end,
+            },
         })
     }
 
-    fn parse_infix(&mut self, left: ast::Node) -> Result<ast::Node> {
-        let Some(token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                position: Position::default(),
-            });
-        };
-        let token = token?;
-        let Token {
-            kind: tkn_kind,
-            position,
-        } = &token;
+    fn parse_infix(&mut self, start_token: Token, left: ast::Node) -> Result<ast::Node> {
+        let start = left.range.start;
 
-        let node_value = match tkn_kind {
+        let (node_value, end) = match &start_token.kind {
+            TokenKind::Le
+            | TokenKind::Leq
+            | TokenKind::Ge
+            | TokenKind::Geq
+            | TokenKind::Eq
+            | TokenKind::Neq
+            | TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Mult
+            | TokenKind::Div
+            | TokenKind::Modulo
+            | TokenKind::And
+            | TokenKind::Or => self.parse_infix_operation(start_token, left)?,
             TokenKind::LSquare | TokenKind::Dot => todo!("parse index"),
             TokenKind::LBracket => todo!("parse function call"),
-            TokenKind::Le => self.parse_infix_operation(left, InfixOperatorKind::Le, &token)?,
-            TokenKind::Leq => self.parse_infix_operation(left, InfixOperatorKind::Leq, &token)?,
-            TokenKind::Ge => self.parse_infix_operation(left, InfixOperatorKind::Ge, &token)?,
-            TokenKind::Geq => self.parse_infix_operation(left, InfixOperatorKind::Geq, &token)?,
-            TokenKind::Eq => self.parse_infix_operation(left, InfixOperatorKind::Eq, &token)?,
-            TokenKind::Neq => self.parse_infix_operation(left, InfixOperatorKind::Neq, &token)?,
-            TokenKind::Plus => self.parse_infix_operation(left, InfixOperatorKind::Add, &token)?,
-            TokenKind::Minus => {
-                self.parse_infix_operation(left, InfixOperatorKind::Subtract, &token)?
-            }
-            TokenKind::Mult => {
-                self.parse_infix_operation(left, InfixOperatorKind::Multiply, &token)?
-            }
-            TokenKind::Div => {
-                self.parse_infix_operation(left, InfixOperatorKind::Divide, &token)?
-            }
-            TokenKind::Modulo => {
-                self.parse_infix_operation(left, InfixOperatorKind::Modulo, &token)?
-            }
-            TokenKind::And => self.parse_infix_operation(left, InfixOperatorKind::And, &token)?,
-            TokenKind::Or => self.parse_infix_operation(left, InfixOperatorKind::Or, &token)?,
             TokenKind::Assign => todo!("parse assign"),
 
             _ => return Ok(left),
@@ -215,12 +203,18 @@ impl Parser<'_> {
 
         Ok(ast::Node {
             value: node_value,
-            position: *position,
+            range: Range { start, end },
         })
     }
 
-    fn parse_prefix_operator(&mut self, operator: PrefixOperatorKind) -> Result<ast::NodeValue> {
-        let right = self.parse_node(Precedence::Prefix)?;
+    fn parse_prefix_operator(&mut self, start_token: Token) -> Result<(ast::NodeValue, Position)> {
+        let Some(right_token) = self.lexer.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: start_token.range,
+            });
+        };
+        let right = self.parse_node(right_token?, Precedence::Prefix)?;
 
         if right.kind() != NodeKind::Expression {
             return Err(Error {
@@ -228,23 +222,40 @@ impl Parser<'_> {
                     expected: NodeKind::Expression,
                     got: right.kind(),
                 },
-                position: right.position,
+                range: right.range,
             });
         }
 
-        Ok(ast::NodeValue::PrefixOperator {
-            operator,
-            right: Box::new(right),
-        })
+        let end = right.range.end;
+
+        Ok((
+            ast::NodeValue::PrefixOperator {
+                operator: token_to_prefix_operator(&start_token.kind),
+                right: Box::new(right),
+            },
+            end,
+        ))
     }
 
     fn parse_infix_operation(
         &mut self,
+        start_token: Token,
         left: ast::Node,
-        operator: InfixOperatorKind,
-        token: &Token,
-    ) -> Result<ast::NodeValue> {
-        let right = self.parse_node(token.into())?;
+    ) -> Result<(ast::NodeValue, Position)> {
+        let precedence = Precedence::from(&start_token);
+        let operator = token_to_infix_operator(&start_token.kind);
+
+        let Some(right_token) = self.lexer.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: Range {
+                    start: left.range.start,
+                    end: start_token.range.end,
+                },
+            });
+        };
+
+        let right = self.parse_node(right_token?, precedence)?;
 
         if left.kind() != NodeKind::Expression {
             return Err(Error {
@@ -252,7 +263,7 @@ impl Parser<'_> {
                     expected: NodeKind::Expression,
                     got: left.kind(),
                 },
-                position: left.position,
+                range: left.range,
             });
         }
 
@@ -262,14 +273,48 @@ impl Parser<'_> {
                     expected: NodeKind::Expression,
                     got: right.kind(),
                 },
-                position: right.position,
+                range: right.range,
             });
         }
 
-        Ok(ast::NodeValue::InfixOperator {
-            operator,
-            left: Box::new(left),
-            right: Box::new(right),
-        })
+        let end = right.range.end;
+
+        Ok((
+            ast::NodeValue::InfixOperator {
+                operator,
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+            end,
+        ))
+    }
+}
+
+fn token_to_infix_operator(token: &TokenKind) -> InfixOperatorKind {
+    match token {
+        TokenKind::Le => InfixOperatorKind::Le,
+        TokenKind::Leq => InfixOperatorKind::Leq,
+        TokenKind::Ge => InfixOperatorKind::Ge,
+        TokenKind::Geq => InfixOperatorKind::Geq,
+        TokenKind::Eq => InfixOperatorKind::Eq,
+        TokenKind::Neq => InfixOperatorKind::Neq,
+        TokenKind::Plus => InfixOperatorKind::Add,
+        TokenKind::Minus => InfixOperatorKind::Subtract,
+        TokenKind::Mult => InfixOperatorKind::Multiply,
+        TokenKind::Div => InfixOperatorKind::Divide,
+        TokenKind::Modulo => InfixOperatorKind::Modulo,
+        TokenKind::And => InfixOperatorKind::And,
+        TokenKind::Or => InfixOperatorKind::Or,
+
+        _ => panic!("token {token:?} is not infix oeprator"),
+    }
+}
+
+fn token_to_prefix_operator(token: &TokenKind) -> PrefixOperatorKind {
+    match token {
+        TokenKind::Bang => PrefixOperatorKind::Not,
+        TokenKind::Minus => PrefixOperatorKind::Negative,
+
+        _ => panic!("token {token:?} is not prefix operator"),
     }
 }

@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::position::Range;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Program {
@@ -8,7 +8,7 @@ pub struct Program {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Node {
     pub value: NodeValue,
-    pub position: Position,
+    pub range: Range,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,6 +1,6 @@
 use crate::{
     error::{Error, ErrorKind, Result},
-    position::Position,
+    position::{Position, Range},
     token::{Token, TokenKind},
 };
 
@@ -54,7 +54,11 @@ impl<'a> Lexer<'a> {
 
     // Read number where the first digit is at `self.input[start]`
     // and `end` is start + utf8 len of first digit.
-    fn read_number(&mut self, start: usize, mut end: usize) -> Result<TokenKind> {
+    fn read_number(
+        &mut self,
+        start: usize,
+        mut end: usize,
+    ) -> std::result::Result<TokenKind, ErrorKind> {
         loop {
             let Some((_, ch)) = self.chars.peek() else {
                 break;
@@ -75,25 +79,15 @@ impl<'a> Lexer<'a> {
         let number = &self.input[start..end];
 
         if number.contains('.') {
-            let float: f64 = number.parse().map_err(|_| {
-                let mut pos = self.position;
-                pos.character -= len;
-                Error {
-                    kind: ErrorKind::InvalidNumber(number.to_string()),
-                    position: pos,
-                }
-            })?;
+            let float: f64 = number
+                .parse()
+                .map_err(|_| ErrorKind::InvalidNumber(number.to_string()))?;
 
             Ok(TokenKind::Float(float))
         } else {
-            let int: i64 = number.parse().map_err(|_| {
-                let mut pos = self.position;
-                pos.character -= len;
-                Error {
-                    kind: ErrorKind::InvalidNumber(number.to_string()),
-                    position: pos,
-                }
-            })?;
+            let int: i64 = number
+                .parse()
+                .map_err(|_| ErrorKind::InvalidNumber(number.to_string()))?;
 
             Ok(TokenKind::Integer(int))
         }
@@ -123,13 +117,16 @@ impl<'a> Lexer<'a> {
     }
 
     // Read string, where `"` is already read.
-    fn read_string(&mut self) -> Result<TokenKind> {
+    fn read_string(&mut self, start_position: Position) -> Result<TokenKind> {
         let mut string = String::new();
 
         loop {
             let (_, ch) = self.chars.next().ok_or(Error {
                 kind: ErrorKind::UnexpectedEof,
-                position: self.position,
+                range: Range {
+                    start: start_position,
+                    end: self.position,
+                },
             })?;
             self.position.character += ch.len_utf8();
 
@@ -144,7 +141,10 @@ impl<'a> Lexer<'a> {
 
             let (_, ch) = self.chars.next().ok_or(Error {
                 kind: ErrorKind::UnexpectedEof,
-                position: self.position,
+                range: Range {
+                    start: start_position,
+                    end: self.position,
+                },
             })?;
             self.position.character += ch.len_utf8();
 
@@ -159,7 +159,10 @@ impl<'a> Lexer<'a> {
 
                     return Err(Error {
                         kind: ErrorKind::InvalidEscapeChar(ch),
-                        position,
+                        range: Range {
+                            start: position,
+                            end: self.position,
+                        },
                     });
                 }
             };
@@ -170,20 +173,14 @@ impl<'a> Lexer<'a> {
     }
 
     /// Read comment where first / is already read.
-    fn read_comment(&mut self) -> Result<TokenKind> {
+    fn read_comment(&mut self) -> std::result::Result<TokenKind, ErrorKind> {
         // Read the second /
         let Some((pos, ch)) = self.chars.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                position: self.position,
-            });
+            return Err(ErrorKind::UnexpectedEof);
         };
 
         if ch != '/' {
-            return Err(Error {
-                kind: ErrorKind::InvalidChar(ch),
-                position: self.position,
-            });
+            return Err(ErrorKind::InvalidChar(ch));
         }
 
         // Increase position after possible error returning,
@@ -221,9 +218,9 @@ impl Iterator for Lexer<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
 
-        let (start, ch) = self.chars.next()?;
-        let current_position = self.position;
+        let start_position = self.position;
 
+        let (start, ch) = self.chars.next()?;
         self.position.character += ch.len_utf8();
 
         let token_type = match ch {
@@ -251,7 +248,7 @@ impl Iterator for Lexer<'_> {
             '>' => self.peek_parse('=', TokenKind::Geq, TokenKind::Ge),
             '=' => self.peek_parse('=', TokenKind::Eq, TokenKind::Assign),
             '!' => self.peek_parse('=', TokenKind::Neq, TokenKind::Bang),
-            '"' => match self.read_string() {
+            '"' => match self.read_string(start_position) {
                 Ok(token) => token,
                 Err(err) => return Some(Err(err)),
             },
@@ -260,7 +257,15 @@ impl Iterator for Lexer<'_> {
                 Some((_, ch)) if *ch != '/' => TokenKind::Div,
                 _ => match self.read_comment() {
                     Ok(token) => token,
-                    Err(err) => return Some(Err(err)),
+                    Err(kind) => {
+                        return Some(Err(Error {
+                            kind,
+                            range: Range {
+                                start: start_position,
+                                end: self.position,
+                            },
+                        }))
+                    }
                 },
             },
             ch if ch.is_ascii_digit() => {
@@ -268,7 +273,15 @@ impl Iterator for Lexer<'_> {
 
                 match self.read_number(start, start + ch.len_utf8()) {
                     Ok(token) => token,
-                    Err(err) => return Some(Err(err)),
+                    Err(kind) => {
+                        return Some(Err(Error {
+                            kind,
+                            range: Range {
+                                start: start_position,
+                                end: self.position,
+                            },
+                        }))
+                    }
                 }
             }
             ch if ch.is_alphabetic() => {
@@ -278,14 +291,20 @@ impl Iterator for Lexer<'_> {
             ch => {
                 return Some(Err(Error {
                     kind: ErrorKind::InvalidChar(ch),
-                    position: current_position,
+                    range: Range {
+                        start: start_position,
+                        end: self.position,
+                    },
                 }))
             }
         };
 
         Some(Ok(Token {
             kind: token_type,
-            position: current_position,
+            range: Range {
+                start: start_position,
+                end: self.position,
+            },
         }))
     }
 }
@@ -294,7 +313,7 @@ impl Iterator for Lexer<'_> {
 mod test {
     use crate::{
         error::{Error, ErrorKind},
-        position::Position,
+        position::{Position, Range},
         token::{Token, TokenKind},
     };
 
@@ -323,7 +342,10 @@ mod test {
             tokens,
             vec![Token {
                 kind: TokenKind::Integer(123),
-                position: Position::new(0, 0)
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3)
+                }
             }]
         );
     }
@@ -335,35 +357,50 @@ mod test {
                 "1.2.3",
                 Error {
                     kind: ErrorKind::InvalidNumber("1.2.3".to_string()),
-                    position: Position::new(0, 0),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 5),
+                    },
                 },
             ),
             (
                 "\"asdf",
                 Error {
                     kind: ErrorKind::UnexpectedEof,
-                    position: Position::new(0, 5),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 5),
+                    },
                 },
             ),
             (
                 "\"asdf\\",
                 Error {
                     kind: ErrorKind::UnexpectedEof,
-                    position: Position::new(0, 6),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 6),
+                    },
                 },
             ),
             (
                 "\"asdf\\a",
                 Error {
                     kind: ErrorKind::InvalidEscapeChar('a'),
-                    position: Position::new(0, 6),
+                    range: Range {
+                        start: Position::new(0, 6),
+                        end: Position::new(0, 7),
+                    },
                 },
             ),
             (
                 "123 $",
                 Error {
                     kind: ErrorKind::InvalidChar('$'),
-                    position: Position::new(0, 4),
+                    range: Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 5),
+                    },
                 },
             ),
         ];
@@ -390,72 +427,240 @@ mod test {
         "#;
 
         let lexer = Lexer::new(input);
-        let (tokens, positions): (Vec<TokenKind>, Vec<Position>) = lexer
+        let (tokens, ranges): (Vec<TokenKind>, Vec<Range>) = lexer
             .map(|token| {
                 let token = token.unwrap();
-                (token.kind, token.position)
+                (token.kind, token.range)
             })
             .unzip();
 
         assert_eq!(
-            positions,
+            ranges,
             vec![
-                Position::new(0, 0),
-                Position::new(1, 12),
-                Position::new(1, 14),
-                Position::new(1, 16),
-                Position::new(1, 17),
-                Position::new(1, 18),
-                Position::new(1, 19),
-                Position::new(1, 21),
-                Position::new(1, 23),
-                Position::new(1, 25),
-                Position::new(2, 12),
-                Position::new(2, 14),
-                Position::new(2, 17),
-                Position::new(2, 20),
-                Position::new(2, 22),
-                Position::new(3, 12),
-                Position::new(3, 13),
-                Position::new(3, 14),
-                Position::new(3, 15),
-                Position::new(3, 16),
-                Position::new(3, 17),
-                Position::new(3, 18),
-                Position::new(3, 19),
-                Position::new(3, 20),
-                Position::new(3, 21),
-                Position::new(3, 22),
-                Position::new(3, 23),
-                Position::new(3, 24),
-                Position::new(4, 12),
-                Position::new(4, 16),
-                Position::new(4, 21),
-                Position::new(5, 12),
-                Position::new(5, 17),
-                Position::new(5, 23),
-                Position::new(5, 26),
-                Position::new(5, 31),
-                Position::new(5, 37),
-                Position::new(5, 41),
-                Position::new(5, 47),
-                Position::new(5, 56),
-                Position::new(5, 63),
-                Position::new(5, 66),
-                Position::new(5, 69),
-                Position::new(6, 12),
-                Position::new(6, 16),
-                Position::new(6, 21),
-                Position::new(6, 27),
-                Position::new(6, 34),
-                Position::new(7, 12),
-                Position::new(7, 28),
-                Position::new(7, 38),
-                Position::new(8, 12),
-                Position::new(8, 27),
-                Position::new(9, 12),
-                Position::new(9, 18),
-                Position::new(9, 34),
+                Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(1, 0),
+                },
+                Range {
+                    start: Position::new(1, 12),
+                    end: Position::new(1, 13),
+                },
+                Range {
+                    start: Position::new(1, 14),
+                    end: Position::new(1, 15),
+                },
+                Range {
+                    start: Position::new(1, 16),
+                    end: Position::new(1, 17),
+                },
+                Range {
+                    start: Position::new(1, 17),
+                    end: Position::new(1, 18),
+                },
+                Range {
+                    start: Position::new(1, 18),
+                    end: Position::new(1, 19),
+                },
+                Range {
+                    start: Position::new(1, 19),
+                    end: Position::new(1, 20),
+                },
+                Range {
+                    start: Position::new(1, 21),
+                    end: Position::new(1, 22),
+                },
+                Range {
+                    start: Position::new(1, 23),
+                    end: Position::new(1, 25),
+                },
+                Range {
+                    start: Position::new(1, 25),
+                    end: Position::new(2, 0),
+                },
+                Range {
+                    start: Position::new(2, 12),
+                    end: Position::new(2, 13),
+                },
+                Range {
+                    start: Position::new(2, 14),
+                    end: Position::new(2, 16),
+                },
+                Range {
+                    start: Position::new(2, 17),
+                    end: Position::new(2, 19),
+                },
+                Range {
+                    start: Position::new(2, 20),
+                    end: Position::new(2, 22),
+                },
+                Range {
+                    start: Position::new(2, 22),
+                    end: Position::new(3, 0),
+                },
+                Range {
+                    start: Position::new(3, 12),
+                    end: Position::new(3, 13),
+                },
+                Range {
+                    start: Position::new(3, 13),
+                    end: Position::new(3, 14),
+                },
+                Range {
+                    start: Position::new(3, 14),
+                    end: Position::new(3, 15),
+                },
+                Range {
+                    start: Position::new(3, 15),
+                    end: Position::new(3, 16),
+                },
+                Range {
+                    start: Position::new(3, 16),
+                    end: Position::new(3, 17),
+                },
+                Range {
+                    start: Position::new(3, 17),
+                    end: Position::new(3, 18),
+                },
+                Range {
+                    start: Position::new(3, 18),
+                    end: Position::new(3, 19),
+                },
+                Range {
+                    start: Position::new(3, 19),
+                    end: Position::new(3, 20),
+                },
+                Range {
+                    start: Position::new(3, 20),
+                    end: Position::new(3, 21),
+                },
+                Range {
+                    start: Position::new(3, 21),
+                    end: Position::new(3, 22),
+                },
+                Range {
+                    start: Position::new(3, 22),
+                    end: Position::new(3, 23),
+                },
+                Range {
+                    start: Position::new(3, 23),
+                    end: Position::new(3, 24),
+                },
+                Range {
+                    start: Position::new(3, 24),
+                    end: Position::new(4, 0),
+                },
+                Range {
+                    start: Position::new(4, 12),
+                    end: Position::new(4, 15),
+                },
+                Range {
+                    start: Position::new(4, 16),
+                    end: Position::new(4, 21),
+                },
+                Range {
+                    start: Position::new(4, 21),
+                    end: Position::new(5, 0),
+                },
+                Range {
+                    start: Position::new(5, 12),
+                    end: Position::new(5, 16),
+                },
+                Range {
+                    start: Position::new(5, 17),
+                    end: Position::new(5, 22),
+                },
+                Range {
+                    start: Position::new(5, 23),
+                    end: Position::new(5, 25),
+                },
+                Range {
+                    start: Position::new(5, 26),
+                    end: Position::new(5, 30),
+                },
+                Range {
+                    start: Position::new(5, 31),
+                    end: Position::new(5, 36),
+                },
+                Range {
+                    start: Position::new(5, 37),
+                    end: Position::new(5, 40),
+                },
+                Range {
+                    start: Position::new(5, 41),
+                    end: Position::new(5, 46),
+                },
+                Range {
+                    start: Position::new(5, 47),
+                    end: Position::new(5, 55),
+                },
+                Range {
+                    start: Position::new(5, 56),
+                    end: Position::new(5, 62),
+                },
+                Range {
+                    start: Position::new(5, 63),
+                    end: Position::new(5, 65),
+                },
+                Range {
+                    start: Position::new(5, 66),
+                    end: Position::new(5, 69),
+                },
+                Range {
+                    start: Position::new(5, 69),
+                    end: Position::new(6, 0),
+                },
+                Range {
+                    start: Position::new(6, 12),
+                    end: Position::new(6, 15),
+                },
+                Range {
+                    start: Position::new(6, 16),
+                    end: Position::new(6, 20),
+                },
+                Range {
+                    start: Position::new(6, 21),
+                    end: Position::new(6, 26),
+                },
+                Range {
+                    start: Position::new(6, 27),
+                    end: Position::new(6, 34),
+                },
+                Range {
+                    start: Position::new(6, 34),
+                    end: Position::new(7, 0),
+                },
+                Range {
+                    start: Position::new(7, 12),
+                    end: Position::new(7, 27),
+                },
+                Range {
+                    start: Position::new(7, 28),
+                    end: Position::new(7, 38),
+                },
+                Range {
+                    start: Position::new(7, 38),
+                    end: Position::new(8, 0),
+                },
+                Range {
+                    start: Position::new(8, 12),
+                    end: Position::new(8, 27),
+                },
+                Range {
+                    start: Position::new(8, 27),
+                    end: Position::new(9, 0),
+                },
+                Range {
+                    start: Position::new(9, 12),
+                    end: Position::new(9, 17),
+                },
+                Range {
+                    start: Position::new(9, 18),
+                    end: Position::new(9, 34),
+                },
+                Range {
+                    start: Position::new(9, 34),
+                    end: Position::new(10, 0),
+                },
             ]
         );
 

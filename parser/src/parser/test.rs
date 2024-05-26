@@ -1,7 +1,7 @@
 use crate::{
     ast,
     error::{Error, ErrorKind, Result},
-    position::Position,
+    position::{Position, Range},
 };
 
 use super::parse;
@@ -35,47 +35,80 @@ fn simple_prefix_expression() -> Result<()> {
         vec![
             ast::Node {
                 value: ast::NodeValue::Identifier("foo".to_string()),
-                position: Position::new(1, 8)
+                range: Range {
+                    start: Position::new(1, 8),
+                    end: Position::new(1, 11)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::IntegerLiteral(10),
-                position: Position::new(2, 8)
+                range: Range {
+                    start: Position::new(2, 8),
+                    end: Position::new(2, 10)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::FloatLiteral(4.2),
-                position: Position::new(3, 8)
+                range: Range {
+                    start: Position::new(3, 8),
+                    end: Position::new(3, 11)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::BoolLiteral(true),
-                position: Position::new(4, 8)
+                range: Range {
+                    start: Position::new(4, 8),
+                    end: Position::new(4, 12)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::BoolLiteral(false),
-                position: Position::new(5, 8)
+                range: Range {
+                    start: Position::new(5, 8),
+                    end: Position::new(5, 13)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::StringLiteral("bar".to_string()),
-                position: Position::new(6, 8)
+                range: Range {
+                    start: Position::new(6, 8),
+                    end: Position::new(6, 13)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::Break,
-                position: Position::new(7, 8)
+                range: Range {
+                    start: Position::new(7, 8),
+                    end: Position::new(7, 13)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::Continue,
-                position: Position::new(8, 8)
+                range: Range {
+                    start: Position::new(8, 8),
+                    end: Position::new(8, 16)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::Comment("this is a comment".to_string()),
-                position: Position::new(9, 8)
+                range: Range {
+                    start: Position::new(9, 8),
+                    end: Position::new(9, 28)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::Identifier("foo".to_string()),
-                position: Position::new(10, 8)
+                range: Range {
+                    start: Position::new(10, 8),
+                    end: Position::new(10, 11)
+                },
             },
             ast::Node {
                 value: ast::NodeValue::Comment("inline comment".to_string()),
-                position: Position::new(10, 12)
+                range: Range {
+                    start: Position::new(10, 12),
+                    end: Position::new(10, 29)
+                },
             },
         ]
     );
@@ -90,7 +123,10 @@ fn one_node_per_line() {
         program,
         Err(Error {
             kind: ErrorKind::ExpectedEol,
-            position: Position::new(0, 4),
+            range: Range {
+                start: Position::new(0, 4),
+                end: Position::new(0, 7),
+            }
         })
     )
 }
@@ -105,10 +141,16 @@ fn prefix_operator() -> Result<()> {
                     operator: ast::PrefixOperatorKind::Not,
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::BoolLiteral(false),
-                        position: Position::new(0, 1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 6),
+                        },
                     }),
                 },
-                position: Position::new(0, 0),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
             },
         ),
         (
@@ -118,10 +160,16 @@ fn prefix_operator() -> Result<()> {
                     operator: ast::PrefixOperatorKind::Negative,
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(42),
-                        position: Position::new(0, 1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 3),
+                        },
                     }),
                 },
-                position: Position::new(0, 0),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3),
+                },
             },
         ),
         (
@@ -134,13 +182,22 @@ fn prefix_operator() -> Result<()> {
                             operator: ast::PrefixOperatorKind::Negative,
                             right: Box::new(ast::Node {
                                 value: ast::NodeValue::IntegerLiteral(1),
-                                position: Position::new(0, 2),
+                                range: Range {
+                                    start: Position::new(0, 2),
+                                    end: Position::new(0, 3),
+                                },
                             }),
                         },
-                        position: Position::new(0, 1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 3),
+                        },
                     }),
                 },
-                position: Position::new(0, 0),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3),
+                },
             },
         ),
     ];
@@ -165,14 +222,23 @@ fn infix_opeartor() -> Result<()> {
                     operator: ast::InfixOperatorKind::Add,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
-                        position: Position::new(0, 0),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
                     }),
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(2),
-                        position: Position::new(0, 2),
+                        range: Range {
+                            start: Position::new(0, 2),
+                            end: Position::new(0, 3),
+                        },
                     }),
                 },
-                position: Position::new(0, 1),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3),
+                },
             },
         ),
         (
@@ -182,14 +248,23 @@ fn infix_opeartor() -> Result<()> {
                     operator: ast::InfixOperatorKind::And,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
-                        position: Position::new(0, 0),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
                     }),
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(2),
-                        position: Position::new(0, 4),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
                     }),
                 },
-                position: Position::new(0, 2),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 5),
+                },
             },
         ),
         (
@@ -199,24 +274,39 @@ fn infix_opeartor() -> Result<()> {
                     operator: ast::InfixOperatorKind::And,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
-                        position: Position::new(0, 0),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
                     }),
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::InfixOperator {
                             operator: ast::InfixOperatorKind::Add,
                             left: Box::new(ast::Node {
                                 value: ast::NodeValue::IntegerLiteral(2),
-                                position: Position::new(0, 4),
+                                range: Range {
+                                    start: Position::new(0, 4),
+                                    end: Position::new(0, 5),
+                                },
                             }),
                             right: Box::new(ast::Node {
                                 value: ast::NodeValue::IntegerLiteral(3),
-                                position: Position::new(0, 8),
+                                range: Range {
+                                    start: Position::new(0, 8),
+                                    end: Position::new(0, 9),
+                                },
                             }),
                         },
-                        position: Position::new(0, 6),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 9),
+                        },
                     }),
                 },
-                position: Position::new(0, 2),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 9),
+                },
             },
         ),
     ];
