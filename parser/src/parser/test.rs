@@ -405,6 +405,125 @@ fn grouped() -> Result<()> {
 }
 
 #[test]
+fn array_literal() -> Result<()> {
+    let tests = [
+        (
+            "[]",
+            ast::Node {
+                value: ast::NodeValue::ArrayLiteral(vec![]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 2),
+                },
+            },
+        ),
+        (
+            "[1]",
+            ast::Node {
+                value: ast::NodeValue::ArrayLiteral(vec![ast::Node {
+                    value: ast::NodeValue::IntegerLiteral(1),
+                    range: Range {
+                        start: Position::new(0, 1),
+                        end: Position::new(0, 2),
+                    },
+                }]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3),
+                },
+            },
+        ),
+        (
+            "[1, 2]",
+            ast::Node {
+                value: ast::NodeValue::ArrayLiteral(vec![
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                    },
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                    },
+                ]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
+            },
+        ),
+        (
+            "[1, 2,]",
+            ast::Node {
+                value: ast::NodeValue::ArrayLiteral(vec![
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                    },
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                    },
+                ]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 7),
+                },
+            },
+        ),
+        (
+            r#"[
+                    1,
+                    2,
+                ]"#,
+            ast::Node {
+                value: ast::NodeValue::ArrayLiteral(vec![
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(1, 20),
+                            end: Position::new(1, 21),
+                        },
+                    },
+                    ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        range: Range {
+                            start: Position::new(2, 20),
+                            end: Position::new(2, 21),
+                        },
+                    },
+                ]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(3, 17),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),
@@ -417,6 +536,7 @@ fn precedence() -> Result<()> {
         ("-1 + 1 * 2 % 3 / 4", "((-1) + (((1 * 2) % 3) / 4))"),
         ("1 + -2", "(1 + (-2))"),
         ("1 * (2 + 3)", "(1 * (2 + 3))"),
+        ("[1 + 2, 3 + 4 * 5]", "[(1 + 2), (3 + (4 * 5))]"),
     ];
 
     for (input, expected) in tests {

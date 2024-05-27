@@ -148,7 +148,7 @@ impl Parser<'_> {
                 range,
             })?,
             TokenKind::LBracket => self.parse_grouped(range)?,
-            TokenKind::LSquare => todo!("parse array literal"),
+            TokenKind::LSquare => self.parse_array_literal(range)?,
             TokenKind::LCurly => todo!("parse hash map literal"),
             TokenKind::If => todo!("parse if statement"),
             TokenKind::While => todo!("parse while loop"),
@@ -321,6 +321,64 @@ impl Parser<'_> {
         }
 
         Ok((node.value, closing_token.range.end))
+    }
+
+    fn parse_array_literal(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+        let mut res = vec![];
+        let mut end = start_range.end;
+
+        let mut can_parse = true;
+        loop {
+            self.skip_eol()?;
+
+            let Some(token) = self.lexer.next() else {
+                return Err(Error {
+                    kind: ErrorKind::UnexpectedEof,
+                    range: Range {
+                        start: start_range.start,
+                        end,
+                    },
+                });
+            };
+            let token = token?;
+
+            if token.kind == TokenKind::RSquare {
+                return Ok((ast::NodeValue::ArrayLiteral(res), token.range.end));
+            }
+
+            if !can_parse {
+                return Err(Error {
+                    kind: ErrorKind::InvalidTokenKind {
+                        expected: TokenKind::RSquare,
+                        got: token.kind,
+                    },
+                    range: token.range,
+                });
+            }
+
+            let item = self.parse_node(token, Precedence::Lowest)?;
+            end = item.range.end;
+            res.push(item);
+
+            peek_token!(
+                self,
+                token_peek,
+                return Err(Error {
+                    kind: ErrorKind::UnexpectedEof,
+                    range: Range {
+                        start: start_range.start,
+                        end,
+                    }
+                })
+            );
+
+            if token_peek.kind == TokenKind::Comma {
+                self.lexer.next();
+                can_parse = true;
+            } else {
+                can_parse = false;
+            }
+        }
     }
 }
 
