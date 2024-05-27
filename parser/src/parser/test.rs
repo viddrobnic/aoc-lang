@@ -524,6 +524,25 @@ fn array_literal() -> Result<()> {
 }
 
 #[test]
+fn parse_use() -> Result<()> {
+    let program = parse("use \"foo.aoc\"")?;
+
+    assert_eq!(program.statements.len(), 1);
+    assert_eq!(
+        program.statements[0],
+        ast::Node {
+            value: ast::NodeValue::Use("foo.aoc".to_string()),
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 13)
+            }
+        }
+    );
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),

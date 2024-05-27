@@ -97,6 +97,13 @@ impl Parser<'_> {
         Ok(())
     }
 
+    fn next_token(&mut self, eof_range: Range) -> Result<Token> {
+        self.lexer.next().ok_or(Error {
+            kind: ErrorKind::UnexpectedEof,
+            range: eof_range,
+        })?
+    }
+
     // Parse node with recursive descent. Takes first token as argument,
     // which makes the caller responsible for handling Eof. This way we can
     // append nice range information to the Eof errors. Similar approach is taken
@@ -157,7 +164,20 @@ impl Parser<'_> {
             TokenKind::Continue => (ast::NodeValue::Continue, range.end),
             TokenKind::Return => todo!("parse return statement"),
             TokenKind::Fn => todo!("parse function literal"),
-            TokenKind::Use => todo!("parse use"),
+            TokenKind::Use => {
+                let token = self.next_token(range)?;
+                let TokenKind::String(val) = token.kind else {
+                    return Err(Error {
+                        kind: ErrorKind::InvalidTokenKind {
+                            expected: TokenKind::String(String::new()),
+                            got: token.kind,
+                        },
+                        range: token.range,
+                    });
+                };
+
+                (ast::NodeValue::Use(val), token.range.end)
+            }
             TokenKind::Comment(comment) => (ast::NodeValue::Comment(comment), range.end),
 
             token => {
@@ -208,13 +228,8 @@ impl Parser<'_> {
     }
 
     fn parse_prefix_operator(&mut self, start_token: Token) -> Result<(ast::NodeValue, Position)> {
-        let Some(right_token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                range: start_token.range,
-            });
-        };
-        let right = self.parse_node(right_token?, Precedence::Prefix)?;
+        let right_token = self.next_token(start_token.range)?;
+        let right = self.parse_node(right_token, Precedence::Prefix)?;
 
         if right.kind() != NodeKind::Expression {
             return Err(Error {
@@ -245,17 +260,12 @@ impl Parser<'_> {
         let precedence = Precedence::from(&start_token);
         let operator = token_to_infix_operator(&start_token.kind);
 
-        let Some(right_token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                range: Range {
-                    start: left.range.start,
-                    end: start_token.range.end,
-                },
-            });
-        };
+        let right_token = self.next_token(Range {
+            start: left.range.start,
+            end: start_token.range.end,
+        })?;
 
-        let right = self.parse_node(right_token?, precedence)?;
+        let right = self.parse_node(right_token, precedence)?;
 
         if left.kind() != NodeKind::Expression {
             return Err(Error {
@@ -290,25 +300,13 @@ impl Parser<'_> {
     }
 
     fn parse_grouped(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
-        let Some(token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                range: start_range,
-            });
-        };
+        let token = self.next_token(start_range)?;
+        let node = self.parse_node(token, Precedence::Lowest)?;
 
-        let node = self.parse_node(token?, Precedence::Lowest)?;
-
-        let Some(closing_token) = self.lexer.next() else {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-                range: Range {
-                    start: start_range.start,
-                    end: node.range.end,
-                },
-            });
-        };
-        let closing_token = closing_token?;
+        let closing_token = self.next_token(Range {
+            start: start_range.start,
+            end: node.range.end,
+        })?;
 
         if closing_token.kind != TokenKind::RBracket {
             return Err(Error {
@@ -331,16 +329,10 @@ impl Parser<'_> {
         loop {
             self.skip_eol()?;
 
-            let Some(token) = self.lexer.next() else {
-                return Err(Error {
-                    kind: ErrorKind::UnexpectedEof,
-                    range: Range {
-                        start: start_range.start,
-                        end,
-                    },
-                });
-            };
-            let token = token?;
+            let token = self.next_token(Range {
+                start: start_range.start,
+                end,
+            })?;
 
             if token.kind == TokenKind::RSquare {
                 return Ok((ast::NodeValue::ArrayLiteral(res), token.range.end));
