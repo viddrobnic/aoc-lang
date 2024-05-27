@@ -147,7 +147,7 @@ impl Parser<'_> {
                 kind: tkn_kind,
                 range,
             })?,
-            TokenKind::LBracket => todo!("parse grouped"),
+            TokenKind::LBracket => self.parse_grouped(range)?,
             TokenKind::LSquare => todo!("parse array literal"),
             TokenKind::LCurly => todo!("parse hash map literal"),
             TokenKind::If => todo!("parse if statement"),
@@ -287,6 +287,40 @@ impl Parser<'_> {
             },
             end,
         ))
+    }
+
+    fn parse_grouped(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+        let Some(token) = self.lexer.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: start_range,
+            });
+        };
+
+        let node = self.parse_node(token?, Precedence::Lowest)?;
+
+        let Some(closing_token) = self.lexer.next() else {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: Range {
+                    start: start_range.start,
+                    end: node.range.end,
+                },
+            });
+        };
+        let closing_token = closing_token?;
+
+        if closing_token.kind != TokenKind::RBracket {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::RBracket,
+                    got: closing_token.kind,
+                },
+                range: closing_token.range,
+            });
+        }
+
+        Ok((node.value, closing_token.range.end))
     }
 }
 

@@ -322,6 +322,89 @@ fn infix_opeartor() -> Result<()> {
 }
 
 #[test]
+fn grouped() -> Result<()> {
+    let program = parse("1 + ((2 + (3 == 4)) + 2)")?;
+
+    assert_eq!(program.statements.len(), 1);
+    assert_eq!(
+        program.statements[0],
+        ast::Node {
+            value: ast::NodeValue::InfixOperator {
+                operator: ast::InfixOperatorKind::Add,
+                left: Box::new(ast::Node {
+                    value: ast::NodeValue::IntegerLiteral(1),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 1)
+                    }
+                }),
+                right: Box::new(ast::Node {
+                    value: ast::NodeValue::InfixOperator {
+                        operator: ast::InfixOperatorKind::Add,
+                        left: Box::new(ast::Node {
+                            value: ast::NodeValue::InfixOperator {
+                                operator: ast::InfixOperatorKind::Add,
+                                left: Box::new(ast::Node {
+                                    value: ast::NodeValue::IntegerLiteral(2),
+                                    range: Range {
+                                        start: Position::new(0, 6),
+                                        end: Position::new(0, 7),
+                                    }
+                                }),
+                                right: Box::new(ast::Node {
+                                    value: ast::NodeValue::InfixOperator {
+                                        operator: ast::InfixOperatorKind::Eq,
+                                        left: Box::new(ast::Node {
+                                            value: ast::NodeValue::IntegerLiteral(3),
+                                            range: Range {
+                                                start: Position::new(0, 11),
+                                                end: Position::new(0, 12),
+                                            }
+                                        }),
+                                        right: Box::new(ast::Node {
+                                            value: ast::NodeValue::IntegerLiteral(4),
+                                            range: Range {
+                                                start: Position::new(0, 16),
+                                                end: Position::new(0, 17),
+                                            }
+                                        })
+                                    },
+                                    range: Range {
+                                        start: Position::new(0, 10),
+                                        end: Position::new(0, 18),
+                                    }
+                                })
+                            },
+                            range: Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 19),
+                            }
+                        }),
+                        right: Box::new(ast::Node {
+                            value: ast::NodeValue::IntegerLiteral(2),
+                            range: Range {
+                                start: Position::new(0, 22),
+                                end: Position::new(0, 23)
+                            }
+                        })
+                    },
+                    range: Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 24),
+                    }
+                })
+            },
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 24),
+            }
+        }
+    );
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),
@@ -333,6 +416,7 @@ fn precedence() -> Result<()> {
         ("2 <= 3 == 3 > 2", "((2 <= 3) == (3 > 2))"),
         ("-1 + 1 * 2 % 3 / 4", "((-1) + (((1 * 2) % 3) / 4))"),
         ("1 + -2", "(1 + (-2))"),
+        ("1 * (2 + 3)", "(1 * (2 + 3))"),
     ];
 
     for (input, expected) in tests {

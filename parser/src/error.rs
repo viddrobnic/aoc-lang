@@ -13,6 +13,7 @@ pub enum ErrorKind {
     InvalidExpression(TokenKind),
     ExpectedEol,
     InvalidNodeKind { expected: NodeKind, got: NodeKind },
+    InvalidTokenKind { expected: TokenKind, got: TokenKind },
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -40,6 +41,9 @@ impl Display for ErrorKind {
             ErrorKind::ExpectedEol => write!(f, "expression must end with new line"),
             ErrorKind::InvalidNodeKind { expected, got } => {
                 write!(f, "invalid node kind, expected: {expected:?}, got: {got:?}")
+            }
+            ErrorKind::InvalidTokenKind { expected, got } => {
+                write!(f, "invalid token, expected: {expected:?}, got: {got:?}")
             }
         }
     }
