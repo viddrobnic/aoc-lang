@@ -524,6 +524,56 @@ fn array_literal() -> Result<()> {
 }
 
 #[test]
+fn hash_map_literal() -> Result<()> {
+    let tests = [
+        (
+            "{}",
+            ast::Node {
+                value: ast::NodeValue::HashLiteral(vec![]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 2),
+                },
+            },
+        ),
+        (
+            "{1: 2}",
+            ast::Node {
+                value: ast::NodeValue::HashLiteral(vec![ast::HashLiteralPair {
+                    key: ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                    },
+                    value: ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                    },
+                }]),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn parse_use() -> Result<()> {
     let program = parse("use \"foo.aoc\"")?;
 
@@ -556,6 +606,11 @@ fn precedence() -> Result<()> {
         ("1 + -2", "(1 + (-2))"),
         ("1 * (2 + 3)", "(1 * (2 + 3))"),
         ("[1 + 2, 3 + 4 * 5]", "[(1 + 2), (3 + (4 * 5))]"),
+        ("{1 + 2: 4 * 5}", "{(1 + 2): (4 * 5)}"),
+        (
+            "{1 + 2: 4 * 5, \"foo\":bar}",
+            "{(1 + 2): (4 * 5), \"foo\": bar}",
+        ),
     ];
 
     for (input, expected) in tests {

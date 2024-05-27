@@ -236,6 +236,7 @@ impl Iterator for Lexer<'_> {
             '%' => TokenKind::Modulo,
             '&' => TokenKind::And,
             '|' => TokenKind::Or,
+            ':' => TokenKind::Colon,
             ';' => TokenKind::Semicolon,
             ',' => TokenKind::Comma,
             '.' => TokenKind::Dot,
@@ -417,7 +418,7 @@ mod test {
         let input = r#"
             [ ] (){} < <=
             > >= == !=
-            !+-*/%&|=;,.
+            !+-*/%&|=;,.:
             123 1.234
             true false if else while for break continue return fn use
             foo bar1 bar_1 bar_baz
@@ -547,6 +548,10 @@ mod test {
                 },
                 Range {
                     start: Position::new(3, 24),
+                    end: Position::new(3, 25),
+                },
+                Range {
+                    start: Position::new(3, 25),
                     end: Position::new(4, 0),
                 },
                 Range {
@@ -694,6 +699,7 @@ mod test {
                 TokenKind::Semicolon,
                 TokenKind::Comma,
                 TokenKind::Dot,
+                TokenKind::Colon,
                 TokenKind::Eol,
                 TokenKind::Integer(123),
                 TokenKind::Float(1.234),

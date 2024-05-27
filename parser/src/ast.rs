@@ -72,8 +72,8 @@ pub enum NodeValue {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct HashLiteralPair {
-    key: Node,
-    value: Node,
+    pub key: Node,
+    pub value: Node,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

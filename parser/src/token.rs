@@ -29,6 +29,7 @@ pub enum TokenKind {
     Or,        // |
     Bang,      // !
     Assign,    // =
+    Colon,     // :
     Semicolon, // ;
     Comma,     // ,
     Dot,       // .

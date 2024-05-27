@@ -156,7 +156,7 @@ impl Parser<'_> {
             })?,
             TokenKind::LBracket => self.parse_grouped(range)?,
             TokenKind::LSquare => self.parse_array_literal(range)?,
-            TokenKind::LCurly => todo!("parse hash map literal"),
+            TokenKind::LCurly => self.parse_hash_map_literal(range)?,
             TokenKind::If => todo!("parse if statement"),
             TokenKind::While => todo!("parse while loop"),
             TokenKind::For => todo!("parse for loop"),
@@ -322,6 +322,56 @@ impl Parser<'_> {
     }
 
     fn parse_array_literal(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+        let (items, end) =
+            self.parse_multiple(start_range, TokenKind::RSquare, |parser, token| {
+                let item = parser.parse_node(token, Precedence::Lowest)?;
+                let end = item.range.end;
+                Ok((item, end))
+            })?;
+
+        Ok((ast::NodeValue::ArrayLiteral(items), end))
+    }
+
+    fn parse_hash_map_literal(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+        let (items, end) =
+            self.parse_multiple(start_range, TokenKind::RCurly, |parser, token| {
+                let key = parser.parse_node(token, Precedence::Lowest)?;
+
+                let token = parser.next_token(key.range)?;
+                if token.kind != TokenKind::Colon {
+                    return Err(Error {
+                        kind: ErrorKind::InvalidTokenKind {
+                            expected: TokenKind::Colon,
+                            got: token.kind,
+                        },
+                        range: token.range,
+                    });
+                }
+
+                let val_token = parser.next_token(Range {
+                    start: key.range.start,
+                    end: token.range.end,
+                })?;
+
+                let value = parser.parse_node(val_token, Precedence::Lowest)?;
+                let end = value.range.end;
+
+                Ok((ast::HashLiteralPair { key, value }, end))
+            })?;
+
+        Ok((ast::NodeValue::HashLiteral(items), end))
+    }
+
+    // Helper function used for parsing arrays, hash maps, function arguments, function calls.
+    fn parse_multiple<T, F>(
+        &mut self,
+        start_range: Range,
+        end_token: TokenKind,
+        parse_item: F,
+    ) -> Result<(Vec<T>, Position)>
+    where
+        F: Fn(&mut Self, Token) -> Result<(T, Position)>,
+    {
         let mut res = vec![];
         let mut end = start_range.end;
 
@@ -334,8 +384,8 @@ impl Parser<'_> {
                 end,
             })?;
 
-            if token.kind == TokenKind::RSquare {
-                return Ok((ast::NodeValue::ArrayLiteral(res), token.range.end));
+            if token.kind == end_token {
+                return Ok((res, token.range.end));
             }
 
             if !can_parse {
@@ -348,8 +398,8 @@ impl Parser<'_> {
                 });
             }
 
-            let item = self.parse_node(token, Precedence::Lowest)?;
-            end = item.range.end;
+            let (item, item_end) = parse_item(self, token)?;
+            end = item_end;
             res.push(item);
 
             peek_token!(
