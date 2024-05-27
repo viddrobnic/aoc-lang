@@ -320,3 +320,25 @@ fn infix_opeartor() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn precedence() -> Result<()> {
+    let tests = [
+        ("1 + 2 + 3", "((1 + 2) + 3)"),
+        ("1 + 2 * 3", "(1 + (2 * 3))"),
+        ("1 + 2 == 3", "((1 + 2) == 3)"),
+        ("1 != 2 & false", "((1 != 2) & false)"),
+        ("a & b | c", "((a & b) | c)"),
+        ("a | b & c", "(a | (b & c))"),
+        ("2 <= 3 == 3 > 2", "((2 <= 3) == (3 > 2))"),
+        ("-1 + 1 * 2 % 3 / 4", "((-1) + (((1 * 2) % 3) / 4))"),
+        ("1 + -2", "(1 + (-2))"),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+        assert_eq!(program.to_string(), expected);
+    }
+
+    Ok(())
+}
