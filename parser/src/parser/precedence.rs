@@ -3,6 +3,7 @@ use crate::token::{Token, TokenKind};
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Precedence {
     Lowest,
+    Assign,
     Or,
     And,
     Equals,
@@ -16,6 +17,7 @@ pub enum Precedence {
 impl From<&TokenKind> for Precedence {
     fn from(value: &TokenKind) -> Self {
         match value {
+            TokenKind::Assign => Self::Assign,
             TokenKind::Or => Self::Or,
             TokenKind::And => Self::And,
             TokenKind::Eq | TokenKind::Neq => Self::Equals,

@@ -2,6 +2,7 @@ use crate::{
     ast::{self, InfixOperatorKind, NodeKind, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
+    parser::validate::validate_assignee,
     position::{Position, Range},
     token::{Token, TokenKind},
 };
@@ -9,6 +10,7 @@ use crate::{
 use self::precedence::Precedence;
 
 mod precedence;
+mod validate;
 
 #[cfg(test)]
 mod test;
@@ -216,7 +218,7 @@ impl Parser<'_> {
             | TokenKind::Or => self.parse_infix_operation(start_token, left)?,
             TokenKind::LSquare | TokenKind::Dot => todo!("parse index"),
             TokenKind::LBracket => todo!("parse function call"),
-            TokenKind::Assign => todo!("parse assign"),
+            TokenKind::Assign => self.parse_assign(left, start_token.range)?,
 
             _ => return Ok(left),
         };
@@ -338,18 +340,7 @@ impl Parser<'_> {
                 Ok((item, end))
             })?;
 
-        for it in &items {
-            if it.kind() != NodeKind::Expression {
-                return Err(Error {
-                    kind: ErrorKind::InvalidNodeKind {
-                        expected: NodeKind::Statement,
-                        got: it.kind(),
-                    },
-                    range: it.range,
-                });
-            }
-        }
-
+        validate::validate_array_literal(&items)?;
         Ok((ast::NodeValue::ArrayLiteral(items), end))
     }
 
@@ -380,29 +371,38 @@ impl Parser<'_> {
                 Ok((ast::HashLiteralPair { key, value }, end))
             })?;
 
-        for it in &items {
-            if it.key.kind() != NodeKind::Expression {
-                return Err(Error {
-                    kind: ErrorKind::InvalidNodeKind {
-                        expected: NodeKind::Expression,
-                        got: it.key.kind(),
-                    },
-                    range: it.key.range,
-                });
-            }
+        validate::validate_hash_literal(&items)?;
+        Ok((ast::NodeValue::HashLiteral(items), end))
+    }
 
-            if it.value.kind() != NodeKind::Expression {
-                return Err(Error {
-                    kind: ErrorKind::InvalidNodeKind {
-                        expected: NodeKind::Expression,
-                        got: it.value.kind(),
-                    },
-                    range: it.value.range,
-                });
-            }
+    fn parse_assign(
+        &mut self,
+        left: ast::Node,
+        start_range: Range,
+    ) -> Result<(ast::NodeValue, Position)> {
+        let token = self.next_token(start_range)?;
+
+        let right = self.parse_node(token, Precedence::Lowest)?;
+        if right.kind() != NodeKind::Expression {
+            return Err(Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: NodeKind::Expression,
+                    got: right.kind(),
+                },
+                range: right.range,
+            });
         }
 
-        Ok((ast::NodeValue::HashLiteral(items), end))
+        validate_assignee(&left)?;
+
+        let end = right.range.end;
+        Ok((
+            ast::NodeValue::Assign {
+                ident: Box::new(left),
+                value: Box::new(right),
+            },
+            end,
+        ))
     }
 
     // Helper function used for parsing arrays, hash maps, function arguments, function calls.

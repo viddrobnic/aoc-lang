@@ -593,6 +593,109 @@ fn parse_use() -> Result<()> {
 }
 
 #[test]
+fn assign() -> Result<()> {
+    let tests = [
+        (
+            "a = 1",
+            ast::Node {
+                value: ast::NodeValue::Assign {
+                    ident: Box::new(ast::Node {
+                        value: ast::NodeValue::Identifier("a".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                    }),
+                    value: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 5),
+                },
+            },
+        ),
+        (
+            "[a] = true | 1 == 2",
+            ast::Node {
+                value: ast::NodeValue::Assign {
+                    ident: Box::new(ast::Node {
+                        value: ast::NodeValue::ArrayLiteral(vec![ast::Node {
+                            value: ast::NodeValue::Identifier("a".to_string()),
+                            range: Range {
+                                start: Position::new(0, 1),
+                                end: Position::new(0, 2),
+                            },
+                        }]),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                    value: Box::new(ast::Node {
+                        value: ast::NodeValue::InfixOperator {
+                            operator: ast::InfixOperatorKind::Or,
+                            left: Box::new(ast::Node {
+                                value: ast::NodeValue::BoolLiteral(true),
+                                range: Range {
+                                    start: Position::new(0, 6),
+                                    end: Position::new(0, 10),
+                                },
+                            }),
+                            right: Box::new(ast::Node {
+                                value: ast::NodeValue::InfixOperator {
+                                    operator: ast::InfixOperatorKind::Eq,
+                                    left: Box::new(ast::Node {
+                                        value: ast::NodeValue::IntegerLiteral(1),
+                                        range: Range {
+                                            start: Position::new(0, 13),
+                                            end: Position::new(0, 14),
+                                        },
+                                    }),
+                                    right: Box::new(ast::Node {
+                                        value: ast::NodeValue::IntegerLiteral(2),
+                                        range: Range {
+                                            start: Position::new(0, 18),
+                                            end: Position::new(0, 19),
+                                        },
+                                    }),
+                                },
+                                range: Range {
+                                    start: Position::new(0, 13),
+                                    end: Position::new(0, 19),
+                                },
+                            }),
+                        },
+                        range: Range {
+                            start: Position::new(0, 6),
+                            end: Position::new(0, 19),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 19),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),
