@@ -140,6 +140,15 @@ impl Node {
     }
 }
 
+impl Display for NodeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NodeKind::Expression => write!(f, "EXPRESSION"),
+            NodeKind::Statement => write!(f, "STATEMENT"),
+        }
+    }
+}
+
 impl NodeValue {
     pub fn kind(&self) -> NodeKind {
         match self {

@@ -302,6 +302,15 @@ impl Parser<'_> {
     fn parse_grouped(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
         let token = self.next_token(start_range)?;
         let node = self.parse_node(token, Precedence::Lowest)?;
+        if node.kind() != NodeKind::Expression {
+            return Err(Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: NodeKind::Expression,
+                    got: node.kind(),
+                },
+                range: node.range,
+            });
+        }
 
         let closing_token = self.next_token(Range {
             start: start_range.start,
@@ -328,6 +337,18 @@ impl Parser<'_> {
                 let end = item.range.end;
                 Ok((item, end))
             })?;
+
+        for it in &items {
+            if it.kind() != NodeKind::Expression {
+                return Err(Error {
+                    kind: ErrorKind::InvalidNodeKind {
+                        expected: NodeKind::Statement,
+                        got: it.kind(),
+                    },
+                    range: it.range,
+                });
+            }
+        }
 
         Ok((ast::NodeValue::ArrayLiteral(items), end))
     }
@@ -358,6 +379,28 @@ impl Parser<'_> {
 
                 Ok((ast::HashLiteralPair { key, value }, end))
             })?;
+
+        for it in &items {
+            if it.key.kind() != NodeKind::Expression {
+                return Err(Error {
+                    kind: ErrorKind::InvalidNodeKind {
+                        expected: NodeKind::Expression,
+                        got: it.key.kind(),
+                    },
+                    range: it.key.range,
+                });
+            }
+
+            if it.value.kind() != NodeKind::Expression {
+                return Err(Error {
+                    kind: ErrorKind::InvalidNodeKind {
+                        expected: NodeKind::Expression,
+                        got: it.value.kind(),
+                    },
+                    range: it.value.range,
+                });
+            }
+        }
 
         Ok((ast::NodeValue::HashLiteral(items), end))
     }

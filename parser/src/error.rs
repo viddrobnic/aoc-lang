@@ -40,10 +40,10 @@ impl Display for ErrorKind {
             ErrorKind::InvalidExpression(token) => write!(f, "not a valid expression: {:?}", token),
             ErrorKind::ExpectedEol => write!(f, "expression must end with new line"),
             ErrorKind::InvalidNodeKind { expected, got } => {
-                write!(f, "invalid node kind, expected: {expected:?}, got: {got:?}")
+                write!(f, "invalid node kind, expected: {expected}, got: {got}")
             }
             ErrorKind::InvalidTokenKind { expected, got } => {
-                write!(f, "invalid token, expected: {expected:?}, got: {got:?}")
+                write!(f, "invalid token, expected: {expected}, got: {got}")
             }
         }
     }
