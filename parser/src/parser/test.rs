@@ -748,6 +748,46 @@ fn index() -> Result<()> {
                 },
             },
         ),
+        (
+            "a.b.c",
+            ast::Node {
+                value: ast::NodeValue::Index {
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::Index {
+                            left: Box::new(ast::Node {
+                                value: ast::NodeValue::Identifier("a".to_string()),
+                                range: Range {
+                                    start: Position::new(0, 0),
+                                    end: Position::new(0, 1),
+                                },
+                            }),
+                            index: Box::new(ast::Node {
+                                value: ast::NodeValue::StringLiteral("b".to_string()),
+                                range: Range {
+                                    start: Position::new(0, 2),
+                                    end: Position::new(0, 3),
+                                },
+                            }),
+                        },
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                    index: Box::new(ast::Node {
+                        value: ast::NodeValue::StringLiteral("c".to_string()),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 5),
+                },
+            },
+        ),
     ];
 
     for (input, expected) in tests {
