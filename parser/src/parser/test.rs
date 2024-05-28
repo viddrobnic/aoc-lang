@@ -910,6 +910,19 @@ fn precedence() -> Result<()> {
             "{1 + 2: 4 * 5, \"foo\":bar}",
             "{(1 + 2): (4 * 5), \"foo\": bar}",
         ),
+        ("1 == 2 //comment", "(1 == 2)\n// comment"),
+        (
+            "if (true) {1 + 2 // comment\n}",
+            "if (true) {(1 + 2)\n// comment} else {}",
+        ),
+        (
+            "if (true) {1 + 2\n\n\n} else if (true){}",
+            "if (true) {(1 + 2)} else {if (true) {} else {}}",
+        ),
+        (
+            "if (true) {\n if (1 == 2) {\nfalse}\ntrue}",
+            "if (true) {if ((1 == 2)) {false} else {}\ntrue} else {}",
+        ),
     ];
 
     for (input, expected) in tests {

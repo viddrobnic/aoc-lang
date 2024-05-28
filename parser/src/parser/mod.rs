@@ -2,12 +2,11 @@ use crate::{
     ast::{self, InfixOperatorKind, NodeKind, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
-    parser::validate::validate_assignee,
+    parser::precedence::Precedence,
+    parser::validate::*,
     position::{Position, Range},
     token::{Token, TokenKind},
 };
-
-use self::{precedence::Precedence, validate::validate_node_kind};
 
 mod precedence;
 mod validate;
@@ -237,15 +236,7 @@ impl Parser<'_> {
         let right_token = self.next_token(start_token.range)?;
         let right = self.parse_node(right_token, Precedence::Prefix)?;
 
-        if right.kind() != NodeKind::Expression {
-            return Err(Error {
-                kind: ErrorKind::InvalidNodeKind {
-                    expected: NodeKind::Expression,
-                    got: right.kind(),
-                },
-                range: right.range,
-            });
-        }
+        validate_node_kind(&right, NodeKind::Expression)?;
 
         let end = right.range.end;
 
@@ -273,25 +264,8 @@ impl Parser<'_> {
 
         let right = self.parse_node(right_token, precedence)?;
 
-        if left.kind() != NodeKind::Expression {
-            return Err(Error {
-                kind: ErrorKind::InvalidNodeKind {
-                    expected: NodeKind::Expression,
-                    got: left.kind(),
-                },
-                range: left.range,
-            });
-        }
-
-        if right.kind() != NodeKind::Expression {
-            return Err(Error {
-                kind: ErrorKind::InvalidNodeKind {
-                    expected: NodeKind::Expression,
-                    got: right.kind(),
-                },
-                range: right.range,
-            });
-        }
+        validate_node_kind(&left, NodeKind::Expression)?;
+        validate_node_kind(&right, NodeKind::Expression)?;
 
         let end = right.range.end;
 
@@ -308,30 +282,13 @@ impl Parser<'_> {
     fn parse_grouped(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
         let token = self.next_token(start_range)?;
         let node = self.parse_node(token, Precedence::Lowest)?;
-        if node.kind() != NodeKind::Expression {
-            return Err(Error {
-                kind: ErrorKind::InvalidNodeKind {
-                    expected: NodeKind::Expression,
-                    got: node.kind(),
-                },
-                range: node.range,
-            });
-        }
+        validate_node_kind(&node, NodeKind::Expression)?;
 
         let closing_token = self.next_token(Range {
             start: start_range.start,
             end: node.range.end,
         })?;
-
-        if closing_token.kind != TokenKind::RBracket {
-            return Err(Error {
-                kind: ErrorKind::InvalidTokenKind {
-                    expected: TokenKind::RBracket,
-                    got: closing_token.kind,
-                },
-                range: closing_token.range,
-            });
-        }
+        validate_token_kind(&closing_token, TokenKind::RBracket)?;
 
         Ok((node.value, closing_token.range.end))
     }
@@ -344,7 +301,7 @@ impl Parser<'_> {
                 Ok((item, end))
             })?;
 
-        validate::validate_array_literal(&items)?;
+        validate_array_literal(&items)?;
         Ok((ast::NodeValue::ArrayLiteral(items), end))
     }
 
@@ -354,15 +311,7 @@ impl Parser<'_> {
                 let key = parser.parse_node(token, Precedence::Lowest)?;
 
                 let token = parser.next_token(key.range)?;
-                if token.kind != TokenKind::Colon {
-                    return Err(Error {
-                        kind: ErrorKind::InvalidTokenKind {
-                            expected: TokenKind::Colon,
-                            got: token.kind,
-                        },
-                        range: token.range,
-                    });
-                }
+                validate_token_kind(&token, TokenKind::Colon)?;
 
                 let val_token = parser.next_token(Range {
                     start: key.range.start,
@@ -375,7 +324,7 @@ impl Parser<'_> {
                 Ok((ast::HashLiteralPair { key, value }, end))
             })?;
 
-        validate::validate_hash_literal(&items)?;
+        validate_hash_literal(&items)?;
         Ok((ast::NodeValue::HashLiteral(items), end))
     }
 
@@ -387,16 +336,7 @@ impl Parser<'_> {
         let token = self.next_token(start_range)?;
 
         let right = self.parse_node(token, Precedence::Lowest)?;
-        if right.kind() != NodeKind::Expression {
-            return Err(Error {
-                kind: ErrorKind::InvalidNodeKind {
-                    expected: NodeKind::Expression,
-                    got: right.kind(),
-                },
-                range: right.range,
-            });
-        }
-
+        validate_node_kind(&right, NodeKind::Expression)?;
         validate_assignee(&left)?;
 
         let end = right.range.end;
@@ -422,16 +362,7 @@ impl Parser<'_> {
             start: start_range.start,
             end: index.range.end,
         })?;
-        if end_token.kind != TokenKind::RSquare {
-            return Err(Error {
-                kind: ErrorKind::InvalidTokenKind {
-                    expected: TokenKind::RSquare,
-                    got: end_token.kind,
-                },
-                range: end_token.range,
-            });
-        }
-
+        validate_token_kind(&end_token, TokenKind::RSquare)?;
         validate_node_kind(&left, NodeKind::Expression)?;
         validate_node_kind(&index, NodeKind::Expression)?;
 
@@ -479,15 +410,7 @@ impl Parser<'_> {
     fn parse_if(&mut self, start_range: Range) -> Result<(ast::IfNode, Position)> {
         // Read `(`
         let token = self.next_token(start_range)?;
-        if token.kind != TokenKind::LBracket {
-            return Err(Error {
-                kind: ErrorKind::InvalidTokenKind {
-                    expected: TokenKind::LBracket,
-                    got: token.kind,
-                },
-                range: token.range,
-            });
-        }
+        validate_token_kind(&token, TokenKind::LBracket)?;
 
         // Parse condition
         let cond_token = self.next_token(Range {
@@ -502,15 +425,7 @@ impl Parser<'_> {
             start: start_range.start,
             end: condition.range.end,
         })?;
-        if token.kind != TokenKind::RBracket {
-            return Err(Error {
-                kind: ErrorKind::InvalidTokenKind {
-                    expected: TokenKind::RBracket,
-                    got: token.kind,
-                },
-                range: token.range,
-            });
-        }
+        validate_token_kind(&token, TokenKind::RBracket)?;
 
         // Parse consequence
         let cons_token = self.next_token(Range {
@@ -532,15 +447,7 @@ impl Parser<'_> {
             return Ok((if_node, cons_end));
         }
 
-        if else_token.kind != TokenKind::Else {
-            return Err(Error {
-                kind: ErrorKind::InvalidTokenKind {
-                    expected: TokenKind::Else,
-                    got: else_token.kind.clone(),
-                },
-                range: else_token.range,
-            });
-        }
+        validate_token_kind(else_token, TokenKind::Else)?;
 
         // Read else token and discard it.
         let else_token_range = else_token.range;
@@ -574,7 +481,7 @@ impl Parser<'_> {
     // This function checks if the start token is `{`, so the caller doesn't have to do this.
     fn parse_block(&mut self, start_token: Token) -> Result<(Vec<ast::Node>, Position)> {
         // Start token should be `{`
-        validate::validate_token_kind(&start_token, TokenKind::LCurly)?;
+        validate_token_kind(&start_token, TokenKind::LCurly)?;
 
         let mut nodes = Vec::new();
         let mut end = start_token.range.end;
@@ -607,18 +514,25 @@ impl Parser<'_> {
                 end,
             })?;
 
-            if token.kind == TokenKind::RCurly {
-                return Ok((nodes, token.range.end));
-            }
-
-            if !matches!(token.kind, TokenKind::Eol | TokenKind::Comment(_)) {
-                return Err(Error {
-                    kind: ErrorKind::InvalidTokenKind {
-                        expected: TokenKind::RCurly,
-                        got: token.kind,
-                    },
-                    range: token.range,
-                });
+            match token.kind {
+                TokenKind::RCurly => return Ok((nodes, token.range.end)),
+                TokenKind::Comment(comment) => {
+                    end = token.range.end;
+                    nodes.push(ast::Node {
+                        value: ast::NodeValue::Comment(comment),
+                        range: token.range,
+                    })
+                }
+                TokenKind::Eol => (),
+                _ => {
+                    return Err(Error {
+                        kind: ErrorKind::InvalidTokenKind {
+                            expected: TokenKind::RCurly,
+                            got: token.kind,
+                        },
+                        range: token.range,
+                    })
+                }
             }
         }
     }
