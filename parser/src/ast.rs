@@ -39,11 +39,7 @@ pub enum NodeValue {
         left: Box<Node>,
         index: Box<Node>,
     },
-    If {
-        condition: Box<Node>,
-        consequence: Vec<Node>,
-        alternative: Vec<Node>,
-    },
+    If(IfNode),
     While {
         condition: Box<Node>,
         body: Vec<Node>,
@@ -74,6 +70,13 @@ pub enum NodeValue {
 pub struct HashLiteralPair {
     pub key: Node,
     pub value: Node,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct IfNode {
+    pub condition: Box<Node>,
+    pub consequence: Vec<Node>,
+    pub alternative: Vec<Node>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -217,24 +220,26 @@ impl Display for NodeValue {
             } => write!(f, "({left} {operator} {right})"),
             NodeValue::Assign { ident, value } => write!(f, "({ident} = {value})"),
             NodeValue::Index { left, index } => write!(f, "({left}[{index}])"),
-            NodeValue::If {
-                condition,
-                consequence,
-                alternative,
-            } => {
-                let cons = consequence
+            NodeValue::If(if_node) => {
+                let cons = if_node
+                    .consequence
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
                     .join("\n");
 
-                let alt = alternative
+                let alt = if_node
+                    .alternative
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
                     .join("\n");
 
-                write!(f, "if ({condition}) {{{cons}}} else {{{alt}}}")
+                write!(
+                    f,
+                    "if ({}) {{{}}} else {{{}}}",
+                    if_node.condition, cons, alt
+                )
             }
             NodeValue::While { condition, body } => {
                 let body = body

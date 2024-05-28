@@ -1,6 +1,7 @@
 use crate::{
     ast::{HashLiteralPair, Node, NodeKind, NodeValue},
     error::{Error, ErrorKind, Result},
+    token::{Token, TokenKind},
 };
 
 pub fn validate_hash_literal(items: &[HashLiteralPair]) -> Result<()> {
@@ -73,6 +74,20 @@ pub fn validate_node_kind(node: &Node, expected: NodeKind) -> Result<()> {
                 got: node.kind(),
             },
             range: node.range,
+        });
+    }
+
+    Ok(())
+}
+
+pub fn validate_token_kind(token: &Token, expected: TokenKind) -> Result<()> {
+    if token.kind != expected {
+        return Err(Error {
+            kind: ErrorKind::InvalidTokenKind {
+                expected,
+                got: token.kind.clone(),
+            },
+            range: token.range,
         });
     }
 

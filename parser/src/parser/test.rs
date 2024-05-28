@@ -801,6 +801,97 @@ fn index() -> Result<()> {
 }
 
 #[test]
+fn if_node() -> Result<()> {
+    let tests = [
+        (
+            "if (true) {}",
+            ast::Node {
+                value: ast::NodeValue::If(ast::IfNode {
+                    condition: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(true),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                    }),
+                    consequence: vec![],
+                    alternative: vec![],
+                }),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 12),
+                },
+            },
+        ),
+        (
+            "if (true) {\n} else {\n}",
+            ast::Node {
+                value: ast::NodeValue::If(ast::IfNode {
+                    condition: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(true),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                    }),
+                    consequence: vec![],
+                    alternative: vec![],
+                }),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(2, 1),
+                },
+            },
+        ),
+        (
+            "if (true) {\n} else if (false) {\n}",
+            ast::Node {
+                value: ast::NodeValue::If(ast::IfNode {
+                    condition: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(true),
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                    }),
+                    consequence: vec![],
+                    alternative: vec![ast::Node {
+                        value: ast::NodeValue::If(ast::IfNode {
+                            condition: Box::new(ast::Node {
+                                value: ast::NodeValue::BoolLiteral(false),
+                                range: Range {
+                                    start: Position::new(1, 11),
+                                    end: Position::new(1, 16),
+                                },
+                            }),
+                            consequence: vec![],
+                            alternative: vec![],
+                        }),
+                        range: Range {
+                            start: Position::new(1, 7),
+                            end: Position::new(2, 1),
+                        },
+                    }],
+                }),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(2, 1),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),

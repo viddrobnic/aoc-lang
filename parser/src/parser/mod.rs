@@ -159,7 +159,10 @@ impl Parser<'_> {
             TokenKind::LBracket => self.parse_grouped(range)?,
             TokenKind::LSquare => self.parse_array_literal(range)?,
             TokenKind::LCurly => self.parse_hash_map_literal(range)?,
-            TokenKind::If => todo!("parse if statement"),
+            TokenKind::If => {
+                let (if_node, end) = self.parse_if(range)?;
+                (ast::NodeValue::If(if_node), end)
+            }
             TokenKind::While => todo!("parse while loop"),
             TokenKind::For => todo!("parse for loop"),
             TokenKind::Break => (ast::NodeValue::Break, range.end),
@@ -471,6 +474,153 @@ impl Parser<'_> {
             },
             index.range.end,
         ))
+    }
+
+    fn parse_if(&mut self, start_range: Range) -> Result<(ast::IfNode, Position)> {
+        // Read `(`
+        let token = self.next_token(start_range)?;
+        if token.kind != TokenKind::LBracket {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::LBracket,
+                    got: token.kind,
+                },
+                range: token.range,
+            });
+        }
+
+        // Parse condition
+        let cond_token = self.next_token(Range {
+            start: start_range.start,
+            end: token.range.end,
+        })?;
+        let condition = self.parse_node(cond_token, Precedence::Lowest)?;
+        validate_node_kind(&condition, NodeKind::Expression)?;
+
+        // Read `)`
+        let token = self.next_token(Range {
+            start: start_range.start,
+            end: condition.range.end,
+        })?;
+        if token.kind != TokenKind::RBracket {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::RBracket,
+                    got: token.kind,
+                },
+                range: token.range,
+            });
+        }
+
+        // Parse consequence
+        let cons_token = self.next_token(Range {
+            start: start_range.start,
+            end: token.range.end,
+        })?;
+        let (consequence, cons_end) = self.parse_block(cons_token)?;
+
+        // Construct the if node
+        let mut if_node = ast::IfNode {
+            condition: Box::new(condition),
+            consequence,
+            alternative: vec![],
+        };
+
+        // After consequence we can have eof, eol or else.
+        peek_token!(self, else_token, return Ok((if_node, cons_end)));
+        if else_token.kind == TokenKind::Eol {
+            return Ok((if_node, cons_end));
+        }
+
+        if else_token.kind != TokenKind::Else {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::Else,
+                    got: else_token.kind.clone(),
+                },
+                range: else_token.range,
+            });
+        }
+
+        // Read else token and discard it.
+        let else_token_range = else_token.range;
+        self.lexer.next();
+
+        // Handle else and else if
+        let token = self.next_token(else_token_range)?;
+        if token.kind == TokenKind::If {
+            let (alternative, alternative_end) = self.parse_if(token.range)?;
+
+            if_node.alternative = vec![ast::Node {
+                value: ast::NodeValue::If(alternative),
+                range: Range {
+                    start: token.range.start,
+                    end: alternative_end,
+                },
+            }];
+            Ok((if_node, alternative_end))
+        } else {
+            let (alternative, alternative_end) = self.parse_block(token)?;
+
+            if_node.alternative = alternative;
+            Ok((if_node, alternative_end))
+        }
+    }
+
+    // Helper function that reads block { ... }.
+    // It returns vector of nodes and end position, which is the end
+    // position of `}`
+    //
+    // This function checks if the start token is `{`, so the caller doesn't have to do this.
+    fn parse_block(&mut self, start_token: Token) -> Result<(Vec<ast::Node>, Position)> {
+        // Start token should be `{`
+        validate::validate_token_kind(&start_token, TokenKind::LCurly)?;
+
+        let mut nodes = Vec::new();
+        let mut end = start_token.range.end;
+        loop {
+            // Skip \n's
+            self.skip_eol()?;
+
+            // Check if next token is `}`. In this case we are done with the block
+            let token = self.next_token(Range {
+                start: start_token.range.start,
+                end,
+            })?;
+
+            if token.kind == TokenKind::RCurly {
+                return Ok((nodes, token.range.end));
+            }
+
+            // Parse next node
+            let node = self.parse_node(token, Precedence::Lowest)?;
+            end = node.range.end;
+            nodes.push(node);
+
+            // Token after ndoe should be one of:
+            // - `}` => We are done with the block
+            // - `\n` => We repeat the loop
+            // - `// ...` => We repeat the loop
+            // Otherwise, we return an error
+            let token = self.next_token(Range {
+                start: start_token.range.start,
+                end,
+            })?;
+
+            if token.kind == TokenKind::RCurly {
+                return Ok((nodes, token.range.end));
+            }
+
+            if !matches!(token.kind, TokenKind::Eol | TokenKind::Comment(_)) {
+                return Err(Error {
+                    kind: ErrorKind::InvalidTokenKind {
+                        expected: TokenKind::RCurly,
+                        got: token.kind,
+                    },
+                    range: token.range,
+                });
+            }
+        }
     }
 
     // Helper function used for parsing arrays, hash maps, function arguments, function calls.
