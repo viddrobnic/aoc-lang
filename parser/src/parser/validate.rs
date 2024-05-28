@@ -64,3 +64,17 @@ pub fn validate_assignee(assignee: &Node) -> Result<()> {
 
     Ok(())
 }
+
+pub fn validate_node_kind(node: &Node, expected: NodeKind) -> Result<()> {
+    if node.kind() != expected {
+        return Err(Error {
+            kind: ErrorKind::InvalidNodeKind {
+                expected,
+                got: node.kind(),
+            },
+            range: node.range,
+        });
+    }
+
+    Ok(())
+}

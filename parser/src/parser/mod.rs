@@ -7,7 +7,7 @@ use crate::{
     token::{Token, TokenKind},
 };
 
-use self::precedence::Precedence;
+use self::{precedence::Precedence, validate::validate_node_kind};
 
 mod precedence;
 mod validate;
@@ -216,7 +216,8 @@ impl Parser<'_> {
             | TokenKind::Modulo
             | TokenKind::And
             | TokenKind::Or => self.parse_infix_operation(start_token, left)?,
-            TokenKind::LSquare | TokenKind::Dot => todo!("parse index"),
+            TokenKind::LSquare => self.parse_index(left, start_token.range)?,
+            TokenKind::Dot => self.parse_dot_index(left, start_token.range)?,
             TokenKind::LBracket => todo!("parse function call"),
             TokenKind::Assign => self.parse_assign(left, start_token.range)?,
 
@@ -402,6 +403,73 @@ impl Parser<'_> {
                 value: Box::new(right),
             },
             end,
+        ))
+    }
+
+    // Parse index `left[index]`
+    fn parse_index(
+        &mut self,
+        left: ast::Node,
+        start_range: Range,
+    ) -> Result<(ast::NodeValue, Position)> {
+        let token = self.next_token(start_range)?;
+        let index = self.parse_node(token, Precedence::Lowest)?;
+
+        let end_token = self.next_token(Range {
+            start: start_range.start,
+            end: index.range.end,
+        })?;
+        if end_token.kind != TokenKind::RSquare {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::RSquare,
+                    got: end_token.kind,
+                },
+                range: end_token.range,
+            });
+        }
+
+        validate_node_kind(&left, NodeKind::Expression)?;
+        validate_node_kind(&index, NodeKind::Expression)?;
+
+        Ok((
+            ast::NodeValue::Index {
+                left: Box::new(left),
+                index: Box::new(index),
+            },
+            end_token.range.end,
+        ))
+    }
+
+    // parse index `left.index` where `index` is ident
+    fn parse_dot_index(
+        &mut self,
+        left: ast::Node,
+        start_range: Range,
+    ) -> Result<(ast::NodeValue, Position)> {
+        let index = self.next_token(start_range)?;
+
+        let TokenKind::Ident(index_ident) = index.kind else {
+            return Err(Error {
+                kind: ErrorKind::InvalidTokenKind {
+                    expected: TokenKind::Ident("".to_string()),
+                    got: index.kind,
+                },
+                range: index.range,
+            });
+        };
+
+        validate_node_kind(&left, NodeKind::Expression)?;
+
+        Ok((
+            ast::NodeValue::Index {
+                left: Box::new(left),
+                index: Box::new(ast::Node {
+                    value: ast::NodeValue::StringLiteral(index_ident),
+                    range: index.range,
+                }),
+            },
+            index.range.end,
         ))
     }
 

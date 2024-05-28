@@ -696,6 +696,71 @@ fn assign() -> Result<()> {
 }
 
 #[test]
+fn index() -> Result<()> {
+    let tests = [
+        (
+            "a[0]",
+            ast::Node {
+                value: ast::NodeValue::Index {
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::Identifier("a".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                    }),
+                    index: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(0),
+                        range: Range {
+                            start: Position::new(0, 2),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 4),
+                },
+            },
+        ),
+        (
+            "a.b",
+            ast::Node {
+                value: ast::NodeValue::Index {
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::Identifier("a".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                    }),
+                    index: Box::new(ast::Node {
+                        value: ast::NodeValue::StringLiteral("b".to_string()),
+                        range: Range {
+                            start: Position::new(0, 2),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 3),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),

@@ -24,7 +24,7 @@ impl From<&TokenKind> for Precedence {
             TokenKind::Le | TokenKind::Leq | TokenKind::Ge | TokenKind::Geq => Self::LessGreater,
             TokenKind::Plus | TokenKind::Minus => Self::Sum,
             TokenKind::Mult | TokenKind::Div | TokenKind::Modulo => Self::Product,
-            TokenKind::LBracket | TokenKind::LSquare => Self::CallIndex,
+            TokenKind::LBracket | TokenKind::Dot | TokenKind::LSquare => Self::CallIndex,
             _ => Self::Lowest,
         }
     }
