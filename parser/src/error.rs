@@ -15,6 +15,7 @@ pub enum ErrorKind {
     InvalidNodeKind { expected: NodeKind, got: NodeKind },
     InvalidTokenKind { expected: TokenKind, got: TokenKind },
     InvalidAssignee,
+    InvalidRange,
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -47,6 +48,7 @@ impl Display for ErrorKind {
                 write!(f, "invalid token, expected: {expected}, got: {got}")
             }
             ErrorKind::InvalidAssignee => write!(f, "assignee must be identifier, index or array"),
+            ErrorKind::InvalidRange => write!(f, "invalid range defined"),
         }
     }
 }

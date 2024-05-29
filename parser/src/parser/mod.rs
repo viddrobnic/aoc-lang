@@ -197,7 +197,7 @@ impl Parser<'_> {
                 (ast::NodeValue::If(if_node), end)
             }
             TokenKind::While => self.parse_while()?,
-            TokenKind::For => todo!("parse for loop"),
+            TokenKind::For => self.parse_for()?,
             TokenKind::Break => (ast::NodeValue::Break, range.end),
             TokenKind::Continue => (ast::NodeValue::Continue, range.end),
             TokenKind::Return => todo!("parse return statement"),
@@ -490,6 +490,47 @@ impl Parser<'_> {
             ast::NodeValue::While {
                 condition: Box::new(condition),
                 body: block,
+            },
+            end,
+        ))
+    }
+
+    fn parse_for(&mut self) -> Result<(ast::NodeValue, Position)> {
+        // Read `(`
+        let token = self.next_token()?;
+        validate_token_kind(&token, TokenKind::LBracket)?;
+
+        // Read inside params.
+        let (params, end) = self.parse_multiple(
+            TokenKind::RBracket,
+            TokenKind::Semicolon,
+            |parser, token| parser.parse_node(token, Precedence::Lowest),
+        )?;
+
+        if params.len() != 3 {
+            return Err(Error {
+                kind: ErrorKind::InvalidRange,
+                range: Range {
+                    start: token.range.start,
+                    end,
+                },
+            });
+        }
+
+        let mut params = params.into_iter();
+        let initial = params.next().unwrap();
+        let condition = params.next().unwrap();
+        let after = params.next().unwrap();
+
+        let body_token = self.next_token()?;
+        let (body, end) = self.parse_block(body_token)?;
+
+        Ok((
+            ast::NodeValue::For {
+                initial: Box::new(initial),
+                condition: Box::new(condition),
+                after: Box::new(after),
+                body,
             },
             end,
         ))

@@ -928,6 +928,116 @@ fn while_loop() -> Result<()> {
 }
 
 #[test]
+fn for_loop() -> Result<()> {
+    let program = parse("for (i = 0; i < 10; i = i + 1) {\nfoo\n}")?;
+
+    assert_eq!(program.statements.len(), 1);
+    assert_eq!(
+        program.statements[0],
+        ast::Node {
+            value: ast::NodeValue::For {
+                initial: Box::new(ast::Node {
+                    value: ast::NodeValue::Assign {
+                        ident: Box::new(ast::Node {
+                            value: ast::NodeValue::Identifier("i".to_string()),
+                            range: Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 6)
+                            }
+                        }),
+                        value: Box::new(ast::Node {
+                            value: ast::NodeValue::IntegerLiteral(0),
+                            range: Range {
+                                start: Position::new(0, 9),
+                                end: Position::new(0, 10),
+                            }
+                        })
+                    },
+                    range: Range {
+                        start: Position::new(0, 5),
+                        end: Position::new(0, 10),
+                    }
+                }),
+                condition: Box::new(ast::Node {
+                    value: ast::NodeValue::InfixOperator {
+                        operator: ast::InfixOperatorKind::Le,
+                        left: Box::new(ast::Node {
+                            value: ast::NodeValue::Identifier("i".to_string()),
+                            range: Range {
+                                start: Position::new(0, 12),
+                                end: Position::new(0, 13),
+                            }
+                        }),
+                        right: Box::new(ast::Node {
+                            value: ast::NodeValue::IntegerLiteral(10),
+                            range: Range {
+                                start: Position::new(0, 16),
+                                end: Position::new(0, 18),
+                            }
+                        })
+                    },
+                    range: Range {
+                        start: Position::new(0, 12),
+                        end: Position::new(0, 18),
+                    }
+                }),
+                after: Box::new(ast::Node {
+                    value: ast::NodeValue::Assign {
+                        ident: Box::new(ast::Node {
+                            value: ast::NodeValue::Identifier("i".to_string()),
+                            range: Range {
+                                start: Position::new(0, 20),
+                                end: Position::new(0, 21),
+                            }
+                        }),
+                        value: Box::new(ast::Node {
+                            value: ast::NodeValue::InfixOperator {
+                                operator: ast::InfixOperatorKind::Add,
+                                left: Box::new(ast::Node {
+                                    value: ast::NodeValue::Identifier("i".to_string()),
+                                    range: Range {
+                                        start: Position::new(0, 24),
+                                        end: Position::new(0, 25),
+                                    }
+                                }),
+                                right: Box::new(ast::Node {
+                                    value: ast::NodeValue::IntegerLiteral(1),
+                                    range: Range {
+                                        start: Position::new(0, 28),
+                                        end: Position::new(0, 29),
+                                    }
+                                })
+                            },
+                            range: Range {
+                                start: Position::new(0, 24),
+                                end: Position::new(0, 29)
+                            }
+                        })
+                    },
+                    range: Range {
+                        start: Position::new(0, 20),
+                        end: Position::new(0, 29),
+                    }
+                }),
+                body: vec![ast::Node {
+                    value: ast::NodeValue::Identifier("foo".to_string()),
+                    range: Range {
+                        start: Position::new(1, 0),
+                        end: Position::new(1, 3)
+                    }
+                }]
+            },
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(2, 1)
+            }
+        }
+    );
+
+    Ok(())
+}
+
+#[test]
 fn errors() {
     let tests = [
         (
