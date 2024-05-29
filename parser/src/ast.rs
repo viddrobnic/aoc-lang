@@ -5,6 +5,7 @@ use crate::position::Range;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     pub statements: Vec<Node>,
+    pub comments: Vec<Comment>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -63,7 +64,12 @@ pub enum NodeValue {
     },
     Return(Box<Node>),
     Use(String),
-    Comment(String),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Comment {
+    pub comment: String,
+    pub range: Range,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -161,7 +167,6 @@ impl NodeValue {
             NodeValue::Break => NodeKind::Statement,
             NodeValue::Continue => NodeKind::Statement,
             NodeValue::Return(_) => NodeKind::Statement,
-            NodeValue::Comment(_) => NodeKind::Statement,
             _ => NodeKind::Expression,
         }
     }
@@ -293,7 +298,6 @@ impl Display for NodeValue {
             }
             NodeValue::Return(ret) => write!(f, "return {ret}"),
             NodeValue::Use(name) => write!(f, "use {name}"),
-            NodeValue::Comment(comment) => write!(f, "// {comment}"),
         }
     }
 }

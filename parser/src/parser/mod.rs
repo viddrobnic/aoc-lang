@@ -15,94 +15,137 @@ mod validate;
 mod test;
 
 pub fn parse(input: &str) -> Result<ast::Program> {
-    let mut parser = Parser::new(Lexer::new(input));
+    let parser = Parser::new(Lexer::new(input));
     parser.parse_program()
 }
 
 struct Parser<'a> {
     lexer: std::iter::Peekable<Lexer<'a>>,
+    comments: Vec<ast::Comment>,
+    end: Position,
 }
 
 impl<'a> Parser<'a> {
     fn new(lexer: Lexer<'a>) -> Self {
         Self {
             lexer: lexer.peekable(),
+            comments: vec![],
+            end: Position::default(),
         }
     }
 }
 
-// Ugly macro solution to repeating code. First idea was to introduce
-// a helper method `peek_token_or_err(&mut self) -> Result<Option<&Token>>`.
-// The problem was, that the token extracted from return of `self.lexer.peek()`
-// lives only for the duration of the method and can not be returned.
-macro_rules! peek_token {
-    // Params:
-    // - self: pass parse &mut self to macro
-    // - var: to which ident the extracted token reference is stored.
-    // - eof: statement that is executed in case of eof.
-    ($self:ident, $var:ident, $eof:stmt) => {
-        let Some(peek) = $self.lexer.peek() else {
-            // We reached eof.
-            $eof
-        };
-
-        // Handle lexer errors
-        let $var = match peek {
-            Err(_) => {
-                // We know that peek is Some(Err(_)), so it is safe to unwrap.
-                return Err($self.lexer.next().unwrap().unwrap_err());
-            }
-            Ok(tkn) => tkn,
-        };
-    };
-}
-
 impl Parser<'_> {
-    fn parse_program(&mut self) -> Result<ast::Program> {
+    fn parse_program(mut self) -> Result<ast::Program> {
         let mut statements = Vec::new();
 
         loop {
             self.skip_eol()?;
 
-            let Some(token) = self.lexer.next() else {
-                // If there is no more tokens, we reached EOF.
+            let Ok(token) = self.next_token() else {
+                // If we reach eof, we don't raise an error.
                 break;
             };
 
-            let stmt = self.parse_node(token?, Precedence::Lowest)?;
+            let stmt = self.parse_node(token, Precedence::Lowest)?;
             statements.push(stmt);
 
-            peek_token!(self, token, break);
-            if !matches!(token.kind, TokenKind::Eol | TokenKind::Comment(_)) {
-                return Err(Error {
-                    kind: ErrorKind::ExpectedEol,
-                    range: token.range,
-                });
+            let is_eol = self.peek_token_is(|t| t.kind == TokenKind::Eol)?;
+            match is_eol {
+                None => break,
+                Some(true) => (),
+                Some(false) => {
+                    let token = self.next_token()?;
+                    return Err(Error {
+                        kind: ErrorKind::ExpectedEol,
+                        range: token.range,
+                    });
+                }
             }
         }
 
-        Ok(ast::Program { statements })
+        Ok(ast::Program {
+            statements,
+            comments: self.comments,
+        })
+    }
+
+    // Returns next token.
+    //
+    // - If an error occurs while lexing the token, the error is returned.
+    // - If eof is reached, UnexpectedEof error is returned.
+    // - If token is comment, it is added to self.comments and the token
+    //   after that is emitted.
+    fn next_token(&mut self) -> Result<Token> {
+        match self.lexer.next() {
+            None => Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: Range {
+                    start: self.end,
+                    end: Position {
+                        line: self.end.line + 1,
+                        character: 0,
+                    },
+                },
+            }),
+            Some(Err(err)) => Err(err),
+            Some(Ok(token)) => {
+                self.end = token.range.end;
+
+                if let TokenKind::Comment(comment) = token.kind {
+                    self.comments.push(ast::Comment {
+                        comment,
+                        range: token.range,
+                    });
+                    self.next_token()
+                } else {
+                    Ok(token)
+                }
+            }
+        }
+    }
+
+    // Checks if peek token satisfies check.
+    //
+    // - If an error occurs while lexing next token, the error is returnd.
+    // - If eof is reached, Ok(None) is returned
+    // - If comment is reached, it is skipped
+    // - Otherwise Ok(SOme(check(token))) is returned
+    fn peek_token_is<F>(&mut self, check: F) -> Result<Option<bool>>
+    where
+        F: Fn(&Token) -> bool,
+    {
+        match self.lexer.peek() {
+            None => Ok(None),
+            Some(Err(_)) => Err(self.next_token().unwrap_err()),
+            Some(Ok(token)) => {
+                if matches!(token.kind, TokenKind::Comment(_)) {
+                    // Safe to unwrap, because we know the token is Some(Ok(_))
+                    let token = self.lexer.next().unwrap().unwrap();
+                    let TokenKind::Comment(comment) = token.kind else {
+                        unreachable!()
+                    };
+                    self.comments.push(ast::Comment {
+                        comment,
+                        range: token.range,
+                    });
+
+                    self.peek_token_is(check)
+                } else {
+                    Ok(Some(check(token)))
+                }
+            }
+        }
     }
 
     // Skips Token::Eol while they exist
     fn skip_eol(&mut self) -> Result<()> {
         loop {
-            peek_token!(self, token, break);
-            if token.kind == TokenKind::Eol {
-                self.lexer.next();
-            } else {
-                break;
-            }
+            match self.peek_token_is(|token| token.kind == TokenKind::Eol)? {
+                None | Some(false) => return Ok(()),
+                Some(true) => self.next_token()?,
+            };
         }
-
-        Ok(())
-    }
-
-    fn next_token(&mut self, eof_range: Range) -> Result<Token> {
-        self.lexer.next().ok_or(Error {
-            kind: ErrorKind::UnexpectedEof,
-            range: eof_range,
-        })?
     }
 
     // Parse node with recursive descent. Takes first token as argument,
@@ -113,25 +156,16 @@ impl Parser<'_> {
         let mut left = self.parse_prefix(start_token)?;
 
         loop {
-            peek_token!(self, token, break);
-
-            // Handle eol
-            if token.kind == TokenKind::Eol {
-                break;
+            let should_break = self.peek_token_is(|t| {
+                t.kind == TokenKind::Eol || precedence >= t.into() || !t.kind.is_infix()
+            })?;
+            match should_break {
+                None | Some(true) => break,
+                Some(false) => (),
             }
 
-            // Handle precedence
-            if precedence >= token.into() {
-                break;
-            }
-
-            if !token.kind.is_infix() {
-                break;
-            }
-
-            // We can safely unwrap, because we know it's Some(Ok(_)),
             // since peek_token! already handles those cases.
-            let token = self.lexer.next().unwrap().unwrap();
+            let token = self.next_token()?;
             left = self.parse_infix(token, left)?;
         }
 
@@ -155,11 +189,11 @@ impl Parser<'_> {
                 kind: tkn_kind,
                 range,
             })?,
-            TokenKind::LBracket => self.parse_grouped(range)?,
-            TokenKind::LSquare => self.parse_array_literal(range)?,
-            TokenKind::LCurly => self.parse_hash_map_literal(range)?,
+            TokenKind::LBracket => self.parse_grouped()?,
+            TokenKind::LSquare => self.parse_array_literal()?,
+            TokenKind::LCurly => self.parse_hash_map_literal()?,
             TokenKind::If => {
-                let (if_node, end) = self.parse_if(range)?;
+                let (if_node, end) = self.parse_if()?;
                 (ast::NodeValue::If(if_node), end)
             }
             TokenKind::While => todo!("parse while loop"),
@@ -169,7 +203,7 @@ impl Parser<'_> {
             TokenKind::Return => todo!("parse return statement"),
             TokenKind::Fn => todo!("parse function literal"),
             TokenKind::Use => {
-                let token = self.next_token(range)?;
+                let token = self.next_token()?;
                 let TokenKind::String(val) = token.kind else {
                     return Err(Error {
                         kind: ErrorKind::InvalidTokenKind {
@@ -182,7 +216,6 @@ impl Parser<'_> {
 
                 (ast::NodeValue::Use(val), token.range.end)
             }
-            TokenKind::Comment(comment) => (ast::NodeValue::Comment(comment), range.end),
 
             token => {
                 return Err(Error {
@@ -218,10 +251,10 @@ impl Parser<'_> {
             | TokenKind::Modulo
             | TokenKind::And
             | TokenKind::Or => self.parse_infix_operation(start_token, left)?,
-            TokenKind::LSquare => self.parse_index(left, start_token.range)?,
-            TokenKind::Dot => self.parse_dot_index(left, start_token.range)?,
+            TokenKind::LSquare => self.parse_index(left)?,
+            TokenKind::Dot => self.parse_dot_index(left)?,
             TokenKind::LBracket => todo!("parse function call"),
-            TokenKind::Assign => self.parse_assign(left, start_token.range)?,
+            TokenKind::Assign => self.parse_assign(left)?,
 
             _ => return Ok(left),
         };
@@ -233,7 +266,7 @@ impl Parser<'_> {
     }
 
     fn parse_prefix_operator(&mut self, start_token: Token) -> Result<(ast::NodeValue, Position)> {
-        let right_token = self.next_token(start_token.range)?;
+        let right_token = self.next_token()?;
         let right = self.parse_node(right_token, Precedence::Prefix)?;
 
         validate_node_kind(&right, NodeKind::Expression)?;
@@ -257,11 +290,7 @@ impl Parser<'_> {
         let precedence = Precedence::from(&start_token);
         let operator = token_to_infix_operator(&start_token.kind);
 
-        let right_token = self.next_token(Range {
-            start: left.range.start,
-            end: start_token.range.end,
-        })?;
-
+        let right_token = self.next_token()?;
         let right = self.parse_node(right_token, precedence)?;
 
         validate_node_kind(&left, NodeKind::Expression)?;
@@ -279,61 +308,48 @@ impl Parser<'_> {
         ))
     }
 
-    fn parse_grouped(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
-        let token = self.next_token(start_range)?;
+    fn parse_grouped(&mut self) -> Result<(ast::NodeValue, Position)> {
+        let token = self.next_token()?;
         let node = self.parse_node(token, Precedence::Lowest)?;
         validate_node_kind(&node, NodeKind::Expression)?;
 
-        let closing_token = self.next_token(Range {
-            start: start_range.start,
-            end: node.range.end,
-        })?;
+        let closing_token = self.next_token()?;
         validate_token_kind(&closing_token, TokenKind::RBracket)?;
 
         Ok((node.value, closing_token.range.end))
     }
 
-    fn parse_array_literal(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+    fn parse_array_literal(&mut self) -> Result<(ast::NodeValue, Position)> {
         let (items, end) =
-            self.parse_multiple(start_range, TokenKind::RSquare, |parser, token| {
+            self.parse_multiple(TokenKind::RSquare, TokenKind::Comma, |parser, token| {
                 let item = parser.parse_node(token, Precedence::Lowest)?;
-                let end = item.range.end;
-                Ok((item, end))
+                Ok(item)
             })?;
 
         validate_array_literal(&items)?;
         Ok((ast::NodeValue::ArrayLiteral(items), end))
     }
 
-    fn parse_hash_map_literal(&mut self, start_range: Range) -> Result<(ast::NodeValue, Position)> {
+    fn parse_hash_map_literal(&mut self) -> Result<(ast::NodeValue, Position)> {
         let (items, end) =
-            self.parse_multiple(start_range, TokenKind::RCurly, |parser, token| {
+            self.parse_multiple(TokenKind::RCurly, TokenKind::Comma, |parser, token| {
                 let key = parser.parse_node(token, Precedence::Lowest)?;
 
-                let token = parser.next_token(key.range)?;
+                let token = parser.next_token()?;
                 validate_token_kind(&token, TokenKind::Colon)?;
 
-                let val_token = parser.next_token(Range {
-                    start: key.range.start,
-                    end: token.range.end,
-                })?;
-
+                let val_token = parser.next_token()?;
                 let value = parser.parse_node(val_token, Precedence::Lowest)?;
-                let end = value.range.end;
 
-                Ok((ast::HashLiteralPair { key, value }, end))
+                Ok(ast::HashLiteralPair { key, value })
             })?;
 
         validate_hash_literal(&items)?;
         Ok((ast::NodeValue::HashLiteral(items), end))
     }
 
-    fn parse_assign(
-        &mut self,
-        left: ast::Node,
-        start_range: Range,
-    ) -> Result<(ast::NodeValue, Position)> {
-        let token = self.next_token(start_range)?;
+    fn parse_assign(&mut self, left: ast::Node) -> Result<(ast::NodeValue, Position)> {
+        let token = self.next_token()?;
 
         let right = self.parse_node(token, Precedence::Lowest)?;
         validate_node_kind(&right, NodeKind::Expression)?;
@@ -350,19 +366,13 @@ impl Parser<'_> {
     }
 
     // Parse index `left[index]`
-    fn parse_index(
-        &mut self,
-        left: ast::Node,
-        start_range: Range,
-    ) -> Result<(ast::NodeValue, Position)> {
-        let token = self.next_token(start_range)?;
+    fn parse_index(&mut self, left: ast::Node) -> Result<(ast::NodeValue, Position)> {
+        let token = self.next_token()?;
         let index = self.parse_node(token, Precedence::Lowest)?;
 
-        let end_token = self.next_token(Range {
-            start: start_range.start,
-            end: index.range.end,
-        })?;
+        let end_token = self.next_token()?;
         validate_token_kind(&end_token, TokenKind::RSquare)?;
+
         validate_node_kind(&left, NodeKind::Expression)?;
         validate_node_kind(&index, NodeKind::Expression)?;
 
@@ -376,12 +386,8 @@ impl Parser<'_> {
     }
 
     // parse index `left.index` where `index` is ident
-    fn parse_dot_index(
-        &mut self,
-        left: ast::Node,
-        start_range: Range,
-    ) -> Result<(ast::NodeValue, Position)> {
-        let index = self.next_token(start_range)?;
+    fn parse_dot_index(&mut self, left: ast::Node) -> Result<(ast::NodeValue, Position)> {
+        let index = self.next_token()?;
 
         let TokenKind::Ident(index_ident) = index.kind else {
             return Err(Error {
@@ -407,31 +413,22 @@ impl Parser<'_> {
         ))
     }
 
-    fn parse_if(&mut self, start_range: Range) -> Result<(ast::IfNode, Position)> {
+    fn parse_if(&mut self) -> Result<(ast::IfNode, Position)> {
         // Read `(`
-        let token = self.next_token(start_range)?;
+        let token = self.next_token()?;
         validate_token_kind(&token, TokenKind::LBracket)?;
 
         // Parse condition
-        let cond_token = self.next_token(Range {
-            start: start_range.start,
-            end: token.range.end,
-        })?;
+        let cond_token = self.next_token()?;
         let condition = self.parse_node(cond_token, Precedence::Lowest)?;
         validate_node_kind(&condition, NodeKind::Expression)?;
 
         // Read `)`
-        let token = self.next_token(Range {
-            start: start_range.start,
-            end: condition.range.end,
-        })?;
+        let token = self.next_token()?;
         validate_token_kind(&token, TokenKind::RBracket)?;
 
         // Parse consequence
-        let cons_token = self.next_token(Range {
-            start: start_range.start,
-            end: token.range.end,
-        })?;
+        let cons_token = self.next_token()?;
         let (consequence, cons_end) = self.parse_block(cons_token)?;
 
         // Construct the if node
@@ -442,21 +439,19 @@ impl Parser<'_> {
         };
 
         // After consequence we can have eof, eol or else.
-        peek_token!(self, else_token, return Ok((if_node, cons_end)));
-        if else_token.kind == TokenKind::Eol {
-            return Ok((if_node, cons_end));
+        match self.peek_token_is(|t| t.kind == TokenKind::Eol)? {
+            None | Some(true) => return Ok((if_node, cons_end)),
+            Some(false) => (),
         }
 
-        validate_token_kind(else_token, TokenKind::Else)?;
-
         // Read else token and discard it.
-        let else_token_range = else_token.range;
-        self.lexer.next();
+        let else_token = self.next_token()?;
+        validate_token_kind(&else_token, TokenKind::Else)?;
 
         // Handle else and else if
-        let token = self.next_token(else_token_range)?;
+        let token = self.next_token()?;
         if token.kind == TokenKind::If {
-            let (alternative, alternative_end) = self.parse_if(token.range)?;
+            let (alternative, alternative_end) = self.parse_if()?;
 
             if_node.alternative = vec![ast::Node {
                 value: ast::NodeValue::If(alternative),
@@ -483,117 +478,48 @@ impl Parser<'_> {
         // Start token should be `{`
         validate_token_kind(&start_token, TokenKind::LCurly)?;
 
-        let mut nodes = Vec::new();
-        let mut end = start_token.range.end;
-        loop {
-            // Skip \n's
-            self.skip_eol()?;
-
-            // Check if next token is `}`. In this case we are done with the block
-            let token = self.next_token(Range {
-                start: start_token.range.start,
-                end,
-            })?;
-
-            if token.kind == TokenKind::RCurly {
-                return Ok((nodes, token.range.end));
-            }
-
-            // Parse next node
-            let node = self.parse_node(token, Precedence::Lowest)?;
-            end = node.range.end;
-            nodes.push(node);
-
-            // Token after ndoe should be one of:
-            // - `}` => We are done with the block
-            // - `\n` => We repeat the loop
-            // - `// ...` => We repeat the loop
-            // Otherwise, we return an error
-            let token = self.next_token(Range {
-                start: start_token.range.start,
-                end,
-            })?;
-
-            match token.kind {
-                TokenKind::RCurly => return Ok((nodes, token.range.end)),
-                TokenKind::Comment(comment) => {
-                    end = token.range.end;
-                    nodes.push(ast::Node {
-                        value: ast::NodeValue::Comment(comment),
-                        range: token.range,
-                    })
-                }
-                TokenKind::Eol => (),
-                _ => {
-                    return Err(Error {
-                        kind: ErrorKind::InvalidTokenKind {
-                            expected: TokenKind::RCurly,
-                            got: token.kind,
-                        },
-                        range: token.range,
-                    })
-                }
-            }
-        }
+        self.parse_multiple(TokenKind::RCurly, TokenKind::Eol, |parser, token| {
+            parser.parse_node(token, Precedence::Lowest)
+        })
     }
 
     // Helper function used for parsing arrays, hash maps, function arguments, function calls.
     fn parse_multiple<T, F>(
         &mut self,
-        start_range: Range,
         end_token: TokenKind,
+        separator: TokenKind,
         parse_item: F,
     ) -> Result<(Vec<T>, Position)>
     where
-        F: Fn(&mut Self, Token) -> Result<(T, Position)>,
+        F: Fn(&mut Self, Token) -> Result<T>,
     {
         let mut res = vec![];
-        let mut end = start_range.end;
 
-        let mut can_parse = true;
         loop {
             self.skip_eol()?;
 
-            let token = self.next_token(Range {
-                start: start_range.start,
-                end,
-            })?;
+            let token = self.next_token()?;
+            if token.kind == end_token {
+                return Ok((res, token.range.end));
+            }
+
+            let item = parse_item(self, token)?;
+            res.push(item);
+
+            let token = self.next_token()?;
 
             if token.kind == end_token {
                 return Ok((res, token.range.end));
             }
 
-            if !can_parse {
+            if token.kind != separator {
                 return Err(Error {
                     kind: ErrorKind::InvalidTokenKind {
-                        expected: TokenKind::RSquare,
+                        expected: end_token,
                         got: token.kind,
                     },
                     range: token.range,
                 });
-            }
-
-            let (item, item_end) = parse_item(self, token)?;
-            end = item_end;
-            res.push(item);
-
-            peek_token!(
-                self,
-                token_peek,
-                return Err(Error {
-                    kind: ErrorKind::UnexpectedEof,
-                    range: Range {
-                        start: start_range.start,
-                        end,
-                    }
-                })
-            );
-
-            if token_peek.kind == TokenKind::Comma {
-                self.lexer.next();
-                can_parse = true;
-            } else {
-                can_parse = false;
             }
         }
     }

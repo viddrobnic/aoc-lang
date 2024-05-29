@@ -25,8 +25,6 @@ fn simple_prefix_expression() -> Result<()> {
         "bar"
         break
         continue
-        // this is a comment
-        foo // inline comment
     "#;
 
     let program = parse(input)?;
@@ -87,27 +85,6 @@ fn simple_prefix_expression() -> Result<()> {
                 range: Range {
                     start: Position::new(8, 8),
                     end: Position::new(8, 16)
-                },
-            },
-            ast::Node {
-                value: ast::NodeValue::Comment("this is a comment".to_string()),
-                range: Range {
-                    start: Position::new(9, 8),
-                    end: Position::new(9, 28)
-                },
-            },
-            ast::Node {
-                value: ast::NodeValue::Identifier("foo".to_string()),
-                range: Range {
-                    start: Position::new(10, 8),
-                    end: Position::new(10, 11)
-                },
-            },
-            ast::Node {
-                value: ast::NodeValue::Comment("inline comment".to_string()),
-                range: Range {
-                    start: Position::new(10, 12),
-                    end: Position::new(10, 29)
                 },
             },
         ]
@@ -892,6 +869,37 @@ fn if_node() -> Result<()> {
 }
 
 #[test]
+fn errors() {
+    let tests = [
+        (
+            "if (true) {",
+            Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: Range {
+                    start: Position::new(0, 11),
+                    end: Position::new(1, 0),
+                },
+            },
+        ),
+        (
+            "if (true) {foo\n",
+            Error {
+                kind: ErrorKind::UnexpectedEof,
+                range: Range {
+                    start: Position::new(1, 0),
+                    end: Position::new(2, 0),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input);
+        assert_eq!(program, Err(expected));
+    }
+}
+
+#[test]
 fn precedence() -> Result<()> {
     let tests = [
         ("1 + 2 + 3", "((1 + 2) + 3)"),
@@ -910,10 +918,10 @@ fn precedence() -> Result<()> {
             "{1 + 2: 4 * 5, \"foo\":bar}",
             "{(1 + 2): (4 * 5), \"foo\": bar}",
         ),
-        ("1 == 2 //comment", "(1 == 2)\n// comment"),
+        ("1 == 2 //comment", "(1 == 2)"),
         (
             "if (true) {1 + 2 // comment\n}",
-            "if (true) {(1 + 2)\n// comment} else {}",
+            "if (true) {(1 + 2)} else {}",
         ),
         (
             "if (true) {1 + 2\n\n\n} else if (true){}",
@@ -923,6 +931,8 @@ fn precedence() -> Result<()> {
             "if (true) {\n if (1 == 2) {\nfalse}\ntrue}",
             "if (true) {if ((1 == 2)) {false} else {}\ntrue} else {}",
         ),
+        ("// comment", ""),
+        ("//", ""),
     ];
 
     for (input, expected) in tests {
