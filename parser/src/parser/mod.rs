@@ -201,7 +201,7 @@ impl Parser<'_> {
             TokenKind::Break => (ast::NodeValue::Break, range.end),
             TokenKind::Continue => (ast::NodeValue::Continue, range.end),
             TokenKind::Return => todo!("parse return statement"),
-            TokenKind::Fn => todo!("parse function literal"),
+            TokenKind::Fn => self.parse_fn_literal()?,
             TokenKind::Use => {
                 let token = self.next_token()?;
                 let TokenKind::String(val) = token.kind else {
@@ -351,9 +351,15 @@ impl Parser<'_> {
     fn parse_assign(&mut self, left: ast::Node) -> Result<(ast::NodeValue, Position)> {
         let token = self.next_token()?;
 
-        let right = self.parse_node(token, Precedence::Lowest)?;
+        let mut right = self.parse_node(token, Precedence::Lowest)?;
         validate_node_kind(&right, NodeKind::Expression)?;
         validate_assignee(&left)?;
+
+        if let (ast::NodeValue::Identifier(ident), ast::NodeValue::FunctionLiteral { name, .. }) =
+            (&left.value, &mut right.value)
+        {
+            *name = Some(ident.clone());
+        }
 
         let end = right.range.end;
         Ok((
@@ -530,6 +536,37 @@ impl Parser<'_> {
                 initial: Box::new(initial),
                 condition: Box::new(condition),
                 after: Box::new(after),
+                body,
+            },
+            end,
+        ))
+    }
+
+    fn parse_fn_literal(&mut self) -> Result<(ast::NodeValue, Position)> {
+        // Read `(`
+        let token = self.next_token()?;
+        validate_token_kind(&token, TokenKind::LBracket)?;
+
+        // Read arguments
+        let (args, _) = self.parse_multiple(
+            TokenKind::RBracket,
+            TokenKind::Comma,
+            |_, token| match token.kind {
+                TokenKind::Ident(ident) => Ok(ident),
+                _ => Err(Error {
+                    kind: ErrorKind::InvalidFunctionParameter,
+                    range: token.range,
+                }),
+            },
+        )?;
+
+        let body_token = self.next_token()?;
+        let (body, end) = self.parse_block(body_token)?;
+
+        Ok((
+            ast::NodeValue::FunctionLiteral {
+                name: None,
+                parameters: args,
                 body,
             },
             end,

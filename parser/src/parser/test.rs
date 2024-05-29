@@ -1038,6 +1038,101 @@ fn for_loop() -> Result<()> {
 }
 
 #[test]
+fn fn_literal() -> Result<()> {
+    let tests = [
+        (
+            "fn(){}",
+            ast::Node {
+                value: ast::NodeValue::FunctionLiteral {
+                    name: None,
+                    parameters: vec![],
+                    body: vec![],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
+            },
+        ),
+        (
+            "fn(a){}",
+            ast::Node {
+                value: ast::NodeValue::FunctionLiteral {
+                    name: None,
+                    parameters: vec!["a".to_string()],
+                    body: vec![],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 7),
+                },
+            },
+        ),
+        (
+            "fn(a, b){\n}",
+            ast::Node {
+                value: ast::NodeValue::FunctionLiteral {
+                    name: None,
+                    parameters: vec!["a".to_string(), "b".to_string()],
+                    body: vec![],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(1, 1),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
+fn fn_literal_named() -> Result<()> {
+    let program = parse("foo = fn(){}")?;
+
+    assert_eq!(program.statements.len(), 1);
+    assert_eq!(
+        program.statements[0],
+        ast::Node {
+            value: ast::NodeValue::Assign {
+                ident: Box::new(ast::Node {
+                    value: ast::NodeValue::Identifier("foo".to_string()),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3),
+                    }
+                }),
+                value: Box::new(ast::Node {
+                    value: ast::NodeValue::FunctionLiteral {
+                        name: Some("foo".to_string()),
+                        parameters: vec![],
+                        body: vec![]
+                    },
+                    range: Range {
+                        start: Position::new(0, 6),
+                        end: Position::new(0, 12),
+                    }
+                })
+            },
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 12),
+            }
+        }
+    );
+
+    Ok(())
+}
+
+#[test]
 fn errors() {
     let tests = [
         (
@@ -1057,6 +1152,26 @@ fn errors() {
                 range: Range {
                     start: Position::new(1, 0),
                     end: Position::new(2, 0),
+                },
+            },
+        ),
+        (
+            "for (true) {}",
+            Error {
+                kind: ErrorKind::InvalidRange,
+                range: Range {
+                    start: Position::new(0, 4),
+                    end: Position::new(0, 10),
+                },
+            },
+        ),
+        (
+            "fn(1 + 1){}",
+            Error {
+                kind: ErrorKind::InvalidFunctionParameter,
+                range: Range {
+                    start: Position::new(0, 3),
+                    end: Position::new(0, 4),
                 },
             },
         ),

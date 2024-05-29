@@ -16,6 +16,7 @@ pub enum ErrorKind {
     InvalidTokenKind { expected: TokenKind, got: TokenKind },
     InvalidAssignee,
     InvalidRange,
+    InvalidFunctionParameter,
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -49,6 +50,9 @@ impl Display for ErrorKind {
             }
             ErrorKind::InvalidAssignee => write!(f, "assignee must be identifier, index or array"),
             ErrorKind::InvalidRange => write!(f, "invalid range defined"),
+            ErrorKind::InvalidFunctionParameter => {
+                write!(f, "function parameter must be an identifier")
+            }
         }
     }
 }
