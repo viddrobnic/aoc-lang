@@ -869,6 +869,65 @@ fn if_node() -> Result<()> {
 }
 
 #[test]
+fn while_loop() -> Result<()> {
+    let tests = [
+        (
+            "while (true) {}",
+            ast::Node {
+                value: ast::NodeValue::While {
+                    condition: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(true),
+                        range: Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                    }),
+                    body: vec![],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 15),
+                },
+            },
+        ),
+        (
+            "while (true) {\nfoo\n}",
+            ast::Node {
+                value: ast::NodeValue::While {
+                    condition: Box::new(ast::Node {
+                        value: ast::NodeValue::BoolLiteral(true),
+                        range: Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                    }),
+                    body: vec![ast::Node {
+                        value: ast::NodeValue::Identifier("foo".to_string()),
+                        range: Range {
+                            start: Position::new(1, 0),
+                            end: Position::new(1, 3),
+                        },
+                    }],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(2, 1),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn errors() {
     let tests = [
         (

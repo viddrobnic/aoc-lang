@@ -196,7 +196,7 @@ impl Parser<'_> {
                 let (if_node, end) = self.parse_if()?;
                 (ast::NodeValue::If(if_node), end)
             }
-            TokenKind::While => todo!("parse while loop"),
+            TokenKind::While => self.parse_while()?,
             TokenKind::For => todo!("parse for loop"),
             TokenKind::Break => (ast::NodeValue::Break, range.end),
             TokenKind::Continue => (ast::NodeValue::Continue, range.end),
@@ -467,6 +467,32 @@ impl Parser<'_> {
             if_node.alternative = alternative;
             Ok((if_node, alternative_end))
         }
+    }
+
+    fn parse_while(&mut self) -> Result<(ast::NodeValue, Position)> {
+        // Read `(`
+        let token = self.next_token()?;
+        validate_token_kind(&token, TokenKind::LBracket)?;
+
+        // Parse condition
+        let cond_token = self.next_token()?;
+        let condition = self.parse_node(cond_token, Precedence::Lowest)?;
+        validate_node_kind(&condition, NodeKind::Expression)?;
+
+        // Read `)`
+        let token = self.next_token()?;
+        validate_token_kind(&token, TokenKind::RBracket)?;
+
+        let block_token = self.next_token()?;
+        let (block, end) = self.parse_block(block_token)?;
+
+        Ok((
+            ast::NodeValue::While {
+                condition: Box::new(condition),
+                body: block,
+            },
+            end,
+        ))
     }
 
     // Helper function that reads block { ... }.
