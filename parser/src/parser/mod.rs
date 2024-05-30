@@ -260,7 +260,7 @@ impl Parser<'_> {
             | TokenKind::Or => self.parse_infix_operation(start_token, left)?,
             TokenKind::LSquare => self.parse_index(left)?,
             TokenKind::Dot => self.parse_dot_index(left)?,
-            TokenKind::LBracket => todo!("parse function call"),
+            TokenKind::LBracket => self.parse_fn_call(left)?,
             TokenKind::Assign => self.parse_assign(left)?,
 
             _ => return Ok(left),
@@ -575,6 +575,27 @@ impl Parser<'_> {
                 name: None,
                 parameters: args,
                 body,
+            },
+            end,
+        ))
+    }
+
+    fn parse_fn_call(&mut self, left: ast::Node) -> Result<(ast::NodeValue, Position)> {
+        // Read arguments
+        let (args, end) =
+            self.parse_multiple(TokenKind::RBracket, TokenKind::Comma, |parser, token| {
+                parser.parse_node(token, Precedence::Lowest)
+            })?;
+
+        // Check all nodes are expression
+        for arg in &args {
+            validate_node_kind(arg, NodeKind::Expression)?;
+        }
+
+        Ok((
+            ast::NodeValue::FunctionCall {
+                function: Box::new(left),
+                arguments: args,
             },
             end,
         ))

@@ -1133,6 +1133,74 @@ fn fn_literal_named() -> Result<()> {
 }
 
 #[test]
+fn fn_call() -> Result<()> {
+    let tests = [
+        (
+            "foo()",
+            ast::Node {
+                value: ast::NodeValue::FunctionCall {
+                    function: Box::new(ast::Node {
+                        value: ast::NodeValue::Identifier("foo".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                    arguments: vec![],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 5),
+                },
+            },
+        ),
+        (
+            "foo(\n1,\n2,\n)",
+            ast::Node {
+                value: ast::NodeValue::FunctionCall {
+                    function: Box::new(ast::Node {
+                        value: ast::NodeValue::Identifier("foo".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    }),
+                    arguments: vec![
+                        ast::Node {
+                            value: ast::NodeValue::IntegerLiteral(1),
+                            range: Range {
+                                start: Position::new(1, 0),
+                                end: Position::new(1, 1),
+                            },
+                        },
+                        ast::Node {
+                            value: ast::NodeValue::IntegerLiteral(2),
+                            range: Range {
+                                start: Position::new(2, 0),
+                                end: Position::new(2, 1),
+                            },
+                        },
+                    ],
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(3, 1),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input)?;
+
+        assert_eq!(program.statements.len(), 1);
+        assert_eq!(program.statements[0], expected);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn return_statement() -> Result<()> {
     let program = parse("return 1 + 2")?;
 
@@ -1273,6 +1341,10 @@ fn precedence() -> Result<()> {
         ("//", ""),
         ("return 1 + 1 * 2", "return (1 + (1 * 2))"),
         ("return fn(){}", "return fn() {}"),
+        ("fn(){}()", "(fn() {}())"),
+        ("foo()[0]", "((foo())[0])"),
+        ("foo[0]()", "((foo[0])())"),
+        ("foo[0].bar(1, 1 + 2)", "(((foo[0])[\"bar\"])(1, (1 + 2)))"),
     ];
 
     for (input, expected) in tests {
