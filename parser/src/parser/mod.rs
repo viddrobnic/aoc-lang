@@ -200,7 +200,14 @@ impl Parser<'_> {
             TokenKind::For => self.parse_for()?,
             TokenKind::Break => (ast::NodeValue::Break, range.end),
             TokenKind::Continue => (ast::NodeValue::Continue, range.end),
-            TokenKind::Return => todo!("parse return statement"),
+            TokenKind::Return => {
+                let token = self.next_token()?;
+                let node = self.parse_node(token, Precedence::Lowest)?;
+                validate_node_kind(&node, NodeKind::Expression)?;
+
+                let end = node.range.end;
+                (ast::NodeValue::Return(Box::new(node)), end)
+            }
             TokenKind::Fn => self.parse_fn_literal()?,
             TokenKind::Use => {
                 let token = self.next_token()?;

@@ -1133,6 +1133,47 @@ fn fn_literal_named() -> Result<()> {
 }
 
 #[test]
+fn return_statement() -> Result<()> {
+    let program = parse("return 1 + 2")?;
+
+    assert_eq!(program.statements.len(), 1);
+    assert_eq!(
+        program.statements[0],
+        ast::Node {
+            value: ast::NodeValue::Return(Box::new(ast::Node {
+                value: ast::NodeValue::InfixOperator {
+                    operator: ast::InfixOperatorKind::Add,
+                    left: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(1),
+                        range: Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 8)
+                        }
+                    }),
+                    right: Box::new(ast::Node {
+                        value: ast::NodeValue::IntegerLiteral(2),
+                        range: Range {
+                            start: Position::new(0, 11),
+                            end: Position::new(0, 12)
+                        }
+                    })
+                },
+                range: Range {
+                    start: Position::new(0, 7),
+                    end: Position::new(0, 12)
+                }
+            })),
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 12)
+            }
+        }
+    );
+
+    Ok(())
+}
+
+#[test]
 fn errors() {
     let tests = [
         (
@@ -1172,6 +1213,19 @@ fn errors() {
                 range: Range {
                     start: Position::new(0, 3),
                     end: Position::new(0, 4),
+                },
+            },
+        ),
+        (
+            "return continue",
+            Error {
+                kind: ErrorKind::InvalidNodeKind {
+                    expected: ast::NodeKind::Expression,
+                    got: ast::NodeKind::Statement,
+                },
+                range: Range {
+                    start: Position::new(0, 7),
+                    end: Position::new(0, 15),
                 },
             },
         ),
@@ -1217,6 +1271,8 @@ fn precedence() -> Result<()> {
         ),
         ("// comment", ""),
         ("//", ""),
+        ("return 1 + 1 * 2", "return (1 + (1 * 2))"),
+        ("return fn(){}", "return fn() {}"),
     ];
 
     for (input, expected) in tests {
