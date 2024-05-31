@@ -448,7 +448,7 @@ impl Parser<'_> {
         let mut if_node = ast::IfNode {
             condition: Box::new(condition),
             consequence,
-            alternative: vec![],
+            alternative: None,
         };
 
         // After consequence we can have eof, eol or else.
@@ -466,18 +466,22 @@ impl Parser<'_> {
         if token.kind == TokenKind::If {
             let (alternative, alternative_end) = self.parse_if()?;
 
-            if_node.alternative = vec![ast::Node {
-                value: ast::NodeValue::If(alternative),
-                range: Range {
-                    start: token.range.start,
-                    end: alternative_end,
-                },
-            }];
+            let range = Range {
+                start: token.range.start,
+                end: alternative_end,
+            };
+            if_node.alternative = Some(ast::Block {
+                nodes: vec![ast::Node {
+                    value: ast::NodeValue::If(alternative),
+                    range,
+                }],
+                range,
+            });
             Ok((if_node, alternative_end))
         } else {
             let (alternative, alternative_end) = self.parse_block(token)?;
 
-            if_node.alternative = alternative;
+            if_node.alternative = Some(alternative);
             Ok((if_node, alternative_end))
         }
     }
@@ -606,13 +610,25 @@ impl Parser<'_> {
     // position of `}`
     //
     // This function checks if the start token is `{`, so the caller doesn't have to do this.
-    fn parse_block(&mut self, start_token: Token) -> Result<(Vec<ast::Node>, Position)> {
+    fn parse_block(&mut self, start_token: Token) -> Result<(ast::Block, Position)> {
         // Start token should be `{`
         validate_token_kind(&start_token, TokenKind::LCurly)?;
 
-        self.parse_multiple(TokenKind::RCurly, TokenKind::Eol, |parser, token| {
-            parser.parse_node(token, Precedence::Lowest)
-        })
+        let (nodes, end) =
+            self.parse_multiple(TokenKind::RCurly, TokenKind::Eol, |parser, token| {
+                parser.parse_node(token, Precedence::Lowest)
+            })?;
+
+        Ok((
+            ast::Block {
+                nodes,
+                range: Range {
+                    start: start_token.range.start,
+                    end,
+                },
+            },
+            end,
+        ))
     }
 
     // Helper function used for parsing arrays, hash maps, function arguments, function calls.

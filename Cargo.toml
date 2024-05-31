@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser"]
+members = ["parser", "runtime"]
 
 [package]
 name = "aoc-lang"

@@ -791,8 +791,14 @@ fn if_node() -> Result<()> {
                             end: Position::new(0, 8),
                         },
                     }),
-                    consequence: vec![],
-                    alternative: vec![],
+                    consequence: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                    },
+                    alternative: None,
                 }),
                 range: Range {
                     start: Position::new(0, 0),
@@ -811,8 +817,20 @@ fn if_node() -> Result<()> {
                             end: Position::new(0, 8),
                         },
                     }),
-                    consequence: vec![],
-                    alternative: vec![],
+                    consequence: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(1, 1),
+                        },
+                    },
+                    alternative: Some(ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(1, 7),
+                            end: Position::new(2, 1),
+                        },
+                    }),
                 }),
                 range: Range {
                     start: Position::new(0, 0),
@@ -831,24 +849,42 @@ fn if_node() -> Result<()> {
                             end: Position::new(0, 8),
                         },
                     }),
-                    consequence: vec![],
-                    alternative: vec![ast::Node {
-                        value: ast::NodeValue::If(ast::IfNode {
-                            condition: Box::new(ast::Node {
-                                value: ast::NodeValue::BoolLiteral(false),
-                                range: Range {
-                                    start: Position::new(1, 11),
-                                    end: Position::new(1, 16),
+                    consequence: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(1, 1),
+                        },
+                    },
+                    alternative: Some(ast::Block {
+                        nodes: vec![ast::Node {
+                            value: ast::NodeValue::If(ast::IfNode {
+                                condition: Box::new(ast::Node {
+                                    value: ast::NodeValue::BoolLiteral(false),
+                                    range: Range {
+                                        start: Position::new(1, 11),
+                                        end: Position::new(1, 16),
+                                    },
+                                }),
+                                consequence: ast::Block {
+                                    nodes: vec![],
+                                    range: Range {
+                                        start: Position::new(1, 18),
+                                        end: Position::new(2, 1),
+                                    },
                                 },
+                                alternative: None,
                             }),
-                            consequence: vec![],
-                            alternative: vec![],
-                        }),
+                            range: Range {
+                                start: Position::new(1, 7),
+                                end: Position::new(2, 1),
+                            },
+                        }],
                         range: Range {
                             start: Position::new(1, 7),
                             end: Position::new(2, 1),
                         },
-                    }],
+                    }),
                 }),
                 range: Range {
                     start: Position::new(0, 0),
@@ -882,7 +918,13 @@ fn while_loop() -> Result<()> {
                             end: Position::new(0, 11),
                         },
                     }),
-                    body: vec![],
+                    body: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 13),
+                            end: Position::new(0, 15),
+                        },
+                    },
                 },
                 range: Range {
                     start: Position::new(0, 0),
@@ -901,13 +943,19 @@ fn while_loop() -> Result<()> {
                             end: Position::new(0, 11),
                         },
                     }),
-                    body: vec![ast::Node {
-                        value: ast::NodeValue::Identifier("foo".to_string()),
+                    body: ast::Block {
+                        nodes: vec![ast::Node {
+                            value: ast::NodeValue::Identifier("foo".to_string()),
+                            range: Range {
+                                start: Position::new(1, 0),
+                                end: Position::new(1, 3),
+                            },
+                        }],
                         range: Range {
-                            start: Position::new(1, 0),
-                            end: Position::new(1, 3),
+                            start: Position::new(0, 13),
+                            end: Position::new(2, 1),
                         },
-                    }],
+                    },
                 },
                 range: Range {
                     start: Position::new(0, 0),
@@ -1019,13 +1067,19 @@ fn for_loop() -> Result<()> {
                         end: Position::new(0, 29),
                     }
                 }),
-                body: vec![ast::Node {
-                    value: ast::NodeValue::Identifier("foo".to_string()),
+                body: ast::Block {
+                    nodes: vec![ast::Node {
+                        value: ast::NodeValue::Identifier("foo".to_string()),
+                        range: Range {
+                            start: Position::new(1, 0),
+                            end: Position::new(1, 3)
+                        }
+                    }],
                     range: Range {
-                        start: Position::new(1, 0),
-                        end: Position::new(1, 3)
+                        start: Position::new(0, 31),
+                        end: Position::new(2, 1)
                     }
-                }]
+                }
             },
             range: Range {
                 start: Position::new(0, 0),
@@ -1046,7 +1100,13 @@ fn fn_literal() -> Result<()> {
                 value: ast::NodeValue::FunctionLiteral {
                     name: None,
                     parameters: vec![],
-                    body: vec![],
+                    body: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 6),
+                        },
+                    },
                 },
                 range: Range {
                     start: Position::new(0, 0),
@@ -1060,7 +1120,13 @@ fn fn_literal() -> Result<()> {
                 value: ast::NodeValue::FunctionLiteral {
                     name: None,
                     parameters: vec!["a".to_string()],
-                    body: vec![],
+                    body: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 5),
+                            end: Position::new(0, 7),
+                        },
+                    },
                 },
                 range: Range {
                     start: Position::new(0, 0),
@@ -1074,7 +1140,13 @@ fn fn_literal() -> Result<()> {
                 value: ast::NodeValue::FunctionLiteral {
                     name: None,
                     parameters: vec!["a".to_string(), "b".to_string()],
-                    body: vec![],
+                    body: ast::Block {
+                        nodes: vec![],
+                        range: Range {
+                            start: Position::new(0, 8),
+                            end: Position::new(1, 1),
+                        },
+                    },
                 },
                 range: Range {
                     start: Position::new(0, 0),
@@ -1114,7 +1186,13 @@ fn fn_literal_named() -> Result<()> {
                     value: ast::NodeValue::FunctionLiteral {
                         name: Some("foo".to_string()),
                         parameters: vec![],
-                        body: vec![]
+                        body: ast::Block {
+                            nodes: vec![],
+                            range: Range {
+                                start: Position::new(0, 10),
+                                end: Position::new(0, 12),
+                            }
+                        }
                     },
                     range: Range {
                         start: Position::new(0, 6),

@@ -43,20 +43,20 @@ pub enum NodeValue {
     If(IfNode),
     While {
         condition: Box<Node>,
-        body: Vec<Node>,
+        body: Block,
     },
     For {
         initial: Box<Node>,
         condition: Box<Node>,
         after: Box<Node>,
-        body: Vec<Node>,
+        body: Block,
     },
     Break,
     Continue,
     FunctionLiteral {
         name: Option<String>,
         parameters: Vec<String>,
-        body: Vec<Node>,
+        body: Block,
     },
     FunctionCall {
         function: Box<Node>,
@@ -81,8 +81,14 @@ pub struct HashLiteralPair {
 #[derive(Debug, PartialEq, Clone)]
 pub struct IfNode {
     pub condition: Box<Node>,
-    pub consequence: Vec<Node>,
-    pub alternative: Vec<Node>,
+    pub consequence: Block,
+    pub alternative: Option<Block>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Block {
+    pub nodes: Vec<Node>,
+    pub range: Range,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -228,17 +234,21 @@ impl Display for NodeValue {
             NodeValue::If(if_node) => {
                 let cons = if_node
                     .consequence
+                    .nodes
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
                     .join("\n");
 
-                let alt = if_node
-                    .alternative
-                    .iter()
-                    .map(|node| node.to_string())
-                    .collect::<Vec<_>>()
-                    .join("\n");
+                let mut alt = String::new();
+                if let Some(alternative) = &if_node.alternative {
+                    alt = alternative
+                        .nodes
+                        .iter()
+                        .map(|node| node.to_string())
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                }
 
                 write!(
                     f,
@@ -248,6 +258,7 @@ impl Display for NodeValue {
             }
             NodeValue::While { condition, body } => {
                 let body = body
+                    .nodes
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
@@ -262,6 +273,7 @@ impl Display for NodeValue {
                 body,
             } => {
                 let body = body
+                    .nodes
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
@@ -277,6 +289,7 @@ impl Display for NodeValue {
                 body,
             } => {
                 let body = body
+                    .nodes
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
