@@ -2,6 +2,7 @@ pub mod object;
 
 mod bytecode;
 mod compiler;
+mod vm;
 
 #[cfg(test)]
 mod test;

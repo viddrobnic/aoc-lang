@@ -6,4 +6,5 @@ pub enum Object {
     Float(f64),
     Boolean(bool),
     String(Rc<String>),
+    Null,
 }
