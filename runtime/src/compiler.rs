@@ -70,22 +70,18 @@ impl Compiler {
         match &node.value {
             ast::NodeValue::Identifier(_) => todo!(),
             ast::NodeValue::IntegerLiteral(int) => {
-                let const_idx = self.add_constant(Object::Integer(*int));
-                self.emit(Instruction::Constant(const_idx), node.range);
+                self.compile_constant(Object::Integer(*int), node.range);
             }
             ast::NodeValue::FloatLiteral(flt) => {
-                let const_idx = self.add_constant(Object::Float(*flt));
-                self.emit(Instruction::Constant(const_idx), node.range);
+                self.compile_constant(Object::Float(*flt), node.range);
             }
             ast::NodeValue::BoolLiteral(boolean) => {
-                let const_idx = self.add_constant(Object::Boolean(*boolean));
-                self.emit(Instruction::Constant(const_idx), node.range);
+                self.compile_constant(Object::Boolean(*boolean), node.range);
             }
             ast::NodeValue::StringLiteral(string) => {
-                let const_idx = self.add_constant(Object::String(Rc::new(string.to_string())));
-                self.emit(Instruction::Constant(const_idx), node.range);
+                self.compile_constant(Object::String(Rc::new(string.to_string())), node.range);
             }
-            ast::NodeValue::ArrayLiteral(_) => todo!(),
+            ast::NodeValue::ArrayLiteral(arr) => self.compile_array(arr, node.range),
             ast::NodeValue::HashLiteral(_) => todo!(),
             ast::NodeValue::PrefixOperator { .. } => todo!(),
             ast::NodeValue::InfixOperator { .. } => todo!(),
@@ -101,5 +97,18 @@ impl Compiler {
             ast::NodeValue::Return(_) => todo!(),
             ast::NodeValue::Use(_) => todo!(),
         }
+    }
+
+    fn compile_constant(&mut self, constant: Object, range: Range) {
+        let const_idx = self.add_constant(constant);
+        self.emit(Instruction::Constant(const_idx), range);
+    }
+
+    fn compile_array(&mut self, arr: &[ast::Node], range: Range) {
+        for node in arr {
+            self.compile_node(node);
+        }
+
+        self.emit(Instruction::Array(arr.len()), range);
     }
 }

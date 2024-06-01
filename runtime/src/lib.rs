@@ -1,3 +1,5 @@
+use parser::ast;
+
 pub mod object;
 
 mod bytecode;
@@ -7,10 +9,10 @@ mod vm;
 #[cfg(test)]
 mod test;
 
-pub fn run(input: &str) {
-    // TODO: Haandle errors and add vm
-    let program = parser::parse(input).unwrap();
-
+pub fn run(program: &ast::Program) {
     let compiler = compiler::Compiler::new();
-    let _bytecode = compiler.compile(&program);
+    let bytecode = compiler.compile(program);
+
+    let vm = vm::VirtualMachine::new();
+    vm.run(&bytecode);
 }

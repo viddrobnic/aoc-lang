@@ -4,8 +4,9 @@ use parser::position::Range;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Instruction {
-    Constant(usize),
     Pop,
+    Constant(usize),
+    Array(usize),
 }
 
 #[derive(Debug, PartialEq, Clone)]

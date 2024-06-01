@@ -1,4 +1,9 @@
-use crate::{bytecode::Bytecode, object::Object};
+use std::rc::Rc;
+
+use crate::{
+    bytecode::{Bytecode, Instruction},
+    object::Object,
+};
 
 const STACK_SIZE: usize = 4096;
 
@@ -28,20 +33,39 @@ impl VirtualMachine {
     }
 
     fn pop(&mut self) -> Object {
+        if self.sp == 0 {
+            panic!("No more elements");
+        }
+
         self.sp -= 1;
         self.stack[self.sp].clone()
     }
 
-    pub fn run(&mut self, bytecode: &Bytecode) {
+    /// Runs the program and returns the first element on the stack.
+    ///
+    /// This is primarily used to test if the vm works correctly.
+    /// The first element on the stack should be the last popped element
+    /// if the compiler and vm both work correctly.
+    pub fn run(mut self, bytecode: &Bytecode) -> Object {
         for inst in &bytecode.instructions {
             match inst {
-                crate::bytecode::Instruction::Constant(idx) => {
-                    self.push(bytecode.constants[*idx].clone())
-                }
-                crate::bytecode::Instruction::Pop => {
+                Instruction::Constant(idx) => self.push(bytecode.constants[*idx].clone()),
+                Instruction::Pop => {
                     self.pop();
                 }
+                Instruction::Array(len) => self.execute_array(*len),
             }
         }
+
+        self.stack[0].clone()
+    }
+
+    fn execute_array(&mut self, len: usize) {
+        let start = self.sp - len;
+
+        let arr = self.stack[start..self.sp].to_vec();
+        self.sp -= len;
+
+        self.push(Object::Array(Rc::new(arr)));
     }
 }
