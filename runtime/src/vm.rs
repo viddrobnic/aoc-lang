@@ -1,8 +1,8 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     bytecode::{Bytecode, Instruction},
-    object::Object,
+    object::{HashKey, Object},
 };
 
 const STACK_SIZE: usize = 4096;
@@ -54,6 +54,7 @@ impl VirtualMachine {
                     self.pop();
                 }
                 Instruction::Array(len) => self.execute_array(*len),
+                Instruction::HashMap(len) => self.execute_hash_map(*len),
             }
         }
 
@@ -67,5 +68,26 @@ impl VirtualMachine {
         self.sp -= len;
 
         self.push(Object::Array(Rc::new(arr)));
+    }
+
+    fn execute_hash_map(&mut self, len: usize) {
+        let start = self.sp - len;
+
+        let hash_map: Result<HashMap<_, _>, _> = self.stack[start..self.sp]
+            .chunks(2)
+            .map(|chunk| -> Result<(HashKey, Object), ()> {
+                let key = &chunk[0];
+                let value = &chunk[1];
+
+                let key: HashKey = key.clone().try_into()?;
+
+                Ok((key, value.clone()))
+            })
+            .collect();
+
+        let hash_map = hash_map.unwrap();
+
+        self.sp -= len;
+        self.push(Object::HashMap(Rc::new(hash_map)));
     }
 }

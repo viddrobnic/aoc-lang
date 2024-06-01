@@ -7,6 +7,7 @@ pub enum Instruction {
     Pop,
     Constant(usize),
     Array(usize),
+    HashMap(usize),
 }
 
 #[derive(Debug, PartialEq, Clone)]

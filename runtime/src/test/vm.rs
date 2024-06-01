@@ -1,6 +1,10 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
-use crate::{compiler::Compiler, object::Object, vm::VirtualMachine};
+use crate::{
+    compiler::Compiler,
+    object::{HashKey, Object},
+    vm::VirtualMachine,
+};
 
 fn run_test(input: &str, expected: Object) {
     let program = parser::parse(input).unwrap();
@@ -52,5 +56,36 @@ fn array() {
 
     for (input, expected) in tests {
         run_test(input, Object::Array(Rc::new(expected)));
+    }
+}
+
+#[test]
+fn hash_map() {
+    let tests = [
+        ("{}", HashMap::from([])),
+        (
+            "{\"foo\": 1}",
+            HashMap::from([(
+                HashKey::String(Rc::new("foo".to_string())),
+                Object::Integer(1),
+            )]),
+        ),
+        (
+            "{1: 2, 2: {3: 4}}",
+            HashMap::from([
+                (HashKey::Integer(1), Object::Integer(2)),
+                (
+                    HashKey::Integer(2),
+                    Object::HashMap(Rc::new(HashMap::from([(
+                        HashKey::Integer(3),
+                        Object::Integer(4),
+                    )]))),
+                ),
+            ]),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Object::HashMap(Rc::new(expected)));
     }
 }

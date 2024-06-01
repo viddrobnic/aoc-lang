@@ -82,7 +82,7 @@ impl Compiler {
                 self.compile_constant(Object::String(Rc::new(string.to_string())), node.range);
             }
             ast::NodeValue::ArrayLiteral(arr) => self.compile_array(arr, node.range),
-            ast::NodeValue::HashLiteral(_) => todo!(),
+            ast::NodeValue::HashLiteral(elements) => self.compile_hash_map(elements, node.range),
             ast::NodeValue::PrefixOperator { .. } => todo!(),
             ast::NodeValue::InfixOperator { .. } => todo!(),
             ast::NodeValue::Assign { .. } => todo!(),
@@ -110,5 +110,14 @@ impl Compiler {
         }
 
         self.emit(Instruction::Array(arr.len()), range);
+    }
+
+    fn compile_hash_map(&mut self, elements: &[ast::HashLiteralPair], range: Range) {
+        for elt in elements {
+            self.compile_node(&elt.key);
+            self.compile_node(&elt.value);
+        }
+
+        self.emit(Instruction::HashMap(elements.len() * 2), range);
     }
 }
