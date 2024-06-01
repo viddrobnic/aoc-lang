@@ -36,22 +36,22 @@ impl Display for Error {
 impl Display for ErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ErrorKind::InvalidNumber(number) => write!(f, "invalid number: {number}"),
-            ErrorKind::UnexpectedEof => write!(f, "unexpected end of file"),
-            ErrorKind::InvalidEscapeChar(ch) => write!(f, "invalid escape char '{ch}'"),
-            ErrorKind::InvalidChar(ch) => write!(f, "invalid char '{ch}'"),
-            ErrorKind::InvalidExpression(token) => write!(f, "not a valid expression: {:?}", token),
-            ErrorKind::ExpectedEol => write!(f, "expression must end with new line"),
+            ErrorKind::InvalidNumber(number) => write!(f, "Not a valid number: {number}"),
+            ErrorKind::UnexpectedEof => write!(f, "Unexpected end of file"),
+            ErrorKind::InvalidEscapeChar(ch) => write!(f, "Invalid escape character '{ch}'"),
+            ErrorKind::InvalidChar(ch) => write!(f, "Invalid character '{ch}'"),
+            ErrorKind::InvalidExpression(token) => write!(f, "Not a valid expression: {token}"),
+            ErrorKind::ExpectedEol => write!(f, "Expression must end with new line"),
             ErrorKind::InvalidNodeKind { expected, got } => {
-                write!(f, "invalid node kind, expected: {expected}, got: {got}")
+                write!(f, "Invalid node kind, expected: {expected}, got: {got}")
             }
             ErrorKind::InvalidTokenKind { expected, got } => {
-                write!(f, "invalid token, expected: {expected}, got: {got}")
+                write!(f, "Invalid token, expected: {expected}, got: {got}")
             }
-            ErrorKind::InvalidAssignee => write!(f, "assignee must be identifier, index or array"),
-            ErrorKind::InvalidRange => write!(f, "invalid range defined"),
+            ErrorKind::InvalidAssignee => write!(f, "Assignee must be identifier, index or array"),
+            ErrorKind::InvalidRange => write!(f, "Invalid range defined"),
             ErrorKind::InvalidFunctionParameter => {
-                write!(f, "function parameter must be an identifier")
+                write!(f, "Function parameter must be an identifier")
             }
         }
     }

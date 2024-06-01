@@ -1,12 +1,15 @@
 use std::{collections::HashMap, rc::Rc};
 
+use parser::position::{Position, Range};
+
 use crate::{
     compiler::Compiler,
-    object::{HashKey, Object},
+    error::{Error, ErrorKind},
+    object::{DataType, HashKey, Object},
     vm::VirtualMachine,
 };
 
-fn run_test(input: &str, expected: Object) {
+fn run_test(input: &str, expected: Result<Object, Error>) {
     let program = parser::parse(input).unwrap();
 
     let compiler = Compiler::new();
@@ -28,7 +31,7 @@ fn constants() {
     ];
 
     for (input, expected) in tests {
-        run_test(input, expected);
+        run_test(input, Ok(expected));
     }
 }
 
@@ -55,7 +58,7 @@ fn array() {
     ];
 
     for (input, expected) in tests {
-        run_test(input, Object::Array(Rc::new(expected)));
+        run_test(input, Ok(Object::Array(Rc::new(expected))));
     }
 }
 
@@ -86,6 +89,24 @@ fn hash_map() {
     ];
 
     for (input, expected) in tests {
-        run_test(input, Object::HashMap(Rc::new(expected)));
+        run_test(input, Ok(Object::HashMap(Rc::new(expected))));
+    }
+}
+
+#[test]
+fn hash_map_error() {
+    let tests = [(
+        "{1.9: true}",
+        Error {
+            kind: ErrorKind::NotHashable(DataType::Float),
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 11),
+            },
+        },
+    )];
+
+    for (input, expected) in tests {
+        run_test(input, Err(expected));
     }
 }

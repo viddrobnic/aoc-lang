@@ -2,6 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     bytecode::{Bytecode, Instruction},
+    error::{Error, ErrorKind},
     object::{HashKey, Object},
 };
 
@@ -23,18 +24,20 @@ impl VirtualMachine {
         }
     }
 
-    fn push(&mut self, obj: Object) {
+    fn push(&mut self, obj: Object) -> Result<(), ErrorKind> {
         if self.sp >= self.stack.len() {
-            panic!("stack overflow");
+            return Err(ErrorKind::StackOverflow);
         }
 
         self.stack[self.sp] = obj;
         self.sp += 1;
+
+        Ok(())
     }
 
     fn pop(&mut self) -> Object {
         if self.sp == 0 {
-            panic!("No more elements");
+            panic!("Trying to pop from empty stack. Something is wrong with compiler or vm...");
         }
 
         self.sp -= 1;
@@ -46,36 +49,46 @@ impl VirtualMachine {
     /// This is primarily used to test if the vm works correctly.
     /// The first element on the stack should be the last popped element
     /// if the compiler and vm both work correctly.
-    pub fn run(mut self, bytecode: &Bytecode) -> Object {
-        for inst in &bytecode.instructions {
-            match inst {
-                Instruction::Constant(idx) => self.push(bytecode.constants[*idx].clone()),
-                Instruction::Pop => {
-                    self.pop();
-                }
-                Instruction::Array(len) => self.execute_array(*len),
-                Instruction::HashMap(len) => self.execute_hash_map(*len),
-            }
+    pub fn run(mut self, bytecode: &Bytecode) -> Result<Object, Error> {
+        for ip in 0..bytecode.instructions.len() {
+            self.execute_instruction(ip, bytecode)
+                .map_err(|kind| Error {
+                    kind,
+                    range: bytecode.ranges[ip],
+                })?;
         }
 
-        self.stack[0].clone()
+        Ok(self.stack[0].clone())
     }
 
-    fn execute_array(&mut self, len: usize) {
+    fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<(), ErrorKind> {
+        match bytecode.instructions[ip] {
+            Instruction::Constant(idx) => self.push(bytecode.constants[idx].clone())?,
+            Instruction::Pop => {
+                self.pop();
+            }
+            Instruction::Array(len) => self.execute_array(len)?,
+            Instruction::HashMap(len) => self.execute_hash_map(len)?,
+        }
+
+        Ok(())
+    }
+
+    fn execute_array(&mut self, len: usize) -> Result<(), ErrorKind> {
         let start = self.sp - len;
 
         let arr = self.stack[start..self.sp].to_vec();
         self.sp -= len;
 
-        self.push(Object::Array(Rc::new(arr)));
+        self.push(Object::Array(Rc::new(arr)))
     }
 
-    fn execute_hash_map(&mut self, len: usize) {
+    fn execute_hash_map(&mut self, len: usize) -> Result<(), ErrorKind> {
         let start = self.sp - len;
 
         let hash_map: Result<HashMap<_, _>, _> = self.stack[start..self.sp]
             .chunks(2)
-            .map(|chunk| -> Result<(HashKey, Object), ()> {
+            .map(|chunk| -> Result<(HashKey, Object), ErrorKind> {
                 let key = &chunk[0];
                 let value = &chunk[1];
 
@@ -85,9 +98,7 @@ impl VirtualMachine {
             })
             .collect();
 
-        let hash_map = hash_map.unwrap();
-
         self.sp -= len;
-        self.push(Object::HashMap(Rc::new(hash_map)));
+        self.push(Object::HashMap(Rc::new(hash_map?)))
     }
 }
