@@ -91,7 +91,7 @@ impl Compiler {
             ast::NodeValue::Assign { .. } => todo!(),
             ast::NodeValue::Index { .. } => todo!(),
             ast::NodeValue::If(_) => todo!(),
-            ast::NodeValue::While { .. } => todo!(),
+            ast::NodeValue::While { .. } => self.compile_while(node),
             ast::NodeValue::For { .. } => todo!(),
             ast::NodeValue::Break => todo!(),
             ast::NodeValue::Continue => todo!(),
@@ -135,5 +135,34 @@ impl Compiler {
             PrefixOperatorKind::Not => self.emit(Instruction::Bang, node.range),
             PrefixOperatorKind::Negative => self.emit(Instruction::Minus, node.range),
         };
+    }
+
+    fn compile_while(&mut self, node: &ast::Node) {
+        let ast::NodeValue::While { condition, body } = &node.value else {
+            panic!("Expected while node, got: {node:?}");
+        };
+
+        let start_index = self.current_scope().instructions.len();
+        self.compile_node(condition);
+
+        // Jump position will be fixed after
+        let jump_index = self.emit(Instruction::JumpNotTruthy(0), condition.range);
+
+        self.compile_block(body);
+
+        self.emit(Instruction::Jump(start_index), body.range);
+
+        let end_index = self.current_scope().instructions.len();
+        self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);
+    }
+
+    fn compile_block(&mut self, block: &ast::Block) {
+        for node in &block.nodes {
+            self.compile_node(node);
+
+            if node.kind() == ast::NodeKind::Expression {
+                self.emit(Instruction::Pop, node.range);
+            }
+        }
     }
 }

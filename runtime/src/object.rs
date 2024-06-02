@@ -14,6 +14,12 @@ pub enum Object {
     Dictionary(Dictionary),
 }
 
+impl Object {
+    pub fn is_truthy(&self) -> bool {
+        !matches!(self, Object::Null | Object::Boolean(false))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Array(pub(crate) gc::Ref<Vec<Object>>);
 

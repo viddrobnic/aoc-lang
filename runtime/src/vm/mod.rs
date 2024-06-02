@@ -57,8 +57,10 @@ impl VirtualMachine {
     /// The first element on the stack should be the last popped element
     /// if the compiler and vm both work correctly.
     pub fn run(&mut self, bytecode: &Bytecode) -> Result<Object, Error> {
-        for ip in 0..bytecode.instructions.len() {
-            self.execute_instruction(ip, bytecode)
+        let mut ip = 0;
+        while ip < bytecode.instructions.len() {
+            ip = self
+                .execute_instruction(ip, bytecode)
                 .map_err(|kind| Error {
                     kind,
                     range: bytecode.ranges[ip],
@@ -72,7 +74,7 @@ impl VirtualMachine {
         Ok(self.stack[0].clone())
     }
 
-    fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<(), ErrorKind> {
+    fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<usize, ErrorKind> {
         match bytecode.instructions[ip] {
             Instruction::Constant(idx) => self.push(bytecode.constants[idx].clone())?,
             Instruction::Pop => {
@@ -82,9 +84,16 @@ impl VirtualMachine {
             Instruction::HashMap(len) => self.execute_hash_map(len)?,
             Instruction::Minus => self.execute_minus()?,
             Instruction::Bang => self.execute_bang()?,
+            Instruction::Jump(index) => return Ok(index),
+            Instruction::JumpNotTruthy(index) => {
+                let obj = self.pop();
+                if !obj.is_truthy() {
+                    return Ok(index);
+                }
+            }
         }
 
-        Ok(())
+        Ok(ip + 1)
     }
 
     fn execute_array(&mut self, len: usize) -> Result<(), ErrorKind> {

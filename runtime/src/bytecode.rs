@@ -11,6 +11,9 @@ pub enum Instruction {
 
     Minus,
     Bang,
+
+    Jump(usize),
+    JumpNotTruthy(usize),
 }
 
 #[derive(Debug, PartialEq, Clone)]

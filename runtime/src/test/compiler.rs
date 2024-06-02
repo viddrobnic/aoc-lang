@@ -399,3 +399,77 @@ fn prefix_operator() {
         assert_eq!(bytecode, expected);
     }
 }
+
+#[test]
+fn while_loop() {
+    let tests = [
+        (
+            "while (true) {}",
+            Bytecode {
+                constants: vec![Object::Boolean(true)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(3),
+                    Instruction::Jump(0),
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 7),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 7),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 13),
+                        end: Position::new(0, 15),
+                    },
+                ],
+            },
+        ),
+        (
+            "while (true) {1}",
+            Bytecode {
+                constants: vec![Object::Boolean(true), Object::Integer(1)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(5),
+                    Instruction::Constant(1),
+                    Instruction::Pop,
+                    Instruction::Jump(0),
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 7),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 7),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 14),
+                        end: Position::new(0, 15),
+                    },
+                    Range {
+                        start: Position::new(0, 14),
+                        end: Position::new(0, 15),
+                    },
+                    Range {
+                        start: Position::new(0, 13),
+                        end: Position::new(0, 16),
+                    },
+                ],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program);
+
+        assert_eq!(bytecode, expected);
+    }
+}

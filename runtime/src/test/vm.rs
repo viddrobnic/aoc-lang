@@ -180,3 +180,12 @@ fn prefix_operator() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn while_loop() {
+    let tests = [("while (false) {}\n 10", Object::Integer(10))];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
