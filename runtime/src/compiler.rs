@@ -5,7 +5,10 @@ use crate::{
     object::Object,
 };
 
-use parser::{ast, position::Range};
+use parser::{
+    ast::{self, PrefixOperatorKind},
+    position::Range,
+};
 
 #[derive(Debug, Default)]
 struct Scope {
@@ -83,7 +86,7 @@ impl Compiler {
             }
             ast::NodeValue::ArrayLiteral(arr) => self.compile_array(arr, node.range),
             ast::NodeValue::HashLiteral(elements) => self.compile_hash_map(elements, node.range),
-            ast::NodeValue::PrefixOperator { .. } => todo!(),
+            ast::NodeValue::PrefixOperator { .. } => self.compile_prefix_operator(node),
             ast::NodeValue::InfixOperator { .. } => todo!(),
             ast::NodeValue::Assign { .. } => todo!(),
             ast::NodeValue::Index { .. } => todo!(),
@@ -119,5 +122,18 @@ impl Compiler {
         }
 
         self.emit(Instruction::HashMap(elements.len() * 2), range);
+    }
+
+    fn compile_prefix_operator(&mut self, node: &ast::Node) {
+        let ast::NodeValue::PrefixOperator { operator, right } = &node.value else {
+            panic!("Expected prefix operator node, got: {node:?}");
+        };
+
+        self.compile_node(right);
+
+        match operator {
+            PrefixOperatorKind::Not => self.emit(Instruction::Bang, node.range),
+            PrefixOperatorKind::Negative => self.emit(Instruction::Minus, node.range),
+        };
     }
 }

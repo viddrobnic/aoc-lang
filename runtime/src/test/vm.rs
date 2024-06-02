@@ -110,3 +110,20 @@ fn hash_map_error() {
         run_test(input, Err(expected));
     }
 }
+
+#[test]
+fn prefix_operator() {
+    let tests = [
+        ("-10", Object::Integer(-10)),
+        ("-4.2", Object::Float(-4.2)),
+        ("--10", Object::Integer(10)),
+        ("-(-10)", Object::Integer(10)),
+        ("!false", Object::Boolean(true)),
+        ("!!false", Object::Boolean(false)),
+        ("!42", Object::Integer(-43)), // two's complement
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

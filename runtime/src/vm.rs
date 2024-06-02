@@ -69,6 +69,8 @@ impl VirtualMachine {
             }
             Instruction::Array(len) => self.execute_array(len)?,
             Instruction::HashMap(len) => self.execute_hash_map(len)?,
+            Instruction::Minus => self.execute_minus()?,
+            Instruction::Bang => self.execute_bang()?,
         }
 
         Ok(())
@@ -100,5 +102,29 @@ impl VirtualMachine {
 
         self.sp -= len;
         self.push(Object::HashMap(Rc::new(hash_map?)))
+    }
+
+    fn execute_minus(&mut self) -> Result<(), ErrorKind> {
+        let value = self.pop();
+        match value {
+            Object::Integer(int) => self.push(Object::Integer(-int))?,
+            Object::Float(float) => self.push(Object::Float(-float))?,
+
+            _ => return Err(ErrorKind::InvalidNegateOperand(value.into())),
+        };
+
+        Ok(())
+    }
+
+    fn execute_bang(&mut self) -> Result<(), ErrorKind> {
+        let value = self.pop();
+        match value {
+            Object::Boolean(boolean) => self.push(Object::Boolean(!boolean))?,
+            Object::Integer(int) => self.push(Object::Integer(!int))?,
+
+            _ => return Err(ErrorKind::InvalidNegateOperand(value.into())),
+        };
+
+        Ok(())
     }
 }

@@ -285,3 +285,117 @@ fn hash_map() {
         assert_eq!(bytecode, expected);
     }
 }
+
+#[test]
+fn prefix_operator() {
+    let tests = [
+        (
+            "-10",
+            Bytecode {
+                constants: vec![Object::Integer(10)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Minus,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 1),
+                        end: Position::new(0, 3),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3),
+                    },
+                ],
+            },
+        ),
+        (
+            "-4.2",
+            Bytecode {
+                constants: vec![Object::Float(4.2)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Minus,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 1),
+                        end: Position::new(0, 4),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 4),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 4),
+                    },
+                ],
+            },
+        ),
+        (
+            "!10",
+            Bytecode {
+                constants: vec![Object::Integer(10)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Bang,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 1),
+                        end: Position::new(0, 3),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3),
+                    },
+                ],
+            },
+        ),
+        (
+            "!false",
+            Bytecode {
+                constants: vec![Object::Boolean(false)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Bang,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 1),
+                        end: Position::new(0, 6),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 6),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 6),
+                    },
+                ],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program);
+
+        assert_eq!(bytecode, expected);
+    }
+}

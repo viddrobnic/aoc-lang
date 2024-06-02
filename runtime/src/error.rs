@@ -9,6 +9,7 @@ use crate::object::DataType;
 pub enum ErrorKind {
     StackOverflow,
     NotHashable(DataType),
+    InvalidNegateOperand(DataType),
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -28,6 +29,7 @@ impl Display for ErrorKind {
         match self {
             ErrorKind::StackOverflow => write!(f, "Stack overflow"),
             ErrorKind::NotHashable(data_type) => write!(f, "Data type {data_type} can't be hashed"),
+            ErrorKind::InvalidNegateOperand(dt) => write!(f, "Can not negate {dt}"),
         }
     }
 }

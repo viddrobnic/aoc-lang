@@ -8,6 +8,9 @@ pub enum Instruction {
     Constant(usize),
     Array(usize),
     HashMap(usize),
+
+    Minus,
+    Bang,
 }
 
 #[derive(Debug, PartialEq, Clone)]
