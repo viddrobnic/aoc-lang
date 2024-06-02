@@ -1,12 +1,12 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use parser::position::{Position, Range};
 
 use crate::{
     compiler::Compiler,
     error::{Error, ErrorKind},
-    object::{DataType, HashKey, Object},
-    vm::VirtualMachine,
+    object::{Array, DataType, Dictionary, HashKey, Object},
+    vm::{gc, VirtualMachine},
 };
 
 fn run_test(input: &str, expected: Result<Object, Error>) {
@@ -15,7 +15,7 @@ fn run_test(input: &str, expected: Result<Object, Error>) {
     let compiler = Compiler::new();
     let bytecode = compiler.compile(&program);
 
-    let vm = VirtualMachine::new();
+    let mut vm = VirtualMachine::new();
     let obj = vm.run(&bytecode);
 
     assert_eq!(obj, expected);
@@ -47,19 +47,39 @@ fn array() {
                 Object::String(Rc::new("foo".to_string())),
             ],
         ),
-        (
-            "[1, [2, 3], 4]",
-            vec![
-                Object::Integer(1),
-                Object::Array(Rc::new(vec![Object::Integer(2), Object::Integer(3)])),
-                Object::Integer(4),
-            ],
-        ),
     ];
 
     for (input, expected) in tests {
-        run_test(input, Ok(Object::Array(Rc::new(expected))));
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Array(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Array(arr)));
     }
+}
+
+#[test]
+fn nested_array() {
+    let input = "[1, [2, 3], 4]";
+
+    let inner = Rc::new(RefCell::new(vec![Object::Integer(2), Object::Integer(3)]));
+    let inner_arr = Object::Array(Array(gc::Ref {
+        value: Rc::downgrade(&inner),
+        id: 0,
+    }));
+
+    let outer = Rc::new(RefCell::new(vec![
+        Object::Integer(1),
+        inner_arr,
+        Object::Integer(4),
+    ]));
+    let outer_arr = Object::Array(Array(gc::Ref {
+        value: Rc::downgrade(&outer),
+        id: 0,
+    }));
+
+    run_test(input, Ok(outer_arr));
 }
 
 #[test]
@@ -73,24 +93,57 @@ fn hash_map() {
                 Object::Integer(1),
             )]),
         ),
-        (
-            "{1: 2, 2: {3: 4}}",
-            HashMap::from([
-                (HashKey::Integer(1), Object::Integer(2)),
-                (
-                    HashKey::Integer(2),
-                    Object::HashMap(Rc::new(HashMap::from([(
-                        HashKey::Integer(3),
-                        Object::Integer(4),
-                    )]))),
-                ),
-            ]),
-        ),
+        // (
+        //     "{1: 2, 2: {3: 4}}",
+        //     HashMap::from([
+        //         (HashKey::Integer(1), Object::Integer(2)),
+        //         (
+        //             HashKey::Integer(2),
+        //             Object::Dictionary(Rc::new(HashMap::from([(
+        //                 HashKey::Integer(3),
+        //                 Object::Integer(4),
+        //             )]))),
+        //         ),
+        //     ]),
+        // ),
     ];
 
     for (input, expected) in tests {
-        run_test(input, Ok(Object::HashMap(Rc::new(expected))));
+        let dict = Rc::new(RefCell::new(expected));
+        let dict_ref = gc::Ref {
+            value: Rc::downgrade(&dict),
+            id: 0,
+        };
+        run_test(input, Ok(Object::Dictionary(Dictionary(dict_ref))));
     }
+}
+
+#[test]
+fn nested_hash_map() {
+    let input = "{1: 2, 2: {3: 4}}";
+
+    let inner = Rc::new(RefCell::new(HashMap::from([(
+        HashKey::Integer(3),
+        Object::Integer(4),
+    )])));
+    let inner_ref = gc::Ref {
+        value: Rc::downgrade(&inner),
+        id: 0,
+    };
+
+    let outer = Rc::new(RefCell::new(HashMap::from([
+        (HashKey::Integer(1), Object::Integer(2)),
+        (
+            HashKey::Integer(2),
+            Object::Dictionary(Dictionary(inner_ref)),
+        ),
+    ])));
+    let outer_ref = gc::Ref {
+        value: Rc::downgrade(&outer),
+        id: 0,
+    };
+
+    run_test(input, Ok(Object::Dictionary(Dictionary(outer_ref))));
 }
 
 #[test]

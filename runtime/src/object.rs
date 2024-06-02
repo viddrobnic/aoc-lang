@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
 use crate::error::ErrorKind;
+use crate::vm::gc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
@@ -9,8 +10,51 @@ pub enum Object {
     Float(f64),
     Boolean(bool),
     String(Rc<String>),
-    Array(Rc<Vec<Object>>),
-    HashMap(Rc<HashMap<HashKey, Object>>),
+    Array(Array),
+    Dictionary(Dictionary),
+}
+
+#[derive(Debug, Clone)]
+pub struct Array(pub(crate) gc::Ref<Vec<Object>>);
+
+// Implement equality for test purposes.
+impl PartialEq for Array {
+    fn eq(&self, other: &Self) -> bool {
+        // If gc works, we won't be checking non dropped weaks
+        // so it's fine to check equality on Option<Rc<...>>
+        self.0.value.upgrade() == other.0.value.upgrade()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Dictionary(pub(crate) gc::Ref<HashMap<HashKey, Object>>);
+
+// Similar for array for testing purposes
+impl PartialEq for Dictionary {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.value.upgrade() == other.0.value.upgrade()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub enum HashKey {
+    Integer(i64),
+    Boolean(bool),
+    String(Rc<String>),
+}
+
+impl TryFrom<Object> for HashKey {
+    type Error = ErrorKind;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        match value {
+            Object::String(str) => Ok(Self::String(str)),
+            Object::Integer(i) => Ok(Self::Integer(i)),
+            Object::Boolean(b) => Ok(Self::Boolean(b)),
+
+            _ => Err(ErrorKind::NotHashable(value.into())),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -33,7 +77,7 @@ impl From<&Object> for DataType {
             Object::Boolean(_) => Self::Boolean,
             Object::String(_) => Self::String,
             Object::Array(_) => Self::Array,
-            Object::HashMap(_) => Self::HashMap,
+            Object::Dictionary(_) => Self::HashMap,
         }
     }
 }
@@ -54,27 +98,6 @@ impl Display for DataType {
             DataType::String => write!(f, "STRING"),
             DataType::Array => write!(f, "ARRAY"),
             DataType::HashMap => write!(f, "HASH_MAP"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub enum HashKey {
-    Integer(i64),
-    Boolean(bool),
-    String(Rc<String>),
-}
-
-impl TryFrom<Object> for HashKey {
-    type Error = ErrorKind;
-
-    fn try_from(value: Object) -> Result<Self, Self::Error> {
-        match value {
-            Object::String(str) => Ok(Self::String(str)),
-            Object::Integer(i) => Ok(Self::Integer(i)),
-            Object::Boolean(b) => Ok(Self::Boolean(b)),
-
-            _ => Err(ErrorKind::NotHashable(value.into())),
         }
     }
 }

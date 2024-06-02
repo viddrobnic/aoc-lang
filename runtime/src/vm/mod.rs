@@ -1,15 +1,21 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use crate::{
     bytecode::{Bytecode, Instruction},
     error::{Error, ErrorKind},
-    object::{HashKey, Object},
+    object::{Array, Dictionary, HashKey, Object},
 };
+
+use self::gc::GarbageCollector;
+
+pub(crate) mod gc;
 
 const STACK_SIZE: usize = 4096;
 
 #[derive(Debug)]
 pub struct VirtualMachine {
+    gc: GarbageCollector,
+
     stack: Vec<Object>,
     // StackPointer which points to the next value.
     // Top of the stack is stack[sp-1]
@@ -19,6 +25,7 @@ pub struct VirtualMachine {
 impl VirtualMachine {
     pub fn new() -> Self {
         Self {
+            gc: GarbageCollector::new(),
             stack: vec![Object::Null; STACK_SIZE],
             sp: 0,
         }
@@ -49,13 +56,17 @@ impl VirtualMachine {
     /// This is primarily used to test if the vm works correctly.
     /// The first element on the stack should be the last popped element
     /// if the compiler and vm both work correctly.
-    pub fn run(mut self, bytecode: &Bytecode) -> Result<Object, Error> {
+    pub fn run(&mut self, bytecode: &Bytecode) -> Result<Object, Error> {
         for ip in 0..bytecode.instructions.len() {
             self.execute_instruction(ip, bytecode)
                 .map_err(|kind| Error {
                     kind,
                     range: bytecode.ranges[ip],
                 })?;
+
+            if self.gc.should_free() {
+                self.gc.free(&self.stack[0..self.sp]);
+            }
         }
 
         Ok(self.stack[0].clone())
@@ -82,7 +93,8 @@ impl VirtualMachine {
         let arr = self.stack[start..self.sp].to_vec();
         self.sp -= len;
 
-        self.push(Object::Array(Rc::new(arr)))
+        let arr_ref = self.gc.allocate(arr);
+        self.push(Object::Array(Array(arr_ref)))
     }
 
     fn execute_hash_map(&mut self, len: usize) -> Result<(), ErrorKind> {
@@ -101,7 +113,9 @@ impl VirtualMachine {
             .collect();
 
         self.sp -= len;
-        self.push(Object::HashMap(Rc::new(hash_map?)))
+
+        let dict_ref = self.gc.allocate(hash_map?);
+        self.push(Object::Dictionary(Dictionary(dict_ref)))
     }
 
     fn execute_minus(&mut self) -> Result<(), ErrorKind> {
