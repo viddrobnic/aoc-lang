@@ -75,7 +75,7 @@ fn constants() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let bytecode = compiler.compile(&program);
+        let bytecode = compiler.compile(&program).unwrap();
         assert_eq!(bytecode, expected);
     }
 }
@@ -160,7 +160,7 @@ fn arrays() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let bytecode = compiler.compile(&program);
+        let bytecode = compiler.compile(&program).unwrap();
         assert_eq!(bytecode, expected);
     }
 
@@ -189,7 +189,7 @@ fn arrays() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let mut bytecode = compiler.compile(&program);
+        let mut bytecode = compiler.compile(&program).unwrap();
         bytecode.ranges = vec![];
 
         assert_eq!(bytecode, expected);
@@ -248,7 +248,7 @@ fn hash_map() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let bytecode = compiler.compile(&program);
+        let bytecode = compiler.compile(&program).unwrap();
         assert_eq!(bytecode, expected);
     }
 
@@ -279,7 +279,7 @@ fn hash_map() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let mut bytecode = compiler.compile(&program);
+        let mut bytecode = compiler.compile(&program).unwrap();
         bytecode.ranges = vec![];
 
         assert_eq!(bytecode, expected);
@@ -394,7 +394,7 @@ fn prefix_operator() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let bytecode = compiler.compile(&program);
+        let bytecode = compiler.compile(&program).unwrap();
 
         assert_eq!(bytecode, expected);
     }
@@ -468,7 +468,214 @@ fn while_loop() {
     for (input, expected) in tests {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
-        let bytecode = compiler.compile(&program);
+        let bytecode = compiler.compile(&program).unwrap();
+
+        assert_eq!(bytecode, expected);
+    }
+}
+
+#[test]
+fn assign() {
+    let tests = [
+        (
+            "foo = -1",
+            Bytecode {
+                constants: vec![Object::Integer(1)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Minus,
+                    Instruction::StoreGlobal(0),
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 7),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 6),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 8),
+                    },
+                ],
+            },
+        ),
+        (
+            "[foo] = [1]",
+            Bytecode {
+                constants: vec![Object::Integer(1)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Array(1),
+                    Instruction::UnpackArray(1),
+                    Instruction::StoreGlobal(0),
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 9),
+                        end: Position::new(0, 10),
+                    },
+                    Range {
+                        start: Position::new(0, 8),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 11),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 11),
+                    },
+                ],
+            },
+        ),
+        (
+            "[foo, bar] = [1, 2]",
+            Bytecode {
+                constants: vec![Object::Integer(1), Object::Integer(2)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Constant(1),
+                    Instruction::Array(2),
+                    Instruction::UnpackArray(2),
+                    Instruction::StoreGlobal(0),
+                    Instruction::StoreGlobal(1),
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 14),
+                        end: Position::new(0, 15),
+                    },
+                    Range {
+                        start: Position::new(0, 17),
+                        end: Position::new(0, 18),
+                    },
+                    Range {
+                        start: Position::new(0, 13),
+                        end: Position::new(0, 19),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 19),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 19),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 19),
+                    },
+                ],
+            },
+        ),
+        (
+            "foo = []\nfoo[0] = 1",
+            Bytecode {
+                constants: vec![Object::Integer(1), Object::Integer(0)],
+                instructions: vec![
+                    Instruction::Array(0),
+                    Instruction::StoreGlobal(0),
+                    Instruction::Constant(0),
+                    Instruction::LoadGlobal(0),
+                    Instruction::Constant(1),
+                    Instruction::IndexSet,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 6),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(1, 9),
+                        end: Position::new(1, 10),
+                    },
+                    Range {
+                        start: Position::new(1, 0),
+                        end: Position::new(1, 3),
+                    },
+                    Range {
+                        start: Position::new(1, 4),
+                        end: Position::new(1, 5),
+                    },
+                    Range {
+                        start: Position::new(1, 0),
+                        end: Position::new(1, 10),
+                    },
+                ],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program).unwrap();
+
+        assert_eq!(bytecode, expected);
+    }
+
+    // Without positions
+    let tests = [
+        (
+            "[foo, [bar, baz]] = [1, [2, 3]]",
+            Bytecode {
+                constants: vec![Object::Integer(1), Object::Integer(2), Object::Integer(3)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Constant(1),
+                    Instruction::Constant(2),
+                    Instruction::Array(2),
+                    Instruction::Array(2),
+                    Instruction::UnpackArray(2),
+                    Instruction::StoreGlobal(0),
+                    Instruction::UnpackArray(2),
+                    Instruction::StoreGlobal(1),
+                    Instruction::StoreGlobal(2),
+                ],
+                ranges: vec![],
+            },
+        ),
+        (
+            "foo = {}\n[foo.bar, foo.baz] = [10, 20]",
+            Bytecode {
+                constants: vec![
+                    Object::Integer(10),
+                    Object::Integer(20),
+                    Object::String(Rc::new("bar".to_string())),
+                    Object::String(Rc::new("baz".to_string())),
+                ],
+                instructions: vec![
+                    Instruction::HashMap(0),
+                    Instruction::StoreGlobal(0),
+                    Instruction::Constant(0),
+                    Instruction::Constant(1),
+                    Instruction::Array(2),
+                    Instruction::UnpackArray(2),
+                    Instruction::LoadGlobal(0),
+                    Instruction::Constant(2),
+                    Instruction::IndexSet,
+                    Instruction::LoadGlobal(0),
+                    Instruction::Constant(3),
+                    Instruction::IndexSet,
+                ],
+                ranges: vec![],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let mut bytecode = compiler.compile(&program).unwrap();
+        bytecode.ranges = vec![];
 
         assert_eq!(bytecode, expected);
     }

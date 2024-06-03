@@ -13,7 +13,7 @@ fn run_test(input: &str, expected: Result<Object, Error>) {
     let program = parser::parse(input).unwrap();
 
     let compiler = Compiler::new();
-    let bytecode = compiler.compile(&program);
+    let bytecode = compiler.compile(&program).unwrap();
 
     let mut vm = VirtualMachine::new();
     let obj = vm.run(&bytecode);
@@ -93,19 +93,6 @@ fn hash_map() {
                 Object::Integer(1),
             )]),
         ),
-        // (
-        //     "{1: 2, 2: {3: 4}}",
-        //     HashMap::from([
-        //         (HashKey::Integer(1), Object::Integer(2)),
-        //         (
-        //             HashKey::Integer(2),
-        //             Object::Dictionary(Rc::new(HashMap::from([(
-        //                 HashKey::Integer(3),
-        //                 Object::Integer(4),
-        //             )]))),
-        //         ),
-        //     ]),
-        // ),
     ];
 
     for (input, expected) in tests {
@@ -187,5 +174,80 @@ fn while_loop() {
 
     for (input, expected) in tests {
         run_test(input, Ok(expected));
+    }
+}
+
+#[test]
+fn assign() {
+    let tests = [
+        ("a = 10\n a", Object::Integer(10)),
+        ("[a, b] = [1, 2]\n a", Object::Integer(1)),
+        ("[a, b] = [1, 2]\n b", Object::Integer(2)),
+        ("[a, [b, c]] = [1, [2, 3]]\n a", Object::Integer(1)),
+        ("[a, [b, c]] = [1, [2, 3]]\n b", Object::Integer(2)),
+        ("[a, [b, c]] = [1, [2, 3]]\n c", Object::Integer(3)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
+fn assign_array_index() {
+    let tests = [
+        ("a = [0]\n a[0] = 1\n a", vec![Object::Integer(1)]),
+        (
+            "a = [0, 1]\n [a[0], a[1]] = [42, 69]\n a",
+            vec![Object::Integer(42), Object::Integer(69)],
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Array(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Array(arr)));
+    }
+}
+
+#[test]
+fn assign_dict_index() {
+    let tests = [
+        (
+            "a = {}\n a[0] = 1\n a",
+            HashMap::from([(HashKey::Integer(0), Object::Integer(1))]),
+        ),
+        (
+            "a = {}\n a.foo = 42\n a",
+            HashMap::from([(
+                HashKey::String(Rc::new("foo".to_string())),
+                Object::Integer(42),
+            )]),
+        ),
+        (
+            "a = {}\n [a.foo, a[\"bar\"]] = [42, 69]\n a",
+            HashMap::from([
+                (
+                    HashKey::String(Rc::new("foo".to_string())),
+                    Object::Integer(42),
+                ),
+                (
+                    HashKey::String(Rc::new("bar".to_string())),
+                    Object::Integer(69),
+                ),
+            ]),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Dictionary(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Dictionary(arr)));
     }
 }

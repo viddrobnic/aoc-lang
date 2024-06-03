@@ -14,6 +14,15 @@ pub enum Instruction {
 
     Jump(usize),
     JumpNotTruthy(usize),
+
+    // Puts all array values on stack, where
+    // array should be given size long.
+    UnpackArray(usize),
+
+    IndexSet,
+
+    StoreGlobal(usize),
+    LoadGlobal(usize),
 }
 
 #[derive(Debug, PartialEq, Clone)]

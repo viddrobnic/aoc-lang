@@ -10,11 +10,17 @@ use self::gc::GarbageCollector;
 
 pub(crate) mod gc;
 
+#[cfg(test)]
+mod test;
+
 const STACK_SIZE: usize = 4096;
+const GLOBALS_SIZE: usize = 512;
 
 #[derive(Debug)]
 pub struct VirtualMachine {
     gc: GarbageCollector,
+
+    globals: Vec<Object>,
 
     stack: Vec<Object>,
     // StackPointer which points to the next value.
@@ -26,6 +32,7 @@ impl VirtualMachine {
     pub fn new() -> Self {
         Self {
             gc: GarbageCollector::new(),
+            globals: vec![Object::Null; GLOBALS_SIZE],
             stack: vec![Object::Null; STACK_SIZE],
             sp: 0,
         }
@@ -91,6 +98,16 @@ impl VirtualMachine {
                     return Ok(index);
                 }
             }
+            Instruction::UnpackArray(size) => self.unpack_array(size)?,
+            Instruction::StoreGlobal(index) => {
+                let obj = self.pop();
+                self.globals[index] = obj;
+            }
+            Instruction::LoadGlobal(index) => {
+                let obj = self.globals[index].clone();
+                self.push(obj)?;
+            }
+            Instruction::IndexSet => self.index_set()?,
         }
 
         Ok(ip + 1)
@@ -147,6 +164,62 @@ impl VirtualMachine {
 
             _ => return Err(ErrorKind::InvalidNegateOperand(value.into())),
         };
+
+        Ok(())
+    }
+
+    fn unpack_array(&mut self, size: usize) -> Result<(), ErrorKind> {
+        let obj = self.pop();
+        let Object::Array(arr) = obj else {
+            return Err(ErrorKind::NotUnpackable(obj.into()));
+        };
+
+        let rc = arr.0.value.upgrade().unwrap();
+        let values = rc.borrow();
+        if values.len() != size {
+            return Err(ErrorKind::UnpackLengthMismatch {
+                expected: size,
+                got: values.len(),
+            });
+        }
+
+        if values.len() > 256 {
+            return Err(ErrorKind::UnpackTooLarge {
+                max: 256,
+                got: values.len(),
+            });
+        }
+
+        for obj in values.iter().rev() {
+            self.push(obj.clone())?;
+        }
+
+        Ok(())
+    }
+
+    fn index_set(&mut self) -> Result<(), ErrorKind> {
+        let index = self.pop();
+        let container = self.pop();
+        let value = self.pop();
+
+        match container {
+            Object::Array(arr) => {
+                let Object::Integer(idx) = index else {
+                    return Err(ErrorKind::InvalidIndexType(index.into()));
+                };
+
+                let rc = arr.0.value.upgrade().unwrap();
+                rc.borrow_mut()[idx as usize] = value;
+            }
+            Object::Dictionary(dict) => {
+                let key: HashKey = index.try_into()?;
+
+                let rc = dict.0.value.upgrade().unwrap();
+                rc.borrow_mut().insert(key, value);
+            }
+
+            _ => return Err(ErrorKind::NotIndexable(container.into())),
+        }
 
         Ok(())
     }
