@@ -281,10 +281,10 @@ impl Parser<'_> {
         let end = right.range.end;
 
         Ok((
-            ast::NodeValue::PrefixOperator {
+            ast::NodeValue::PrefixOperator(ast::PrefixOperator {
                 operator: token_to_prefix_operator(&start_token.kind),
                 right: Box::new(right),
-            },
+            }),
             end,
         ))
     }
@@ -306,11 +306,11 @@ impl Parser<'_> {
         let end = right.range.end;
 
         Ok((
-            ast::NodeValue::InfixOperator {
+            ast::NodeValue::InfixOperator(ast::InfixOperator {
                 operator,
                 left: Box::new(left),
                 right: Box::new(right),
-            },
+            }),
             end,
         ))
     }
@@ -504,10 +504,10 @@ impl Parser<'_> {
         let (block, end) = self.parse_block(block_token)?;
 
         Ok((
-            ast::NodeValue::While {
+            ast::NodeValue::While(ast::While {
                 condition: Box::new(condition),
                 body: block,
-            },
+            }),
             end,
         ))
     }
@@ -538,6 +538,8 @@ impl Parser<'_> {
         let initial = params.next().unwrap();
         let condition = params.next().unwrap();
         let after = params.next().unwrap();
+
+        validate_node_kind(&condition, NodeKind::Expression)?;
 
         let body_token = self.next_token()?;
         let (body, end) = self.parse_block(body_token)?;

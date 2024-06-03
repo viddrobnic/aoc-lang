@@ -114,7 +114,7 @@ fn prefix_operator() -> Result<()> {
         (
             "!false",
             ast::Node {
-                value: ast::NodeValue::PrefixOperator {
+                value: ast::NodeValue::PrefixOperator(ast::PrefixOperator {
                     operator: ast::PrefixOperatorKind::Not,
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::BoolLiteral(false),
@@ -123,7 +123,7 @@ fn prefix_operator() -> Result<()> {
                             end: Position::new(0, 6),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 6),
@@ -133,7 +133,7 @@ fn prefix_operator() -> Result<()> {
         (
             "-42",
             ast::Node {
-                value: ast::NodeValue::PrefixOperator {
+                value: ast::NodeValue::PrefixOperator(ast::PrefixOperator {
                     operator: ast::PrefixOperatorKind::Negative,
                     right: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(42),
@@ -142,7 +142,7 @@ fn prefix_operator() -> Result<()> {
                             end: Position::new(0, 3),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 3),
@@ -152,10 +152,10 @@ fn prefix_operator() -> Result<()> {
         (
             "--1",
             ast::Node {
-                value: ast::NodeValue::PrefixOperator {
+                value: ast::NodeValue::PrefixOperator(ast::PrefixOperator {
                     operator: ast::PrefixOperatorKind::Negative,
                     right: Box::new(ast::Node {
-                        value: ast::NodeValue::PrefixOperator {
+                        value: ast::NodeValue::PrefixOperator(ast::PrefixOperator {
                             operator: ast::PrefixOperatorKind::Negative,
                             right: Box::new(ast::Node {
                                 value: ast::NodeValue::IntegerLiteral(1),
@@ -164,13 +164,13 @@ fn prefix_operator() -> Result<()> {
                                     end: Position::new(0, 3),
                                 },
                             }),
-                        },
+                        }),
                         range: Range {
                             start: Position::new(0, 1),
                             end: Position::new(0, 3),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 3),
@@ -195,7 +195,7 @@ fn infix_opeartor() -> Result<()> {
         (
             "1+2",
             ast::Node {
-                value: ast::NodeValue::InfixOperator {
+                value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                     operator: ast::InfixOperatorKind::Add,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
@@ -211,7 +211,7 @@ fn infix_opeartor() -> Result<()> {
                             end: Position::new(0, 3),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 3),
@@ -221,7 +221,7 @@ fn infix_opeartor() -> Result<()> {
         (
             "1 & 2",
             ast::Node {
-                value: ast::NodeValue::InfixOperator {
+                value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                     operator: ast::InfixOperatorKind::And,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
@@ -237,7 +237,7 @@ fn infix_opeartor() -> Result<()> {
                             end: Position::new(0, 5),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 5),
@@ -247,7 +247,7 @@ fn infix_opeartor() -> Result<()> {
         (
             "1 & 2 + 3",
             ast::Node {
-                value: ast::NodeValue::InfixOperator {
+                value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                     operator: ast::InfixOperatorKind::And,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
@@ -257,7 +257,7 @@ fn infix_opeartor() -> Result<()> {
                         },
                     }),
                     right: Box::new(ast::Node {
-                        value: ast::NodeValue::InfixOperator {
+                        value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                             operator: ast::InfixOperatorKind::Add,
                             left: Box::new(ast::Node {
                                 value: ast::NodeValue::IntegerLiteral(2),
@@ -273,13 +273,13 @@ fn infix_opeartor() -> Result<()> {
                                     end: Position::new(0, 9),
                                 },
                             }),
-                        },
+                        }),
                         range: Range {
                             start: Position::new(0, 4),
                             end: Position::new(0, 9),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 9),
@@ -306,7 +306,7 @@ fn grouped() -> Result<()> {
     assert_eq!(
         program.statements[0],
         ast::Node {
-            value: ast::NodeValue::InfixOperator {
+            value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                 operator: ast::InfixOperatorKind::Add,
                 left: Box::new(ast::Node {
                     value: ast::NodeValue::IntegerLiteral(1),
@@ -316,10 +316,10 @@ fn grouped() -> Result<()> {
                     }
                 }),
                 right: Box::new(ast::Node {
-                    value: ast::NodeValue::InfixOperator {
+                    value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                         operator: ast::InfixOperatorKind::Add,
                         left: Box::new(ast::Node {
-                            value: ast::NodeValue::InfixOperator {
+                            value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                                 operator: ast::InfixOperatorKind::Add,
                                 left: Box::new(ast::Node {
                                     value: ast::NodeValue::IntegerLiteral(2),
@@ -329,7 +329,7 @@ fn grouped() -> Result<()> {
                                     }
                                 }),
                                 right: Box::new(ast::Node {
-                                    value: ast::NodeValue::InfixOperator {
+                                    value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                                         operator: ast::InfixOperatorKind::Eq,
                                         left: Box::new(ast::Node {
                                             value: ast::NodeValue::IntegerLiteral(3),
@@ -345,13 +345,13 @@ fn grouped() -> Result<()> {
                                                 end: Position::new(0, 17),
                                             }
                                         })
-                                    },
+                                    }),
                                     range: Range {
                                         start: Position::new(0, 10),
                                         end: Position::new(0, 18),
                                     }
                                 })
-                            },
+                            }),
                             range: Range {
                                 start: Position::new(0, 5),
                                 end: Position::new(0, 19),
@@ -364,13 +364,13 @@ fn grouped() -> Result<()> {
                                 end: Position::new(0, 23)
                             }
                         })
-                    },
+                    }),
                     range: Range {
                         start: Position::new(0, 4),
                         end: Position::new(0, 24),
                     }
                 })
-            },
+            }),
             range: Range {
                 start: Position::new(0, 0),
                 end: Position::new(0, 24),
@@ -615,7 +615,7 @@ fn assign() -> Result<()> {
                         },
                     }),
                     value: Box::new(ast::Node {
-                        value: ast::NodeValue::InfixOperator {
+                        value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                             operator: ast::InfixOperatorKind::Or,
                             left: Box::new(ast::Node {
                                 value: ast::NodeValue::BoolLiteral(true),
@@ -625,7 +625,7 @@ fn assign() -> Result<()> {
                                 },
                             }),
                             right: Box::new(ast::Node {
-                                value: ast::NodeValue::InfixOperator {
+                                value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                                     operator: ast::InfixOperatorKind::Eq,
                                     left: Box::new(ast::Node {
                                         value: ast::NodeValue::IntegerLiteral(1),
@@ -641,13 +641,13 @@ fn assign() -> Result<()> {
                                             end: Position::new(0, 19),
                                         },
                                     }),
-                                },
+                                }),
                                 range: Range {
                                     start: Position::new(0, 13),
                                     end: Position::new(0, 19),
                                 },
                             }),
-                        },
+                        }),
                         range: Range {
                             start: Position::new(0, 6),
                             end: Position::new(0, 19),
@@ -910,7 +910,7 @@ fn while_loop() -> Result<()> {
         (
             "while (true) {}",
             ast::Node {
-                value: ast::NodeValue::While {
+                value: ast::NodeValue::While(ast::While {
                     condition: Box::new(ast::Node {
                         value: ast::NodeValue::BoolLiteral(true),
                         range: Range {
@@ -925,7 +925,7 @@ fn while_loop() -> Result<()> {
                             end: Position::new(0, 15),
                         },
                     },
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 15),
@@ -935,7 +935,7 @@ fn while_loop() -> Result<()> {
         (
             "while (true) {\nfoo\n}",
             ast::Node {
-                value: ast::NodeValue::While {
+                value: ast::NodeValue::While(ast::While {
                     condition: Box::new(ast::Node {
                         value: ast::NodeValue::BoolLiteral(true),
                         range: Range {
@@ -956,7 +956,7 @@ fn while_loop() -> Result<()> {
                             end: Position::new(2, 1),
                         },
                     },
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(2, 1),
@@ -1007,7 +1007,7 @@ fn for_loop() -> Result<()> {
                     }
                 }),
                 condition: Box::new(ast::Node {
-                    value: ast::NodeValue::InfixOperator {
+                    value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                         operator: ast::InfixOperatorKind::Le,
                         left: Box::new(ast::Node {
                             value: ast::NodeValue::Identifier("i".to_string()),
@@ -1023,7 +1023,7 @@ fn for_loop() -> Result<()> {
                                 end: Position::new(0, 18),
                             }
                         })
-                    },
+                    }),
                     range: Range {
                         start: Position::new(0, 12),
                         end: Position::new(0, 18),
@@ -1039,7 +1039,7 @@ fn for_loop() -> Result<()> {
                             }
                         }),
                         value: Box::new(ast::Node {
-                            value: ast::NodeValue::InfixOperator {
+                            value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                                 operator: ast::InfixOperatorKind::Add,
                                 left: Box::new(ast::Node {
                                     value: ast::NodeValue::Identifier("i".to_string()),
@@ -1055,7 +1055,7 @@ fn for_loop() -> Result<()> {
                                         end: Position::new(0, 29),
                                     }
                                 })
-                            },
+                            }),
                             range: Range {
                                 start: Position::new(0, 24),
                                 end: Position::new(0, 29)
@@ -1287,7 +1287,7 @@ fn return_statement() -> Result<()> {
         program.statements[0],
         ast::Node {
             value: ast::NodeValue::Return(Box::new(ast::Node {
-                value: ast::NodeValue::InfixOperator {
+                value: ast::NodeValue::InfixOperator(ast::InfixOperator {
                     operator: ast::InfixOperatorKind::Add,
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::IntegerLiteral(1),
@@ -1303,7 +1303,7 @@ fn return_statement() -> Result<()> {
                             end: Position::new(0, 12)
                         }
                     })
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 7),
                     end: Position::new(0, 12)

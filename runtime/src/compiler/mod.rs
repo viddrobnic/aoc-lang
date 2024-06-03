@@ -97,15 +97,19 @@ impl Compiler {
             }
             ast::NodeValue::ArrayLiteral(arr) => self.compile_array(arr, node.range)?,
             ast::NodeValue::HashLiteral(elements) => self.compile_hash_map(elements, node.range)?,
-            ast::NodeValue::PrefixOperator { .. } => self.compile_prefix_operator(node)?,
-            ast::NodeValue::InfixOperator { .. } => todo!(),
+            ast::NodeValue::PrefixOperator(prefix) => {
+                self.compile_prefix_operator(prefix, node.range)?;
+            }
+            ast::NodeValue::InfixOperator(infix) => {
+                self.compile_infix_operator(infix, node.range)?;
+            }
             ast::NodeValue::Assign { ident, value } => {
                 self.compile_node(value)?;
                 self.compile_assign(ident, node.range)?;
             }
             ast::NodeValue::Index { .. } => todo!(),
             ast::NodeValue::If(_) => todo!(),
-            ast::NodeValue::While { .. } => self.compile_while(node)?,
+            ast::NodeValue::While(while_loop) => self.compile_while(while_loop)?,
             ast::NodeValue::For { .. } => todo!(),
             ast::NodeValue::Break => todo!(),
             ast::NodeValue::Continue => todo!(),
@@ -147,35 +151,65 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_prefix_operator(&mut self, node: &ast::Node) -> Result<(), Error> {
-        let ast::NodeValue::PrefixOperator { operator, right } = &node.value else {
-            panic!("Expected prefix operator node, got: {node:?}");
-        };
+    fn compile_prefix_operator(
+        &mut self,
+        node: &ast::PrefixOperator,
+        range: Range,
+    ) -> Result<(), Error> {
+        self.compile_node(&node.right)?;
 
-        self.compile_node(right)?;
-
-        match operator {
-            PrefixOperatorKind::Not => self.emit(Instruction::Bang, node.range),
-            PrefixOperatorKind::Negative => self.emit(Instruction::Minus, node.range),
+        match node.operator {
+            PrefixOperatorKind::Not => self.emit(Instruction::Bang, range),
+            PrefixOperatorKind::Negative => self.emit(Instruction::Minus, range),
         };
 
         Ok(())
     }
 
-    fn compile_while(&mut self, node: &ast::Node) -> Result<(), Error> {
-        let ast::NodeValue::While { condition, body } = &node.value else {
-            panic!("Expected while node, got: {node:?}");
+    fn compile_infix_operator(
+        &mut self,
+        node: &ast::InfixOperator,
+        range: Range,
+    ) -> Result<(), Error> {
+        let (instruction, reverse) = match node.operator {
+            ast::InfixOperatorKind::Add => (Instruction::Add, false),
+            ast::InfixOperatorKind::Subtract => (Instruction::Subtract, false),
+            ast::InfixOperatorKind::Multiply => (Instruction::Multiply, false),
+            ast::InfixOperatorKind::Divide => (Instruction::Divide, false),
+            ast::InfixOperatorKind::Modulo => (Instruction::Modulo, false),
+            ast::InfixOperatorKind::And => (Instruction::And, false),
+            ast::InfixOperatorKind::Or => (Instruction::Or, false),
+            ast::InfixOperatorKind::Le => (Instruction::Le, false),
+            ast::InfixOperatorKind::Leq => (Instruction::Leq, false),
+            ast::InfixOperatorKind::Ge => (Instruction::Le, true),
+            ast::InfixOperatorKind::Geq => (Instruction::Leq, true),
+            ast::InfixOperatorKind::Eq => (Instruction::Eq, false),
+            ast::InfixOperatorKind::Neq => (Instruction::Neq, false),
         };
 
+        if reverse {
+            self.compile_node(&node.right)?;
+            self.compile_node(&node.left)?;
+        } else {
+            self.compile_node(&node.left)?;
+            self.compile_node(&node.right)?;
+        }
+
+        self.emit(instruction, range);
+
+        Ok(())
+    }
+
+    fn compile_while(&mut self, while_loop: &ast::While) -> Result<(), Error> {
         let start_index = self.current_scope().instructions.len();
-        self.compile_node(condition)?;
+        self.compile_node(&while_loop.condition)?;
 
         // Jump position will be fixed after
-        let jump_index = self.emit(Instruction::JumpNotTruthy(0), condition.range);
+        let jump_index = self.emit(Instruction::JumpNotTruthy(0), while_loop.condition.range);
 
-        self.compile_block(body)?;
+        self.compile_block(&while_loop.body)?;
 
-        self.emit(Instruction::Jump(start_index), body.range);
+        self.emit(Instruction::Jump(start_index), while_loop.body.range);
 
         let end_index = self.current_scope().instructions.len();
         self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);

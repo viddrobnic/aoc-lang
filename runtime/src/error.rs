@@ -15,7 +15,17 @@ pub enum ErrorKind {
     UnpackLengthMismatch { expected: usize, got: usize },
     UnpackTooLarge { max: usize, got: usize },
     NotIndexable(DataType),
+
     InvalidIndexType(DataType),
+    InvalidAddType(DataType, DataType),
+    InvalidSubtractType(DataType, DataType),
+    InvalidMultiplyType(DataType, DataType),
+    InvalidDivideType(DataType, DataType),
+    InvalidModuloType(DataType, DataType),
+    InvalidAndType(DataType, DataType),
+    InvalidOrType(DataType, DataType),
+    InvalidOrderingType(DataType, DataType),
+    InvalidEqualityType(DataType, DataType),
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -48,6 +58,43 @@ impl Display for ErrorKind {
             ),
             ErrorKind::NotIndexable(dt) => write!(f, "Data type {dt} can't be indexed"),
             ErrorKind::InvalidIndexType(dt) => write!(f, "Invalid index type: {dt}"),
+
+            ErrorKind::InvalidAddType(left, right) => write!(
+                f,
+                "Can't perform {left} + {right}. Can add integers, floats, strings and arrays."
+            ),
+            ErrorKind::InvalidSubtractType(left, right) => write!(
+                f,
+                "Can't perform {left} - {right}. Can subtract integers and floats."
+            ),
+            ErrorKind::InvalidMultiplyType(left, right) => write!(
+                f,
+                "Can't perform {left} * {right}. Can multiply integers and floats."
+            ),
+            ErrorKind::InvalidDivideType(left, right) => write!(
+                f,
+                "Can't perform {left} / {right}. Can divide integers and floats."
+            ),
+            ErrorKind::InvalidModuloType(left, right) => write!(
+                f,
+                "Can't perform {left} % {right}. Can calculate moduleo of integers."
+            ),
+            ErrorKind::InvalidAndType(left, right) => write!(
+                f,
+                "Can't perform {left} & {right}. Can perform and on integers and booleans"
+            ),
+            ErrorKind::InvalidOrType(left, right) => write!(
+                f,
+                "Can't perform {left} | {right}. Can perform or on integers and booleans"
+            ),
+            ErrorKind::InvalidOrderingType(left, right) => write!(
+                f,
+                "Can't compare order of {left} and {right}. Can compare order of integers, floats and strings."
+            ),
+            ErrorKind::InvalidEqualityType(left, right) => write!(
+                f,
+                "Can't compare equality of {left} and {right}. Can compare equality of integers, floats, booleans and strings."
+            ),
         }
     }
 }

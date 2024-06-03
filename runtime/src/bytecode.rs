@@ -12,6 +12,18 @@ pub enum Instruction {
     Minus,
     Bang,
 
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Modulo,
+    And,
+    Or,
+    Le,
+    Leq,
+    Eq,
+    Neq,
+
     Jump(usize),
     JumpNotTruthy(usize),
 

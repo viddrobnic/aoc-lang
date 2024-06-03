@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     bytecode::{Bytecode, Instruction},
     error::{Error, ErrorKind},
-    object::{Array, Dictionary, HashKey, Object},
+    object::{Array, DataType, Dictionary, HashKey, Object},
 };
 
 use self::gc::GarbageCollector;
@@ -108,6 +108,29 @@ impl VirtualMachine {
                 self.push(obj)?;
             }
             Instruction::IndexSet => self.index_set()?,
+            Instruction::Add => self.execute_add()?,
+            Instruction::Subtract => self.execute_infix_number_op(
+                |left, right| left - right,
+                |left, right| left - right,
+                ErrorKind::InvalidSubtractType,
+            )?,
+            Instruction::Multiply => self.execute_infix_number_op(
+                |left, right| left * right,
+                |left, right| left * right,
+                ErrorKind::InvalidMultiplyType,
+            )?,
+            Instruction::Divide => self.execute_infix_number_op(
+                |left, right| left / right,
+                |left, right| left / right,
+                ErrorKind::InvalidDivideType,
+            )?,
+            Instruction::Modulo => self.execute_modulo()?,
+            Instruction::And => self.execute_and()?,
+            Instruction::Or => self.execute_or()?,
+            Instruction::Le => self.execute_le()?,
+            Instruction::Leq => self.execute_leq()?,
+            Instruction::Eq => self.execute_eq()?,
+            Instruction::Neq => self.execute_neq()?,
         }
 
         Ok(ip + 1)
@@ -219,6 +242,231 @@ impl VirtualMachine {
             }
 
             _ => return Err(ErrorKind::NotIndexable(container.into())),
+        }
+
+        Ok(())
+    }
+
+    fn execute_add(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Integer(left + right))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Float(left + right))?;
+            }
+            (Object::String(left), Object::String(right)) => {
+                let mut res = left.to_string();
+                res += right;
+                self.push(Object::String(Rc::new(res)))?;
+            }
+            (Object::Array(left), Object::Array(right)) => {
+                let left_rc = left.0.value.upgrade().unwrap();
+                let right_rc = right.0.value.upgrade().unwrap();
+
+                let mut res = left_rc.borrow().to_vec();
+                res.extend_from_slice(&right_rc.borrow());
+
+                let res_ref = self.gc.allocate(res);
+                self.push(Object::Array(Array(res_ref)))?;
+            }
+
+            _ => return Err(ErrorKind::InvalidAddType(left_obj.into(), right_obj.into())),
+        }
+        Ok(())
+    }
+
+    fn execute_infix_number_op<I, F, E>(
+        &mut self,
+        int_fn: I,
+        float_fn: F,
+        err: E,
+    ) -> Result<(), ErrorKind>
+    where
+        I: Fn(i64, i64) -> i64,
+        F: Fn(f64, f64) -> f64,
+        E: Fn(DataType, DataType) -> ErrorKind,
+    {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Integer(int_fn(*left, *right)))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Float(float_fn(*left, *right)))?;
+            }
+
+            _ => return Err(err(left_obj.into(), right_obj.into())),
+        }
+
+        Ok(())
+    }
+
+    fn execute_modulo(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Integer(left.rem_euclid(*right)))?;
+            }
+            _ => {
+                return Err(ErrorKind::InvalidModuloType(
+                    left_obj.into(),
+                    right_obj.into(),
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn execute_and(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Integer(left & right))?;
+            }
+            (Object::Boolean(left), Object::Boolean(right)) => {
+                self.push(Object::Boolean(*left && *right))?;
+            }
+
+            _ => return Err(ErrorKind::InvalidAndType(left_obj.into(), right_obj.into())),
+        }
+
+        Ok(())
+    }
+
+    fn execute_or(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Integer(left | right))?;
+            }
+            (Object::Boolean(left), Object::Boolean(right)) => {
+                self.push(Object::Boolean(*left || *right))?;
+            }
+
+            _ => return Err(ErrorKind::InvalidOrType(left_obj.into(), right_obj.into())),
+        }
+
+        Ok(())
+    }
+
+    fn execute_le(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Boolean(left < right))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Boolean(left < right))?;
+            }
+            (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left < right))?;
+            }
+
+            _ => {
+                return Err(ErrorKind::InvalidOrderingType(
+                    left_obj.into(),
+                    right_obj.into(),
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn execute_leq(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Boolean(left <= right))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Boolean(left <= right))?;
+            }
+            (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left <= right))?;
+            }
+
+            _ => {
+                return Err(ErrorKind::InvalidOrderingType(
+                    left_obj.into(),
+                    right_obj.into(),
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn execute_eq(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Boolean(left == right))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Boolean(left == right))?;
+            }
+            (Object::Boolean(left), Object::Boolean(right)) => {
+                self.push(Object::Boolean(left == right))?;
+            }
+            (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left == right))?;
+            }
+
+            _ => {
+                return Err(ErrorKind::InvalidEqualityType(
+                    left_obj.into(),
+                    right_obj.into(),
+                ))
+            }
+        }
+
+        Ok(())
+    }
+
+    fn execute_neq(&mut self) -> Result<(), ErrorKind> {
+        let right_obj = self.pop();
+        let left_obj = self.pop();
+
+        match (&left_obj, &right_obj) {
+            (Object::Integer(left), Object::Integer(right)) => {
+                self.push(Object::Boolean(left != right))?;
+            }
+            (Object::Float(left), Object::Float(right)) => {
+                self.push(Object::Boolean(left != right))?;
+            }
+            (Object::Boolean(left), Object::Boolean(right)) => {
+                self.push(Object::Boolean(left != right))?;
+            }
+            (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left != right))?;
+            }
+
+            _ => {
+                return Err(ErrorKind::InvalidEqualityType(
+                    left_obj.into(),
+                    right_obj.into(),
+                ))
+            }
         }
 
         Ok(())

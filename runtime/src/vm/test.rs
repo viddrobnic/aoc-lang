@@ -251,3 +251,29 @@ fn assign_dict_index() {
         run_test(input, Ok(Object::Dictionary(arr)));
     }
 }
+#[test]
+
+fn infix_operator() {
+    let tests = [
+        ("1 + 1", Object::Integer(2)),
+        ("1 + 2 * 3", Object::Integer(7)),
+        ("4.2 * 2.0", Object::Float(8.4)),
+        ("3 - 2 - 1", Object::Integer(0)),
+        (
+            "\"foo\" + \" \" + \"bar\"",
+            Object::String(Rc::new("foo bar".to_string())),
+        ),
+        ("3 % 2", Object::Integer(1)),
+        ("-3 % 2", Object::Integer(1)),
+        ("0 & 1", Object::Integer(0)),
+        ("1 | 1", Object::Integer(1)),
+        ("true & false", Object::Boolean(false)),
+        ("1 < 2 & 3 < 4 | 5 == 2", Object::Boolean(true)),
+        ("\"abc\" < \"aab\"", Object::Boolean(false)),
+        ("\"abc\" == \"abc\"", Object::Boolean(true)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

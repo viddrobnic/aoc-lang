@@ -23,15 +23,8 @@ pub enum NodeValue {
     StringLiteral(String),
     ArrayLiteral(Vec<Node>),
     HashLiteral(Vec<HashLiteralPair>),
-    PrefixOperator {
-        operator: PrefixOperatorKind,
-        right: Box<Node>,
-    },
-    InfixOperator {
-        operator: InfixOperatorKind,
-        left: Box<Node>,
-        right: Box<Node>,
-    },
+    PrefixOperator(PrefixOperator),
+    InfixOperator(InfixOperator),
     Assign {
         ident: Box<Node>,
         value: Box<Node>,
@@ -41,10 +34,7 @@ pub enum NodeValue {
         index: Box<Node>,
     },
     If(IfNode),
-    While {
-        condition: Box<Node>,
-        body: Block,
-    },
+    While(While),
     For {
         initial: Box<Node>,
         condition: Box<Node>,
@@ -70,6 +60,25 @@ pub enum NodeValue {
 pub struct Comment {
     pub comment: String,
     pub range: Range,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct PrefixOperator {
+    pub operator: PrefixOperatorKind,
+    pub right: Box<Node>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct InfixOperator {
+    pub operator: InfixOperatorKind,
+    pub left: Box<Node>,
+    pub right: Box<Node>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct While {
+    pub condition: Box<Node>,
+    pub body: Block,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -223,12 +232,12 @@ impl Display for NodeValue {
 
                 write!(f, "{{{elts}}}")
             }
-            NodeValue::PrefixOperator { operator, right } => write!(f, "({operator}{right})"),
-            NodeValue::InfixOperator {
+            NodeValue::PrefixOperator(prefix) => write!(f, "({}{})", prefix.operator, prefix.right),
+            NodeValue::InfixOperator(InfixOperator {
                 operator,
                 left,
                 right,
-            } => write!(f, "({left} {operator} {right})"),
+            }) => write!(f, "({left} {operator} {right})"),
             NodeValue::Assign { ident, value } => write!(f, "({ident} = {value})"),
             NodeValue::Index { left, index } => write!(f, "({left}[{index}])"),
             NodeValue::If(if_node) => {
@@ -256,15 +265,16 @@ impl Display for NodeValue {
                     if_node.condition, cons, alt
                 )
             }
-            NodeValue::While { condition, body } => {
-                let body = body
+            NodeValue::While(while_loop) => {
+                let body = while_loop
+                    .body
                     .nodes
                     .iter()
                     .map(|node| node.to_string())
                     .collect::<Vec<_>>()
                     .join("\n");
 
-                write!(f, "while ({condition}) {{{body}}}")
+                write!(f, "while ({}) {{{}}}", while_loop.condition, body)
             }
             NodeValue::For {
                 initial,
