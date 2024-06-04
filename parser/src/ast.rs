@@ -29,12 +29,7 @@ pub enum NodeValue {
     Index(Index),
     If(IfNode),
     While(While),
-    For {
-        initial: Box<Node>,
-        condition: Box<Node>,
-        after: Box<Node>,
-        body: Block,
-    },
+    For(For),
     Break,
     Continue,
     FunctionLiteral {
@@ -84,6 +79,14 @@ pub struct Index {
 #[derive(Debug, PartialEq, Clone)]
 pub struct While {
     pub condition: Box<Node>,
+    pub body: Block,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct For {
+    pub initial: Box<Node>,
+    pub condition: Box<Node>,
+    pub after: Box<Node>,
     pub body: Block,
 }
 
@@ -282,12 +285,12 @@ impl Display for NodeValue {
 
                 write!(f, "while ({}) {{{}}}", while_loop.condition, body)
             }
-            NodeValue::For {
+            NodeValue::For(For {
                 initial,
                 condition,
                 after,
                 body,
-            } => {
+            }) => {
                 let body = body
                     .nodes
                     .iter()

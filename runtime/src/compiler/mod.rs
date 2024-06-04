@@ -114,7 +114,7 @@ impl Compiler {
             }
             ast::NodeValue::If(_) => todo!(),
             ast::NodeValue::While(while_loop) => self.compile_while(while_loop)?,
-            ast::NodeValue::For { .. } => todo!(),
+            ast::NodeValue::For(for_loop) => self.compile_for(for_loop)?,
             ast::NodeValue::Break => todo!(),
             ast::NodeValue::Continue => todo!(),
             ast::NodeValue::FunctionLiteral { .. } => todo!(),
@@ -214,6 +214,30 @@ impl Compiler {
         self.compile_block(&while_loop.body)?;
 
         self.emit(Instruction::Jump(start_index), while_loop.body.range);
+
+        let end_index = self.current_scope().instructions.len();
+        self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);
+
+        Ok(())
+    }
+
+    fn compile_for(&mut self, for_loop: &ast::For) -> Result<(), Error> {
+        self.compile_node(&for_loop.initial)?;
+
+        let start_index = self.current_scope().instructions.len();
+        self.compile_node(&for_loop.condition)?;
+
+        // Jump position will be fixed after
+        let jump_index = self.emit(Instruction::JumpNotTruthy(0), for_loop.condition.range);
+
+        // Compile the body
+        self.compile_block(&for_loop.body)?;
+        self.compile_node(&for_loop.after)?;
+        if for_loop.after.kind() == ast::NodeKind::Expression {
+            self.emit(Instruction::Pop, for_loop.after.range);
+        }
+
+        self.emit(Instruction::Jump(start_index), for_loop.body.range);
 
         let end_index = self.current_scope().instructions.len();
         self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);

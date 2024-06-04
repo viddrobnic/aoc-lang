@@ -170,7 +170,13 @@ fn prefix_operator() {
 
 #[test]
 fn while_loop() {
-    let tests = [("while (false) {}\n 10", Object::Integer(10))];
+    let tests = [
+        ("while (false) {}\n 10", Object::Integer(10)),
+        (
+            "i = 0\n while (i < 10) {i = i + 1}\n i",
+            Object::Integer(10),
+        ),
+    ];
 
     for (input, expected) in tests {
         run_test(input, Ok(expected));
@@ -302,4 +308,10 @@ fn index() {
     for (input, expected) in tests {
         run_test(input, Ok(expected));
     }
+}
+
+#[test]
+fn for_loop() {
+    let input = "for (i = 0; i < 42; i = i + 1) {}\n i";
+    run_test(input, Ok(Object::Integer(42)));
 }

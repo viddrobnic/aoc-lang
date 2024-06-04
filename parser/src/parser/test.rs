@@ -983,7 +983,7 @@ fn for_loop() -> Result<()> {
     assert_eq!(
         program.statements[0],
         ast::Node {
-            value: ast::NodeValue::For {
+            value: ast::NodeValue::For(ast::For {
                 initial: Box::new(ast::Node {
                     value: ast::NodeValue::Assign(ast::Assign {
                         ident: Box::new(ast::Node {
@@ -1080,7 +1080,7 @@ fn for_loop() -> Result<()> {
                         end: Position::new(2, 1)
                     }
                 }
-            },
+            }),
             range: Range {
                 start: Position::new(0, 0),
                 end: Position::new(2, 1)

@@ -545,12 +545,12 @@ impl Parser<'_> {
         let (body, end) = self.parse_block(body_token)?;
 
         Ok((
-            ast::NodeValue::For {
+            ast::NodeValue::For(ast::For {
                 initial: Box::new(initial),
                 condition: Box::new(condition),
                 after: Box::new(after),
                 body,
-            },
+            }),
             end,
         ))
     }
