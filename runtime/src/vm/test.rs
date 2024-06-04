@@ -277,3 +277,29 @@ fn infix_operator() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn index() {
+    let tests = [
+        ("[1, 2, 3][0]", Object::Integer(1)),
+        ("[1, 2, 3][1]", Object::Integer(2)),
+        ("[][0]", Object::Null),
+        ("[][-10]", Object::Null),
+        ("foo = []\n foo[0]", Object::Null),
+        (
+            "foo = [\"bar\"]\n foo[0]",
+            Object::String(Rc::new("bar".to_string())),
+        ),
+        ("{true: false}[true]", Object::Boolean(false)),
+        ("{\"foo\": 10}.foo", Object::Integer(10)),
+        ("{\"foo\": 10}[\"foo\"]", Object::Integer(10)),
+        (
+            "foo = {\"property\": {\"nested\": 42}}\n foo.property.nested",
+            Object::Integer(42),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

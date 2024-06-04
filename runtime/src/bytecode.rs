@@ -32,6 +32,7 @@ pub enum Instruction {
     UnpackArray(usize),
 
     IndexSet,
+    IndexGet,
 
     StoreGlobal(usize),
     LoadGlobal(usize),

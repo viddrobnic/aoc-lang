@@ -25,14 +25,8 @@ pub enum NodeValue {
     HashLiteral(Vec<HashLiteralPair>),
     PrefixOperator(PrefixOperator),
     InfixOperator(InfixOperator),
-    Assign {
-        ident: Box<Node>,
-        value: Box<Node>,
-    },
-    Index {
-        left: Box<Node>,
-        index: Box<Node>,
-    },
+    Assign(Assign),
+    Index(Index),
     If(IfNode),
     While(While),
     For {
@@ -73,6 +67,18 @@ pub struct InfixOperator {
     pub operator: InfixOperatorKind,
     pub left: Box<Node>,
     pub right: Box<Node>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Assign {
+    pub ident: Box<Node>,
+    pub value: Box<Node>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Index {
+    pub left: Box<Node>,
+    pub index: Box<Node>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -238,8 +244,8 @@ impl Display for NodeValue {
                 left,
                 right,
             }) => write!(f, "({left} {operator} {right})"),
-            NodeValue::Assign { ident, value } => write!(f, "({ident} = {value})"),
-            NodeValue::Index { left, index } => write!(f, "({left}[{index}])"),
+            NodeValue::Assign(Assign { ident, value }) => write!(f, "({ident} = {value})"),
+            NodeValue::Index(Index { left, index }) => write!(f, "({left}[{index}])"),
             NodeValue::If(if_node) => {
                 let cons = if_node
                     .consequence

@@ -370,10 +370,10 @@ impl Parser<'_> {
 
         let end = right.range.end;
         Ok((
-            ast::NodeValue::Assign {
+            ast::NodeValue::Assign(ast::Assign {
                 ident: Box::new(left),
                 value: Box::new(right),
-            },
+            }),
             end,
         ))
     }
@@ -390,10 +390,10 @@ impl Parser<'_> {
         validate_node_kind(&index, NodeKind::Expression)?;
 
         Ok((
-            ast::NodeValue::Index {
+            ast::NodeValue::Index(ast::Index {
                 left: Box::new(left),
                 index: Box::new(index),
-            },
+            }),
             end_token.range.end,
         ))
     }
@@ -415,13 +415,13 @@ impl Parser<'_> {
         validate_node_kind(&left, NodeKind::Expression)?;
 
         Ok((
-            ast::NodeValue::Index {
+            ast::NodeValue::Index(ast::Index {
                 left: Box::new(left),
                 index: Box::new(ast::Node {
                     value: ast::NodeValue::StringLiteral(index_ident),
                     range: index.range,
                 }),
-            },
+            }),
             index.range.end,
         ))
     }

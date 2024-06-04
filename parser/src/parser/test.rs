@@ -575,7 +575,7 @@ fn assign() -> Result<()> {
         (
             "a = 1",
             ast::Node {
-                value: ast::NodeValue::Assign {
+                value: ast::NodeValue::Assign(ast::Assign {
                     ident: Box::new(ast::Node {
                         value: ast::NodeValue::Identifier("a".to_string()),
                         range: Range {
@@ -590,7 +590,7 @@ fn assign() -> Result<()> {
                             end: Position::new(0, 5),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 5),
@@ -600,7 +600,7 @@ fn assign() -> Result<()> {
         (
             "[a] = true | 1 == 2",
             ast::Node {
-                value: ast::NodeValue::Assign {
+                value: ast::NodeValue::Assign(ast::Assign {
                     ident: Box::new(ast::Node {
                         value: ast::NodeValue::ArrayLiteral(vec![ast::Node {
                             value: ast::NodeValue::Identifier("a".to_string()),
@@ -653,7 +653,7 @@ fn assign() -> Result<()> {
                             end: Position::new(0, 19),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 19),
@@ -678,7 +678,7 @@ fn index() -> Result<()> {
         (
             "a[0]",
             ast::Node {
-                value: ast::NodeValue::Index {
+                value: ast::NodeValue::Index(ast::Index {
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::Identifier("a".to_string()),
                         range: Range {
@@ -693,7 +693,7 @@ fn index() -> Result<()> {
                             end: Position::new(0, 3),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 4),
@@ -703,7 +703,7 @@ fn index() -> Result<()> {
         (
             "a.b",
             ast::Node {
-                value: ast::NodeValue::Index {
+                value: ast::NodeValue::Index(ast::Index {
                     left: Box::new(ast::Node {
                         value: ast::NodeValue::Identifier("a".to_string()),
                         range: Range {
@@ -718,7 +718,7 @@ fn index() -> Result<()> {
                             end: Position::new(0, 3),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 3),
@@ -728,9 +728,9 @@ fn index() -> Result<()> {
         (
             "a.b.c",
             ast::Node {
-                value: ast::NodeValue::Index {
+                value: ast::NodeValue::Index(ast::Index {
                     left: Box::new(ast::Node {
-                        value: ast::NodeValue::Index {
+                        value: ast::NodeValue::Index(ast::Index {
                             left: Box::new(ast::Node {
                                 value: ast::NodeValue::Identifier("a".to_string()),
                                 range: Range {
@@ -745,7 +745,7 @@ fn index() -> Result<()> {
                                     end: Position::new(0, 3),
                                 },
                             }),
-                        },
+                        }),
                         range: Range {
                             start: Position::new(0, 0),
                             end: Position::new(0, 3),
@@ -758,7 +758,7 @@ fn index() -> Result<()> {
                             end: Position::new(0, 5),
                         },
                     }),
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 5),
@@ -985,7 +985,7 @@ fn for_loop() -> Result<()> {
         ast::Node {
             value: ast::NodeValue::For {
                 initial: Box::new(ast::Node {
-                    value: ast::NodeValue::Assign {
+                    value: ast::NodeValue::Assign(ast::Assign {
                         ident: Box::new(ast::Node {
                             value: ast::NodeValue::Identifier("i".to_string()),
                             range: Range {
@@ -1000,7 +1000,7 @@ fn for_loop() -> Result<()> {
                                 end: Position::new(0, 10),
                             }
                         })
-                    },
+                    }),
                     range: Range {
                         start: Position::new(0, 5),
                         end: Position::new(0, 10),
@@ -1030,7 +1030,7 @@ fn for_loop() -> Result<()> {
                     }
                 }),
                 after: Box::new(ast::Node {
-                    value: ast::NodeValue::Assign {
+                    value: ast::NodeValue::Assign(ast::Assign {
                         ident: Box::new(ast::Node {
                             value: ast::NodeValue::Identifier("i".to_string()),
                             range: Range {
@@ -1061,7 +1061,7 @@ fn for_loop() -> Result<()> {
                                 end: Position::new(0, 29)
                             }
                         })
-                    },
+                    }),
                     range: Range {
                         start: Position::new(0, 20),
                         end: Position::new(0, 29),
@@ -1174,7 +1174,7 @@ fn fn_literal_named() -> Result<()> {
     assert_eq!(
         program.statements[0],
         ast::Node {
-            value: ast::NodeValue::Assign {
+            value: ast::NodeValue::Assign(ast::Assign {
                 ident: Box::new(ast::Node {
                     value: ast::NodeValue::Identifier("foo".to_string()),
                     range: Range {
@@ -1199,7 +1199,7 @@ fn fn_literal_named() -> Result<()> {
                         end: Position::new(0, 12),
                     }
                 })
-            },
+            }),
             range: Range {
                 start: Position::new(0, 0),
                 end: Position::new(0, 12),

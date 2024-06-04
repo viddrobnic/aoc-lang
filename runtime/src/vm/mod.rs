@@ -108,6 +108,7 @@ impl VirtualMachine {
                 self.push(obj)?;
             }
             Instruction::IndexSet => self.index_set()?,
+            Instruction::IndexGet => self.index_get()?,
             Instruction::Add => self.execute_add()?,
             Instruction::Subtract => self.execute_infix_number_op(
                 |left, right| left - right,
@@ -231,6 +232,7 @@ impl VirtualMachine {
                     return Err(ErrorKind::InvalidIndexType(index.into()));
                 };
 
+                // TODO: Handle out of bounds
                 let rc = arr.0.value.upgrade().unwrap();
                 rc.borrow_mut()[idx as usize] = value;
             }
@@ -239,6 +241,45 @@ impl VirtualMachine {
 
                 let rc = dict.0.value.upgrade().unwrap();
                 rc.borrow_mut().insert(key, value);
+            }
+
+            _ => return Err(ErrorKind::NotIndexable(container.into())),
+        }
+
+        Ok(())
+    }
+
+    fn index_get(&mut self) -> Result<(), ErrorKind> {
+        let index = self.pop();
+        let container = self.pop();
+        match container {
+            Object::Array(arr) => {
+                let Object::Integer(idx) = index else {
+                    return Err(ErrorKind::InvalidIndexType(index.into()));
+                };
+
+                if idx < 0 {
+                    self.push(Object::Null)?;
+                    return Ok(());
+                }
+
+                let rc = arr.0.value.upgrade().unwrap();
+                let slice = rc.borrow();
+
+                match slice.get(idx as usize) {
+                    Some(obj) => self.push(obj.clone())?,
+                    None => self.push(Object::Null)?,
+                }
+            }
+            Object::Dictionary(dict) => {
+                let key: HashKey = index.try_into()?;
+
+                let rc = dict.0.value.upgrade().unwrap();
+                let hmap = rc.borrow();
+                match hmap.get(&key) {
+                    Some(obj) => self.push(obj.clone())?,
+                    None => self.push(Object::Null)?,
+                }
             }
 
             _ => return Err(ErrorKind::NotIndexable(container.into())),

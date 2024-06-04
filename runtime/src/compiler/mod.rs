@@ -103,11 +103,15 @@ impl Compiler {
             ast::NodeValue::InfixOperator(infix) => {
                 self.compile_infix_operator(infix, node.range)?;
             }
-            ast::NodeValue::Assign { ident, value } => {
-                self.compile_node(value)?;
-                self.compile_assign(ident, node.range)?;
+            ast::NodeValue::Assign(assign) => {
+                self.compile_node(&assign.value)?;
+                self.compile_assign(&assign.ident, node.range)?;
             }
-            ast::NodeValue::Index { .. } => todo!(),
+            ast::NodeValue::Index(index) => {
+                self.compile_node(&index.left)?;
+                self.compile_node(&index.index)?;
+                self.emit(Instruction::IndexGet, node.range);
+            }
             ast::NodeValue::If(_) => todo!(),
             ast::NodeValue::While(while_loop) => self.compile_while(while_loop)?,
             ast::NodeValue::For { .. } => todo!(),
@@ -250,9 +254,9 @@ impl Compiler {
                 let symbol = self.symbol_table.define(identifier.to_string());
                 self.compile_store_instruction(symbol, range);
             }
-            ast::NodeValue::Index { left, index } => {
-                self.compile_node(left)?;
-                self.compile_node(index)?;
+            ast::NodeValue::Index(index) => {
+                self.compile_node(&index.left)?;
+                self.compile_node(&index.index)?;
                 self.emit(Instruction::IndexSet, range);
             }
             ast::NodeValue::ArrayLiteral(arr) => {
