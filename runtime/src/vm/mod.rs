@@ -83,6 +83,7 @@ impl VirtualMachine {
 
     fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<usize, ErrorKind> {
         match bytecode.instructions[ip] {
+            Instruction::Null => self.push(Object::Null)?,
             Instruction::Constant(idx) => self.push(bytecode.constants[idx].clone())?,
             Instruction::Pop => {
                 self.pop();

@@ -5,6 +5,7 @@ use parser::position::Range;
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Instruction {
     Pop,
+    Null,
     Constant(usize),
     Array(usize),
     HashMap(usize),

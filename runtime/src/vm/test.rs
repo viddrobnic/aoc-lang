@@ -315,3 +315,38 @@ fn for_loop() {
     let input = "for (i = 0; i < 42; i = i + 1) {}\n i";
     run_test(input, Ok(Object::Integer(42)));
 }
+
+#[test]
+fn if_statement() {
+    let tests = [
+        ("if (1 < 2) {10}", Object::Integer(10)),
+        ("if (1 > 2) {10}", Object::Null),
+        ("if (true) {10} else {}", Object::Integer(10)),
+        ("if (false) {10} else {20}", Object::Integer(20)),
+        ("if (false) {10} else if (false) {20}", Object::Null),
+        (
+            "if (false) {10} else if (false) {20} else {30}",
+            Object::Integer(30),
+        ),
+        (
+            "if (false) {10} else if (false) {20} else if (true) {30} else {40}",
+            Object::Integer(30),
+        ),
+        (
+            r#"
+            if (1 * 2 * 3 - 5 == 1) {
+                a = 10
+                a = a * 6
+                a + 9
+            } else {
+                42
+            }
+            "#,
+            Object::Integer(69),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

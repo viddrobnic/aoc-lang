@@ -7,7 +7,7 @@ use crate::{
 };
 
 use parser::{
-    ast::{self, PrefixOperatorKind},
+    ast::{self, NodeKind, PrefixOperatorKind},
     position::Range,
 };
 
@@ -112,7 +112,7 @@ impl Compiler {
                 self.compile_node(&index.index)?;
                 self.emit(Instruction::IndexGet, node.range);
             }
-            ast::NodeValue::If(_) => todo!(),
+            ast::NodeValue::If(if_node) => self.compile_if(if_node)?,
             ast::NodeValue::While(while_loop) => self.compile_while(while_loop)?,
             ast::NodeValue::For(for_loop) => self.compile_for(for_loop)?,
             ast::NodeValue::Break => todo!(),
@@ -204,6 +204,33 @@ impl Compiler {
         Ok(())
     }
 
+    fn compile_if(&mut self, if_node: &ast::IfNode) -> Result<(), Error> {
+        self.compile_node(&if_node.condition)?;
+
+        // Jump to alternative
+        let jump_cons = self.emit(Instruction::JumpNotTruthy(0), if_node.condition.range);
+
+        // Compile consequence and add jump to skip alternative
+        self.compile_block(&if_node.consequence, true)?;
+        let jump_alt = self.emit(Instruction::Jump(0), if_node.consequence.range);
+
+        // Fix jump after consequence index.
+        let cons_index = self.current_scope().instructions.len();
+        self.current_scope().instructions[jump_cons] = Instruction::JumpNotTruthy(cons_index);
+
+        match &if_node.alternative {
+            Some(alt) => self.compile_block(alt, true)?,
+            None => {
+                self.emit(Instruction::Null, if_node.consequence.range);
+            }
+        }
+
+        let alt_index = self.current_scope().instructions.len();
+        self.current_scope().instructions[jump_alt] = Instruction::Jump(alt_index);
+
+        Ok(())
+    }
+
     fn compile_while(&mut self, while_loop: &ast::While) -> Result<(), Error> {
         let start_index = self.current_scope().instructions.len();
         self.compile_node(&while_loop.condition)?;
@@ -211,7 +238,7 @@ impl Compiler {
         // Jump position will be fixed after
         let jump_index = self.emit(Instruction::JumpNotTruthy(0), while_loop.condition.range);
 
-        self.compile_block(&while_loop.body)?;
+        self.compile_block(&while_loop.body, false)?;
 
         self.emit(Instruction::Jump(start_index), while_loop.body.range);
 
@@ -231,7 +258,7 @@ impl Compiler {
         let jump_index = self.emit(Instruction::JumpNotTruthy(0), for_loop.condition.range);
 
         // Compile the body
-        self.compile_block(&for_loop.body)?;
+        self.compile_block(&for_loop.body, false)?;
         self.compile_node(&for_loop.after)?;
         if for_loop.after.kind() == ast::NodeKind::Expression {
             self.emit(Instruction::Pop, for_loop.after.range);
@@ -245,12 +272,36 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_block(&mut self, block: &ast::Block) -> Result<(), Error> {
+    // Compiles block. If emit_last is true, last statement in the block will be left on stack.
+    // In case value was not pushed in the last node of the block, null will be pushed.
+    fn compile_block(&mut self, block: &ast::Block, emit_last: bool) -> Result<(), Error> {
+        if emit_last && block.nodes.is_empty() {
+            self.emit(Instruction::Null, block.range);
+            return Ok(());
+        }
+
         for node in &block.nodes {
             self.compile_node(node)?;
 
             if node.kind() == ast::NodeKind::Expression {
                 self.emit(Instruction::Pop, node.range);
+            }
+        }
+
+        if !emit_last {
+            return Ok(());
+        }
+
+        // We already handled empty block where emit last is true, so it's safe to unwrap.
+        let last = block.nodes.last().unwrap();
+        match last.kind() {
+            NodeKind::Expression => {
+                // Remove the `pop` instruction
+                self.current_scope().instructions.pop();
+                self.current_scope().ranges.pop();
+            }
+            NodeKind::Statement => {
+                self.emit(Instruction::Null, last.range);
             }
         }
 

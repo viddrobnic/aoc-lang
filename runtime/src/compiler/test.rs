@@ -937,3 +937,156 @@ fn for_loop() {
 
     assert_eq!(bytecode, expected);
 }
+
+#[test]
+fn if_statement() {
+    let tests = [
+        (
+            "if (true) {}",
+            Bytecode {
+                constants: vec![Object::Boolean(true)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(4),
+                    Instruction::Null,
+                    Instruction::Jump(5),
+                    Instruction::Null,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 10),
+                        end: Position::new(0, 12),
+                    },
+                    Range {
+                        start: Position::new(0, 10),
+                        end: Position::new(0, 12),
+                    },
+                    Range {
+                        start: Position::new(0, 10),
+                        end: Position::new(0, 12),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 12),
+                    },
+                ],
+            },
+        ),
+        (
+            "if (true) {} else {}",
+            Bytecode {
+                constants: vec![Object::Boolean(true)],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(4),
+                    Instruction::Null,
+                    Instruction::Jump(5),
+                    Instruction::Null,
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 8),
+                    },
+                    Range {
+                        start: Position::new(0, 10),
+                        end: Position::new(0, 12),
+                    },
+                    Range {
+                        start: Position::new(0, 10),
+                        end: Position::new(0, 12),
+                    },
+                    Range {
+                        start: Position::new(0, 18),
+                        end: Position::new(0, 20),
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 20),
+                    },
+                ],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program).unwrap();
+        assert_eq!(bytecode, expected);
+    }
+
+    // Ignore ranges
+    let tests = [
+        (
+            "if (true) {a = 0} else {10}",
+            Bytecode {
+                constants: vec![
+                    Object::Boolean(true),
+                    Object::Integer(0),
+                    Object::Integer(10),
+                ],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(6),
+                    Instruction::Constant(1),
+                    Instruction::StoreGlobal(0),
+                    Instruction::Null,
+                    Instruction::Jump(7),
+                    Instruction::Constant(2),
+                    Instruction::Pop,
+                ],
+                ranges: vec![],
+            },
+        ),
+        (
+            "if (true) {a = 0} else if (false) {10}",
+            Bytecode {
+                constants: vec![
+                    Object::Boolean(true),
+                    Object::Integer(0),
+                    Object::Boolean(false),
+                    Object::Integer(10),
+                ],
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::JumpNotTruthy(6),
+                    Instruction::Constant(1),
+                    Instruction::StoreGlobal(0),
+                    Instruction::Null,
+                    Instruction::Jump(11),
+                    Instruction::Constant(2),
+                    Instruction::JumpNotTruthy(10),
+                    Instruction::Constant(3),
+                    Instruction::Jump(11),
+                    Instruction::Null,
+                    Instruction::Pop,
+                ],
+                ranges: vec![],
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let mut bytecode = compiler.compile(&program).unwrap();
+        bytecode.ranges = vec![];
+
+        assert_eq!(bytecode, expected);
+    }
+}
