@@ -4,7 +4,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use crate::{
     compiler::Compiler,
     error::{Error, ErrorKind},
-    object::{Array, DataType, Dictionary, HashKey, Object},
+    object::{Array, Closure, DataType, Dictionary, HashKey, Object},
     vm::{gc, VirtualMachine},
 };
 
@@ -416,6 +416,21 @@ fn loop_continue() {
             Object::Integer(44),
         ),
     ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
+fn closure() {
+    let tests = [(
+        "fn(){}",
+        Object::Closure(Closure {
+            function_index: 0,
+            free_variables: Rc::new(vec![]),
+        }),
+    )];
 
     for (input, expected) in tests {
         run_test(input, Ok(expected));

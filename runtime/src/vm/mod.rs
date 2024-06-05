@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::{
     bytecode::{Bytecode, Instruction},
     error::{Error, ErrorKind},
-    object::{Array, DataType, Dictionary, HashKey, Object},
+    object::{Array, Closure, DataType, Dictionary, HashKey, Object},
 };
 
 use self::gc::GarbageCollector;
@@ -130,7 +130,10 @@ impl VirtualMachine {
             Instruction::Eq => self.execute_eq()?,
             Instruction::Neq => self.execute_neq()?,
             Instruction::Return => todo!(),
-            Instruction::CreateClosure { .. } => todo!(),
+            Instruction::CreateClosure {
+                function_index,
+                nr_free_variables,
+            } => self.create_closure(function_index, nr_free_variables)?,
         }
 
         Ok(ip + 1)
@@ -508,6 +511,21 @@ impl VirtualMachine {
                 ))
             }
         }
+
+        Ok(())
+    }
+
+    fn create_closure(
+        &mut self,
+        function_index: usize,
+        _nr_free_variables: usize,
+    ) -> Result<(), ErrorKind> {
+        // TODO: handle capture of free variables.
+        let cl = Object::Closure(Closure {
+            function_index,
+            free_variables: Rc::new(vec![]),
+        });
+        self.push(cl)?;
 
         Ok(())
     }
