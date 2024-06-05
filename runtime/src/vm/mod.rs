@@ -129,6 +129,8 @@ impl VirtualMachine {
             Instruction::Leq => self.execute_leq()?,
             Instruction::Eq => self.execute_eq()?,
             Instruction::Neq => self.execute_neq()?,
+            Instruction::Return => todo!(),
+            Instruction::CreateClosure { .. } => todo!(),
         }
 
         Ok(ip + 1)

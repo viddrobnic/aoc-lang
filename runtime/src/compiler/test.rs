@@ -6,7 +6,7 @@ use parser::{
 };
 
 use crate::{
-    bytecode::{Bytecode, Instruction},
+    bytecode::{Bytecode, Function, Instruction},
     compiler::Compiler,
     object::Object,
 };
@@ -18,6 +18,7 @@ fn constants() {
             "420",
             Bytecode {
                 constants: vec![Object::Integer(420)],
+                functions: vec![],
                 instructions: vec![Instruction::Constant(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -32,6 +33,7 @@ fn constants() {
             "4.2",
             Bytecode {
                 constants: vec![Object::Float(4.2)],
+                functions: vec![],
                 instructions: vec![Instruction::Constant(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -46,6 +48,7 @@ fn constants() {
             "true",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
+                functions: vec![],
                 instructions: vec![Instruction::Constant(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -60,6 +63,7 @@ fn constants() {
             "\"foo\"",
             Bytecode {
                 constants: vec![Object::String(Rc::new("foo".to_string()))],
+                functions: vec![],
                 instructions: vec![Instruction::Constant(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -87,6 +91,7 @@ fn arrays() {
             "[]",
             Bytecode {
                 constants: vec![],
+                functions: vec![],
                 instructions: vec![Instruction::Array(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -101,6 +106,7 @@ fn arrays() {
             "[1]",
             Bytecode {
                 constants: vec![Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Array(1),
@@ -129,6 +135,7 @@ fn arrays() {
                     Object::Integer(1),
                     Object::String(Rc::new("foo".to_string())),
                 ],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -173,6 +180,7 @@ fn arrays() {
                 Object::Integer(3),
                 Object::Integer(4),
             ],
+            functions: vec![],
             instructions: vec![
                 Instruction::Constant(0),
                 Instruction::Constant(1),
@@ -203,6 +211,7 @@ fn hash_map() {
             "{}",
             Bytecode {
                 constants: vec![],
+                functions: vec![],
                 instructions: vec![Instruction::HashMap(0), Instruction::Pop],
                 ranges: vec![
                     Range {
@@ -217,6 +226,7 @@ fn hash_map() {
             "{1: 2}",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -262,6 +272,7 @@ fn hash_map() {
                 Object::String(Rc::new("bar".to_string())),
                 Object::Integer(4),
             ],
+            functions: vec![],
             instructions: vec![
                 Instruction::Constant(0),
                 Instruction::Constant(1),
@@ -293,6 +304,7 @@ fn prefix_operator() {
             "-10",
             Bytecode {
                 constants: vec![Object::Integer(10)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Minus,
@@ -318,6 +330,7 @@ fn prefix_operator() {
             "-4.2",
             Bytecode {
                 constants: vec![Object::Float(4.2)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Minus,
@@ -343,6 +356,7 @@ fn prefix_operator() {
             "!10",
             Bytecode {
                 constants: vec![Object::Integer(10)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Bang,
@@ -368,6 +382,7 @@ fn prefix_operator() {
             "!false",
             Bytecode {
                 constants: vec![Object::Boolean(false)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Bang,
@@ -407,6 +422,7 @@ fn while_loop() {
             "while (true) {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(3),
@@ -432,6 +448,7 @@ fn while_loop() {
             "while (true) {1}",
             Bytecode {
                 constants: vec![Object::Boolean(true), Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(5),
@@ -481,6 +498,7 @@ fn assign() {
             "foo = -1",
             Bytecode {
                 constants: vec![Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Minus,
@@ -506,6 +524,7 @@ fn assign() {
             "[foo] = [1]",
             Bytecode {
                 constants: vec![Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Array(1),
@@ -536,6 +555,7 @@ fn assign() {
             "[foo, bar] = [1, 2]",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -576,6 +596,7 @@ fn assign() {
             "foo = []\nfoo[0] = 1",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(0)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Array(0),
                     Instruction::StoreGlobal(0),
@@ -628,6 +649,7 @@ fn assign() {
             "[foo, [bar, baz]] = [1, [2, 3]]",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2), Object::Integer(3)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -652,6 +674,7 @@ fn assign() {
                     Object::String(Rc::new("bar".to_string())),
                     Object::String(Rc::new("baz".to_string())),
                 ],
+                functions: vec![],
                 instructions: vec![
                     Instruction::HashMap(0),
                     Instruction::StoreGlobal(0),
@@ -688,6 +711,7 @@ fn infix_operator() {
             "1 < 2",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -718,6 +742,7 @@ fn infix_operator() {
             "1 > 2",
             Bytecode {
                 constants: vec![Object::Integer(2), Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -748,6 +773,7 @@ fn infix_operator() {
             "1 >= 2",
             Bytecode {
                 constants: vec![Object::Integer(2), Object::Integer(1)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Constant(1),
@@ -792,6 +818,7 @@ fn index() {
             "[10][0]",
             Bytecode {
                 constants: vec![Object::Integer(10), Object::Integer(0)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::Array(1),
@@ -827,6 +854,7 @@ fn index() {
             "{}.foo",
             Bytecode {
                 constants: vec![Object::String(Rc::new("foo".to_string()))],
+                functions: vec![],
                 instructions: vec![
                     Instruction::HashMap(0),
                     Instruction::Constant(0),
@@ -870,6 +898,7 @@ fn for_loop() {
 
     let expected = Bytecode {
         constants: vec![Object::Integer(0), Object::Integer(10), Object::Integer(1)],
+        functions: vec![],
         instructions: vec![
             Instruction::Constant(0),
             Instruction::StoreGlobal(0),
@@ -945,6 +974,7 @@ fn if_statement() {
             "if (true) {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(4),
@@ -985,6 +1015,7 @@ fn if_statement() {
             "if (true) {} else {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(4),
@@ -1040,6 +1071,7 @@ fn if_statement() {
                     Object::Integer(0),
                     Object::Integer(10),
                 ],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(6),
@@ -1062,6 +1094,7 @@ fn if_statement() {
                     Object::Boolean(false),
                     Object::Integer(10),
                 ],
+                functions: vec![],
                 instructions: vec![
                     Instruction::Constant(0),
                     Instruction::JumpNotTruthy(6),
@@ -1086,6 +1119,54 @@ fn if_statement() {
         let compiler = Compiler::new();
         let mut bytecode = compiler.compile(&program).unwrap();
         bytecode.ranges = vec![];
+
+        assert_eq!(bytecode, expected);
+    }
+}
+
+#[test]
+fn function_literal() {
+    let tests = [(
+        "fn(){}",
+        Bytecode {
+            constants: vec![],
+            functions: vec![Function {
+                instructions: vec![Instruction::Null, Instruction::Return],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 6),
+                    },
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 6),
+                    },
+                ],
+            }],
+            instructions: vec![
+                Instruction::CreateClosure {
+                    function_index: 0,
+                    nr_free_variables: 0,
+                },
+                Instruction::Pop,
+            ],
+            ranges: vec![
+                Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
+                Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                },
+            ],
+        },
+    )];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program).unwrap();
 
         assert_eq!(bytecode, expected);
     }

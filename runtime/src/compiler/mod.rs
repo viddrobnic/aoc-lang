@@ -1,15 +1,12 @@
 use std::rc::Rc;
 
 use crate::{
-    bytecode::{Bytecode, Instruction},
+    bytecode::{Bytecode, Function, Instruction},
     error::{Error, ErrorKind},
     object::Object,
 };
 
-use parser::{
-    ast::{self, NodeKind, PrefixOperatorKind},
-    position::Range,
-};
+use parser::{ast, position::Range};
 
 use self::symbol_table::{Symbol, SymbolTable};
 
@@ -50,6 +47,7 @@ impl Scope {
 #[derive(Debug)]
 pub struct Compiler {
     constants: Vec<Object>,
+    functions: Vec<Function>,
 
     symbol_table: SymbolTable,
 
@@ -61,6 +59,7 @@ impl Compiler {
     pub fn new() -> Self {
         Self {
             constants: vec![],
+            functions: vec![],
             symbol_table: SymbolTable::new(),
             scopes: vec![Scope::default()],
             scope_index: 0,
@@ -70,6 +69,18 @@ impl Compiler {
     fn add_constant(&mut self, obj: Object) -> usize {
         self.constants.push(obj);
         self.constants.len() - 1
+    }
+
+    fn enter_scope(&mut self) {
+        self.scopes.push(Scope::default());
+        self.scope_index += 1;
+    }
+
+    fn exist_scope(&mut self) -> Scope {
+        let scope = self.scopes.pop();
+        self.scope_index -= 1;
+
+        scope.expect("Existing on no scopes.")
     }
 
     fn current_scope(&mut self) -> &mut Scope {
@@ -98,6 +109,7 @@ impl Compiler {
 
         Ok(Bytecode {
             constants: self.constants,
+            functions: self.functions,
             instructions: scope.instructions,
             ranges: scope.ranges,
         })
@@ -140,9 +152,11 @@ impl Compiler {
             ast::NodeValue::For(for_loop) => self.compile_for(for_loop)?,
             ast::NodeValue::Break => self.compile_break(node.range)?,
             ast::NodeValue::Continue => self.compile_continue(node.range)?,
-            ast::NodeValue::FunctionLiteral { .. } => todo!(),
+            ast::NodeValue::FunctionLiteral(fn_literal) => {
+                self.compile_fn_literal(fn_literal, node.range)?;
+            }
             ast::NodeValue::FunctionCall { .. } => todo!(),
-            ast::NodeValue::Return(_) => todo!(),
+            ast::NodeValue::Return(ret_node) => self.compile_return(ret_node, node.range)?,
             ast::NodeValue::Use(_) => todo!(),
         }
 
@@ -186,8 +200,8 @@ impl Compiler {
         self.compile_node(&node.right)?;
 
         match node.operator {
-            PrefixOperatorKind::Not => self.emit(Instruction::Bang, range),
-            PrefixOperatorKind::Negative => self.emit(Instruction::Minus, range),
+            ast::PrefixOperatorKind::Not => self.emit(Instruction::Bang, range),
+            ast::PrefixOperatorKind::Negative => self.emit(Instruction::Minus, range),
         };
 
         Ok(())
@@ -342,12 +356,12 @@ impl Compiler {
         // We already handled empty block where emit last is true, so it's safe to unwrap.
         let last = block.nodes.last().unwrap();
         match last.kind() {
-            NodeKind::Expression => {
+            ast::NodeKind::Expression => {
                 // Remove the `pop` instruction
                 self.current_scope().instructions.pop();
                 self.current_scope().ranges.pop();
             }
-            NodeKind::Statement => {
+            ast::NodeKind::Statement => {
                 self.emit(Instruction::Null, last.range);
             }
         }
@@ -422,6 +436,50 @@ impl Compiler {
         loop_info.continues.push(idx);
 
         self.emit(Instruction::Jump(0), range);
+
+        Ok(())
+    }
+
+    fn compile_return(&mut self, node: &ast::Node, range: Range) -> Result<(), Error> {
+        if self.scope_index == 0 {
+            return Err(Error {
+                kind: ErrorKind::ReturnOutsideOfFunction,
+                range,
+            });
+        }
+
+        self.compile_node(node)?;
+        self.emit(Instruction::Return, range);
+
+        Ok(())
+    }
+
+    fn compile_fn_literal(
+        &mut self,
+        fn_literal: &ast::FunctionLiteral,
+        range: Range,
+    ) -> Result<(), Error> {
+        // TODO: Do something with arguments
+        // TODO: Do something with recursion
+
+        self.enter_scope();
+        self.compile_block(&fn_literal.body, true)?;
+        self.emit(Instruction::Return, fn_literal.body.range);
+
+        let scope = self.exist_scope();
+        let func = Function {
+            instructions: scope.instructions,
+            ranges: scope.ranges,
+        };
+        self.functions.push(func);
+
+        self.emit(
+            Instruction::CreateClosure {
+                function_index: self.functions.len() - 1,
+                nr_free_variables: 0,
+            },
+            range,
+        );
 
         Ok(())
     }

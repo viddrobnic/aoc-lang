@@ -28,6 +28,12 @@ pub enum Instruction {
     Jump(usize),
     JumpNotTruthy(usize),
 
+    Return,
+    CreateClosure {
+        function_index: usize,
+        nr_free_variables: usize,
+    },
+
     // Puts all array values on stack, where
     // array should be given size long.
     UnpackArray(usize),
@@ -40,8 +46,15 @@ pub enum Instruction {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct Function {
+    pub instructions: Vec<Instruction>,
+    pub ranges: Vec<Range>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Bytecode {
     pub constants: Vec<Object>,
+    pub functions: Vec<Function>,
 
     pub instructions: Vec<Instruction>,
     pub ranges: Vec<Range>,

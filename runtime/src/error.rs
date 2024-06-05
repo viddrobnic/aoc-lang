@@ -16,6 +16,7 @@ pub enum ErrorKind {
     UnpackTooLarge { max: usize, got: usize },
     NotIndexable(DataType),
     ControlFlowOutsideOfLoop,
+    ReturnOutsideOfFunction,
 
     InvalidIndexType(DataType),
     InvalidAddType(DataType, DataType),
@@ -100,6 +101,7 @@ impl Display for ErrorKind {
                 f,
                 "Break and continue can be used only inside of for and while loops."
             ),
+            ErrorKind::ReturnOutsideOfFunction=>write!(f, "Return can't be used outside of a function.")
         }
     }
 }

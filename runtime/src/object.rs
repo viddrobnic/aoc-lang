@@ -12,6 +12,7 @@ pub enum Object {
     String(Rc<String>),
     Array(Array),
     Dictionary(Dictionary),
+    Closure(Closure),
 }
 
 impl Object {
@@ -40,6 +41,18 @@ impl PartialEq for Dictionary {
     fn eq(&self, other: &Self) -> bool {
         self.0.value.upgrade() == other.0.value.upgrade()
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Closure {
+    // Index of the function in the Bytecode.functions
+    pub(crate) function_index: usize,
+
+    // Captured variables. They have to be Rc, since a
+    // closure can be on stack multiple times. But it doesn't have
+    // to be managed by GC, since it's immutable and we can't create
+    // a cycle closures alone.
+    pub(crate) free_variables: Rc<Vec<Object>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -72,6 +85,7 @@ pub enum DataType {
     String,
     Array,
     HashMap,
+    Closure,
 }
 
 impl From<&Object> for DataType {
@@ -84,6 +98,7 @@ impl From<&Object> for DataType {
             Object::String(_) => Self::String,
             Object::Array(_) => Self::Array,
             Object::Dictionary(_) => Self::HashMap,
+            Object::Closure(_) => Self::Closure,
         }
     }
 }
@@ -104,6 +119,7 @@ impl Display for DataType {
             DataType::String => write!(f, "STRING"),
             DataType::Array => write!(f, "ARRAY"),
             DataType::HashMap => write!(f, "HASH_MAP"),
+            DataType::Closure => write!(f, "CLOSURE"),
         }
     }
 }

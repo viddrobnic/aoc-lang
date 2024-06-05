@@ -1097,7 +1097,7 @@ fn fn_literal() -> Result<()> {
         (
             "fn(){}",
             ast::Node {
-                value: ast::NodeValue::FunctionLiteral {
+                value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                     name: None,
                     parameters: vec![],
                     body: ast::Block {
@@ -1107,7 +1107,7 @@ fn fn_literal() -> Result<()> {
                             end: Position::new(0, 6),
                         },
                     },
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 6),
@@ -1117,7 +1117,7 @@ fn fn_literal() -> Result<()> {
         (
             "fn(a){}",
             ast::Node {
-                value: ast::NodeValue::FunctionLiteral {
+                value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                     name: None,
                     parameters: vec!["a".to_string()],
                     body: ast::Block {
@@ -1127,7 +1127,7 @@ fn fn_literal() -> Result<()> {
                             end: Position::new(0, 7),
                         },
                     },
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 7),
@@ -1137,7 +1137,7 @@ fn fn_literal() -> Result<()> {
         (
             "fn(a, b){\n}",
             ast::Node {
-                value: ast::NodeValue::FunctionLiteral {
+                value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                     name: None,
                     parameters: vec!["a".to_string(), "b".to_string()],
                     body: ast::Block {
@@ -1147,7 +1147,7 @@ fn fn_literal() -> Result<()> {
                             end: Position::new(1, 1),
                         },
                     },
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(1, 1),
@@ -1183,7 +1183,7 @@ fn fn_literal_named() -> Result<()> {
                     }
                 }),
                 value: Box::new(ast::Node {
-                    value: ast::NodeValue::FunctionLiteral {
+                    value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                         name: Some("foo".to_string()),
                         parameters: vec![],
                         body: ast::Block {
@@ -1193,7 +1193,7 @@ fn fn_literal_named() -> Result<()> {
                                 end: Position::new(0, 12),
                             }
                         }
-                    },
+                    }),
                     range: Range {
                         start: Position::new(0, 6),
                         end: Position::new(0, 12),

@@ -105,6 +105,11 @@ impl GarbageCollector {
                     self.traverse(val);
                 }
             }
+            Object::Closure(closure) => {
+                for val in closure.free_variables.iter() {
+                    self.traverse(val);
+                }
+            }
             _ => (),
         }
     }

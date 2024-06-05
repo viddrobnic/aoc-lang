@@ -362,8 +362,10 @@ impl Parser<'_> {
         validate_node_kind(&right, NodeKind::Expression)?;
         validate_assignee(&left)?;
 
-        if let (ast::NodeValue::Identifier(ident), ast::NodeValue::FunctionLiteral { name, .. }) =
-            (&left.value, &mut right.value)
+        if let (
+            ast::NodeValue::Identifier(ident),
+            ast::NodeValue::FunctionLiteral(ast::FunctionLiteral { name, .. }),
+        ) = (&left.value, &mut right.value)
         {
             *name = Some(ident.clone());
         }
@@ -577,11 +579,11 @@ impl Parser<'_> {
         let (body, end) = self.parse_block(body_token)?;
 
         Ok((
-            ast::NodeValue::FunctionLiteral {
+            ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                 name: None,
                 parameters: args,
                 body,
-            },
+            }),
             end,
         ))
     }

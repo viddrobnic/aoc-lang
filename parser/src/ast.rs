@@ -32,11 +32,7 @@ pub enum NodeValue {
     For(For),
     Break,
     Continue,
-    FunctionLiteral {
-        name: Option<String>,
-        parameters: Vec<String>,
-        body: Block,
-    },
+    FunctionLiteral(FunctionLiteral),
     FunctionCall {
         function: Box<Node>,
         arguments: Vec<Node>,
@@ -87,6 +83,13 @@ pub struct For {
     pub initial: Box<Node>,
     pub condition: Box<Node>,
     pub after: Box<Node>,
+    pub body: Block,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionLiteral {
+    pub name: Option<String>,
+    pub parameters: Vec<String>,
     pub body: Block,
 }
 
@@ -302,11 +305,11 @@ impl Display for NodeValue {
             }
             NodeValue::Break => write!(f, "break"),
             NodeValue::Continue => write!(f, "continue"),
-            NodeValue::FunctionLiteral {
+            NodeValue::FunctionLiteral(FunctionLiteral {
                 name: _,
                 parameters,
                 body,
-            } => {
+            }) => {
                 let body = body
                     .nodes
                     .iter()
