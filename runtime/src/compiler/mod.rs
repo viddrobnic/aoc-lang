@@ -160,7 +160,7 @@ impl Compiler {
             ast::NodeValue::FunctionLiteral(fn_literal) => {
                 self.compile_fn_literal(fn_literal, node.range)?;
             }
-            ast::NodeValue::FunctionCall { .. } => todo!(),
+            ast::NodeValue::FunctionCall(fn_call) => self.compile_fn_call(fn_call, node.range)?,
             ast::NodeValue::Return(ret_node) => self.compile_return(ret_node, node.range)?,
             ast::NodeValue::Use(_) => todo!(),
         }
@@ -485,6 +485,15 @@ impl Compiler {
             },
             range,
         );
+
+        Ok(())
+    }
+
+    fn compile_fn_call(&mut self, fn_call: &ast::FunctionCall, range: Range) -> Result<(), Error> {
+        self.compile_node(&fn_call.function)?;
+        // TODO: Compile arguments
+
+        self.emit(Instruction::FnCall, range);
 
         Ok(())
     }

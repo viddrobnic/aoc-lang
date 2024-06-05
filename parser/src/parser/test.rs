@@ -1216,7 +1216,7 @@ fn fn_call() -> Result<()> {
         (
             "foo()",
             ast::Node {
-                value: ast::NodeValue::FunctionCall {
+                value: ast::NodeValue::FunctionCall(ast::FunctionCall {
                     function: Box::new(ast::Node {
                         value: ast::NodeValue::Identifier("foo".to_string()),
                         range: Range {
@@ -1225,7 +1225,7 @@ fn fn_call() -> Result<()> {
                         },
                     }),
                     arguments: vec![],
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 5),
@@ -1235,7 +1235,7 @@ fn fn_call() -> Result<()> {
         (
             "foo(\n1,\n2,\n)",
             ast::Node {
-                value: ast::NodeValue::FunctionCall {
+                value: ast::NodeValue::FunctionCall(ast::FunctionCall {
                     function: Box::new(ast::Node {
                         value: ast::NodeValue::Identifier("foo".to_string()),
                         range: Range {
@@ -1259,7 +1259,7 @@ fn fn_call() -> Result<()> {
                             },
                         },
                     ],
-                },
+                }),
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(3, 1),

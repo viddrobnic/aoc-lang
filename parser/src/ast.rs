@@ -33,10 +33,7 @@ pub enum NodeValue {
     Break,
     Continue,
     FunctionLiteral(FunctionLiteral),
-    FunctionCall {
-        function: Box<Node>,
-        arguments: Vec<Node>,
-    },
+    FunctionCall(FunctionCall),
     Return(Box<Node>),
     Use(String),
 }
@@ -91,6 +88,12 @@ pub struct FunctionLiteral {
     pub name: Option<String>,
     pub parameters: Vec<String>,
     pub body: Block,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionCall {
+    pub function: Box<Node>,
+    pub arguments: Vec<Node>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -319,10 +322,10 @@ impl Display for NodeValue {
 
                 write!(f, "fn({}) {{{}}}", parameters.join(", "), body)
             }
-            NodeValue::FunctionCall {
+            NodeValue::FunctionCall(FunctionCall {
                 function,
                 arguments,
-            } => {
+            }) => {
                 let args = arguments
                     .iter()
                     .map(|node| node.to_string())

@@ -28,6 +28,7 @@ pub enum ErrorKind {
     InvalidOrType(DataType, DataType),
     InvalidOrderingType(DataType, DataType),
     InvalidEqualityType(DataType, DataType),
+    InvalidFunctionCalee(DataType),
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -101,7 +102,8 @@ impl Display for ErrorKind {
                 f,
                 "Break and continue can be used only inside of for and while loops."
             ),
-            ErrorKind::ReturnOutsideOfFunction=>write!(f, "Return can't be used outside of a function.")
+            ErrorKind::ReturnOutsideOfFunction => write!(f, "Return can't be used outside of a function."),
+            ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
         }
     }
 }

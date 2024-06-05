@@ -436,3 +436,29 @@ fn closure() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn call_closure() {
+    let tests = [
+        ("fn(){1}()", Object::Integer(1)),
+        ("fn(){if (true) {return 2} else {3}}()", Object::Integer(2)),
+        (
+            "fn(){if (false) {return 2} else {return 3}}()",
+            Object::Integer(3),
+        ),
+        ("foo = fn(){69}\nfoo()", Object::Integer(69)),
+        (
+            r#"
+            foo = fn() {69}
+            bar = fn() {foo() - foo()/2 + 7}
+
+            bar()
+            "#,
+            Object::Integer(42),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

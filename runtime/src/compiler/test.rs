@@ -1242,3 +1242,61 @@ fn function_literal() {
         assert_eq!(bytecode, expected);
     }
 }
+
+#[test]
+fn fn_call() {
+    let tests = [(
+        "fn(){1}()",
+        Bytecode {
+            constants: vec![Object::Integer(1)],
+            functions: vec![
+                Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Return],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 5),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 7),
+                        },
+                    ],
+                },
+                Function {
+                    instructions: vec![
+                        Instruction::CreateClosure {
+                            function_index: 0,
+                            nr_free_variables: 0,
+                        },
+                        Instruction::FnCall,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 7),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 9),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 9),
+                        },
+                    ],
+                },
+            ],
+            main_function: 1,
+        },
+    )];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program).unwrap();
+
+        assert_eq!(bytecode, expected);
+    }
+}

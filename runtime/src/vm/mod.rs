@@ -74,6 +74,12 @@ impl VirtualMachine {
             .expect("There should be at least one frame on vm stack")
     }
 
+    fn pop_frame(&mut self) -> Frame {
+        self.frames
+            .pop()
+            .expect("There should be at leas one frame on vm stack")
+    }
+
     /// Runs the program.
     pub fn run(&mut self, bytecode: &Bytecode) -> Result<(), Error> {
         let main_closure = Closure {
@@ -101,7 +107,10 @@ impl VirtualMachine {
                     kind,
                     range: function.ranges[ip],
                 })?;
-            self.current_frame_mut().ip = new_ip;
+
+            if let Some(ip) = new_ip {
+                self.current_frame_mut().ip = ip;
+            }
 
             if self.gc.should_free() {
                 self.gc.free(&self.stack[0..self.sp]);
@@ -116,7 +125,7 @@ impl VirtualMachine {
         ip: usize,
         instructions: &[Instruction],
         constants: &[Object],
-    ) -> Result<usize, ErrorKind> {
+    ) -> Result<Option<usize>, ErrorKind> {
         match instructions[ip] {
             Instruction::Null => self.push(Object::Null)?,
             Instruction::Constant(idx) => self.push(constants[idx].clone())?,
@@ -127,11 +136,11 @@ impl VirtualMachine {
             Instruction::HashMap(len) => self.execute_hash_map(len)?,
             Instruction::Minus => self.execute_minus()?,
             Instruction::Bang => self.execute_bang()?,
-            Instruction::Jump(index) => return Ok(index),
+            Instruction::Jump(index) => return Ok(Some(index)),
             Instruction::JumpNotTruthy(index) => {
                 let obj = self.pop();
                 if !obj.is_truthy() {
-                    return Ok(index);
+                    return Ok(Some(index));
                 }
             }
             Instruction::UnpackArray(size) => self.unpack_array(size)?,
@@ -168,14 +177,21 @@ impl VirtualMachine {
             Instruction::Leq => self.execute_leq()?,
             Instruction::Eq => self.execute_eq()?,
             Instruction::Neq => self.execute_neq()?,
-            Instruction::Return => todo!(),
+            Instruction::Return => {
+                self.execute_return()?;
+                return Ok(None);
+            }
             Instruction::CreateClosure {
                 function_index,
                 nr_free_variables,
             } => self.create_closure(function_index, nr_free_variables)?,
+            Instruction::FnCall => {
+                self.fn_call()?;
+                return Ok(None);
+            }
         }
 
-        Ok(ip + 1)
+        Ok(Some(ip + 1))
     }
 
     fn execute_array(&mut self, len: usize) -> Result<(), ErrorKind> {
@@ -565,6 +581,34 @@ impl VirtualMachine {
             free_variables: Rc::new(vec![]),
         });
         self.push(cl)?;
+
+        Ok(())
+    }
+
+    fn fn_call(&mut self) -> Result<(), ErrorKind> {
+        // TODO: arguments
+        let obj = self.pop();
+        let Object::Closure(closure) = obj else {
+            return Err(ErrorKind::InvalidFunctionCalee(obj.into()));
+        };
+
+        let frame = Frame {
+            closure,
+            ip: 0,
+            base_pointer: self.sp,
+        };
+        self.frames.push(frame);
+
+        Ok(())
+    }
+
+    fn execute_return(&mut self) -> Result<(), ErrorKind> {
+        let val = self.pop();
+        let frame = self.pop_frame();
+        self.current_frame_mut().ip += 1;
+
+        self.sp = frame.base_pointer;
+        self.push(val)?;
 
         Ok(())
     }

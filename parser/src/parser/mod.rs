@@ -601,10 +601,10 @@ impl Parser<'_> {
         }
 
         Ok((
-            ast::NodeValue::FunctionCall {
+            ast::NodeValue::FunctionCall(ast::FunctionCall {
                 function: Box::new(left),
                 arguments: args,
-            },
+            }),
             end,
         ))
     }

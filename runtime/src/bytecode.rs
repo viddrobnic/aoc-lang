@@ -33,6 +33,7 @@ pub enum Instruction {
         function_index: usize,
         nr_free_variables: usize,
     },
+    FnCall,
 
     // Puts all array values on stack, where
     // array should be given size long.
