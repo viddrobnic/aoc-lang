@@ -18,60 +18,68 @@ fn constants() {
             "420",
             Bytecode {
                 constants: vec![Object::Integer(420)],
-                functions: vec![],
-                instructions: vec![Instruction::Constant(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3)
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3)
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "4.2",
             Bytecode {
                 constants: vec![Object::Float(4.2)],
-                functions: vec![],
-                instructions: vec![Instruction::Constant(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3)
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3)
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "true",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
-                functions: vec![],
-                instructions: vec![Instruction::Constant(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 4)
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 4)
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "\"foo\"",
             Bytecode {
                 constants: vec![Object::String(Rc::new("foo".to_string()))],
-                functions: vec![],
-                instructions: vec![Instruction::Constant(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 5)
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 5)
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -91,41 +99,45 @@ fn arrays() {
             "[]",
             Bytecode {
                 constants: vec![],
-                functions: vec![],
-                instructions: vec![Instruction::Array(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 2),
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Array(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 2),
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "[1]",
             Bytecode {
                 constants: vec![Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Array(1),
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 2),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Array(1),
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
@@ -135,31 +147,33 @@ fn arrays() {
                     Object::Integer(1),
                     Object::String(Rc::new("foo".to_string())),
                 ],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Array(2),
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 2),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 9),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 10),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 10),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Array(2),
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 9),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 10),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 10),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -180,17 +194,19 @@ fn arrays() {
                 Object::Integer(3),
                 Object::Integer(4),
             ],
-            functions: vec![],
-            instructions: vec![
-                Instruction::Constant(0),
-                Instruction::Constant(1),
-                Instruction::Constant(2),
-                Instruction::Array(2),
-                Instruction::Constant(3),
-                Instruction::Array(3),
-                Instruction::Pop,
-            ],
-            ranges: vec![],
+            functions: vec![Function {
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Constant(1),
+                    Instruction::Constant(2),
+                    Instruction::Array(2),
+                    Instruction::Constant(3),
+                    Instruction::Array(3),
+                    Instruction::Pop,
+                ],
+                ranges: vec![],
+            }],
+            main_function: 0,
         },
     )];
 
@@ -198,7 +214,7 @@ fn arrays() {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
         let mut bytecode = compiler.compile(&program).unwrap();
-        bytecode.ranges = vec![];
+        bytecode.functions[0].ranges = vec![];
 
         assert_eq!(bytecode, expected);
     }
@@ -211,46 +227,50 @@ fn hash_map() {
             "{}",
             Bytecode {
                 constants: vec![],
-                functions: vec![],
-                instructions: vec![Instruction::HashMap(0), Instruction::Pop],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 2),
-                    };
-                    2
-                ],
+                functions: vec![Function {
+                    instructions: vec![Instruction::HashMap(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 2),
+                        };
+                        2
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "{1: 2}",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::HashMap(2),
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 2),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 5),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::HashMap(2),
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 2),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -272,18 +292,20 @@ fn hash_map() {
                 Object::String(Rc::new("bar".to_string())),
                 Object::Integer(4),
             ],
-            functions: vec![],
-            instructions: vec![
-                Instruction::Constant(0),
-                Instruction::Constant(1),
-                Instruction::Constant(2),
-                Instruction::HashMap(2),
-                Instruction::Constant(3),
-                Instruction::Constant(4),
-                Instruction::HashMap(4),
-                Instruction::Pop,
-            ],
-            ranges: vec![],
+            functions: vec![Function {
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Constant(1),
+                    Instruction::Constant(2),
+                    Instruction::HashMap(2),
+                    Instruction::Constant(3),
+                    Instruction::Constant(4),
+                    Instruction::HashMap(4),
+                    Instruction::Pop,
+                ],
+                ranges: vec![],
+            }],
+            main_function: 0,
         },
     )];
 
@@ -291,7 +313,7 @@ fn hash_map() {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
         let mut bytecode = compiler.compile(&program).unwrap();
-        bytecode.ranges = vec![];
+        bytecode.functions[0].ranges = vec![];
 
         assert_eq!(bytecode, expected);
     }
@@ -304,104 +326,112 @@ fn prefix_operator() {
             "-10",
             Bytecode {
                 constants: vec![Object::Integer(10)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Minus,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Minus,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "-4.2",
             Bytecode {
                 constants: vec![Object::Float(4.2)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Minus,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 4),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 4),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 4),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Minus,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 4),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 4),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 4),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "!10",
             Bytecode {
                 constants: vec![Object::Integer(10)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Bang,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 3),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Bang,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "!false",
             Bytecode {
                 constants: vec![Object::Boolean(false)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Bang,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Bang,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -422,62 +452,66 @@ fn while_loop() {
             "while (true) {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(3),
-                    Instruction::Jump(0),
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 7),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 7),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 13),
-                        end: Position::new(0, 15),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(3),
+                        Instruction::Jump(0),
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 13),
+                            end: Position::new(0, 15),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "while (true) {1}",
             Bytecode {
                 constants: vec![Object::Boolean(true), Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(5),
-                    Instruction::Constant(1),
-                    Instruction::Pop,
-                    Instruction::Jump(0),
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 7),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 7),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 14),
-                        end: Position::new(0, 15),
-                    },
-                    Range {
-                        start: Position::new(0, 14),
-                        end: Position::new(0, 15),
-                    },
-                    Range {
-                        start: Position::new(0, 13),
-                        end: Position::new(0, 16),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(5),
+                        Instruction::Constant(1),
+                        Instruction::Pop,
+                        Instruction::Jump(0),
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 14),
+                            end: Position::new(0, 15),
+                        },
+                        Range {
+                            start: Position::new(0, 14),
+                            end: Position::new(0, 15),
+                        },
+                        Range {
+                            start: Position::new(0, 13),
+                            end: Position::new(0, 16),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -498,139 +532,147 @@ fn assign() {
             "foo = -1",
             Bytecode {
                 constants: vec![Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Minus,
-                    Instruction::StoreGlobal(0),
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 7),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 6),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 8),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Minus,
+                        Instruction::StoreGlobal(0),
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 7),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 6),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 8),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "[foo] = [1]",
             Bytecode {
                 constants: vec![Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Array(1),
-                    Instruction::UnpackArray(1),
-                    Instruction::StoreGlobal(0),
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 9),
-                        end: Position::new(0, 10),
-                    },
-                    Range {
-                        start: Position::new(0, 8),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 11),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 11),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Array(1),
+                        Instruction::UnpackArray(1),
+                        Instruction::StoreGlobal(0),
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 9),
+                            end: Position::new(0, 10),
+                        },
+                        Range {
+                            start: Position::new(0, 8),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 11),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 11),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "[foo, bar] = [1, 2]",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Array(2),
-                    Instruction::UnpackArray(2),
-                    Instruction::StoreGlobal(0),
-                    Instruction::StoreGlobal(1),
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 14),
-                        end: Position::new(0, 15),
-                    },
-                    Range {
-                        start: Position::new(0, 17),
-                        end: Position::new(0, 18),
-                    },
-                    Range {
-                        start: Position::new(0, 13),
-                        end: Position::new(0, 19),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 19),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 19),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 19),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Array(2),
+                        Instruction::UnpackArray(2),
+                        Instruction::StoreGlobal(0),
+                        Instruction::StoreGlobal(1),
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 14),
+                            end: Position::new(0, 15),
+                        },
+                        Range {
+                            start: Position::new(0, 17),
+                            end: Position::new(0, 18),
+                        },
+                        Range {
+                            start: Position::new(0, 13),
+                            end: Position::new(0, 19),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 19),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 19),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 19),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "foo = []\nfoo[0] = 1",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(0)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Array(0),
-                    Instruction::StoreGlobal(0),
-                    Instruction::Constant(0),
-                    Instruction::LoadGlobal(0),
-                    Instruction::Constant(1),
-                    Instruction::IndexSet,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 6),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(1, 9),
-                        end: Position::new(1, 10),
-                    },
-                    Range {
-                        start: Position::new(1, 0),
-                        end: Position::new(1, 3),
-                    },
-                    Range {
-                        start: Position::new(1, 4),
-                        end: Position::new(1, 5),
-                    },
-                    Range {
-                        start: Position::new(1, 0),
-                        end: Position::new(1, 10),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Array(0),
+                        Instruction::StoreGlobal(0),
+                        Instruction::Constant(0),
+                        Instruction::LoadGlobal(0),
+                        Instruction::Constant(1),
+                        Instruction::IndexSet,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 6),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(1, 9),
+                            end: Position::new(1, 10),
+                        },
+                        Range {
+                            start: Position::new(1, 0),
+                            end: Position::new(1, 3),
+                        },
+                        Range {
+                            start: Position::new(1, 4),
+                            end: Position::new(1, 5),
+                        },
+                        Range {
+                            start: Position::new(1, 0),
+                            end: Position::new(1, 10),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -649,20 +691,22 @@ fn assign() {
             "[foo, [bar, baz]] = [1, [2, 3]]",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2), Object::Integer(3)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Constant(2),
-                    Instruction::Array(2),
-                    Instruction::Array(2),
-                    Instruction::UnpackArray(2),
-                    Instruction::StoreGlobal(0),
-                    Instruction::UnpackArray(2),
-                    Instruction::StoreGlobal(1),
-                    Instruction::StoreGlobal(2),
-                ],
-                ranges: vec![],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Constant(2),
+                        Instruction::Array(2),
+                        Instruction::Array(2),
+                        Instruction::UnpackArray(2),
+                        Instruction::StoreGlobal(0),
+                        Instruction::UnpackArray(2),
+                        Instruction::StoreGlobal(1),
+                        Instruction::StoreGlobal(2),
+                    ],
+                    ranges: vec![],
+                }],
+                main_function: 0,
             },
         ),
         (
@@ -674,22 +718,24 @@ fn assign() {
                     Object::String(Rc::new("bar".to_string())),
                     Object::String(Rc::new("baz".to_string())),
                 ],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::HashMap(0),
-                    Instruction::StoreGlobal(0),
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Array(2),
-                    Instruction::UnpackArray(2),
-                    Instruction::LoadGlobal(0),
-                    Instruction::Constant(2),
-                    Instruction::IndexSet,
-                    Instruction::LoadGlobal(0),
-                    Instruction::Constant(3),
-                    Instruction::IndexSet,
-                ],
-                ranges: vec![],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::HashMap(0),
+                        Instruction::StoreGlobal(0),
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Array(2),
+                        Instruction::UnpackArray(2),
+                        Instruction::LoadGlobal(0),
+                        Instruction::Constant(2),
+                        Instruction::IndexSet,
+                        Instruction::LoadGlobal(0),
+                        Instruction::Constant(3),
+                        Instruction::IndexSet,
+                    ],
+                    ranges: vec![],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -698,7 +744,7 @@ fn assign() {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
         let mut bytecode = compiler.compile(&program).unwrap();
-        bytecode.ranges = vec![];
+        bytecode.functions[0].ranges = vec![];
 
         assert_eq!(bytecode, expected);
     }
@@ -711,93 +757,99 @@ fn infix_operator() {
             "1 < 2",
             Bytecode {
                 constants: vec![Object::Integer(1), Object::Integer(2)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Le,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 1),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 5),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 5),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 5),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Le,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 5),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 5),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "1 > 2",
             Bytecode {
                 constants: vec![Object::Integer(2), Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Le,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 5),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 1),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 5),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 5),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Le,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 5),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 5),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 5),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "1 >= 2",
             Bytecode {
                 constants: vec![Object::Integer(2), Object::Integer(1)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Constant(1),
-                    Instruction::Leq,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 5),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 1),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Constant(1),
+                        Instruction::Leq,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 5),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 1),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -818,67 +870,71 @@ fn index() {
             "[10][0]",
             Bytecode {
                 constants: vec![Object::Integer(10), Object::Integer(0)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::Array(1),
-                    Instruction::Constant(1),
-                    Instruction::IndexGet,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 1),
-                        end: Position::new(0, 3),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 4),
-                    },
-                    Range {
-                        start: Position::new(0, 5),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 7),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 7),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::Array(1),
+                        Instruction::Constant(1),
+                        Instruction::IndexGet,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 1),
+                            end: Position::new(0, 3),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 4),
+                        },
+                        Range {
+                            start: Position::new(0, 5),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 7),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 7),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "{}.foo",
             Bytecode {
                 constants: vec![Object::String(Rc::new("foo".to_string()))],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::HashMap(0),
-                    Instruction::Constant(0),
-                    Instruction::IndexGet,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 2),
-                    },
-                    Range {
-                        start: Position::new(0, 3),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 6),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::HashMap(0),
+                        Instruction::Constant(0),
+                        Instruction::IndexGet,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 2),
+                        },
+                        Range {
+                            start: Position::new(0, 3),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -898,66 +954,68 @@ fn for_loop() {
 
     let expected = Bytecode {
         constants: vec![Object::Integer(0), Object::Integer(10), Object::Integer(1)],
-        functions: vec![],
-        instructions: vec![
-            Instruction::Constant(0),
-            Instruction::StoreGlobal(0),
-            Instruction::LoadGlobal(0),
-            Instruction::Constant(1),
-            Instruction::Le,
-            Instruction::JumpNotTruthy(11),
-            Instruction::LoadGlobal(0),
-            Instruction::Constant(2),
-            Instruction::Add,
-            Instruction::StoreGlobal(0),
-            Instruction::Jump(2),
-        ],
-        ranges: vec![
-            Range {
-                start: Position::new(0, 9),
-                end: Position::new(0, 10),
-            },
-            Range {
-                start: Position::new(0, 5),
-                end: Position::new(0, 10),
-            },
-            Range {
-                start: Position::new(0, 12),
-                end: Position::new(0, 13),
-            },
-            Range {
-                start: Position::new(0, 16),
-                end: Position::new(0, 18),
-            },
-            Range {
-                start: Position::new(0, 12),
-                end: Position::new(0, 18),
-            },
-            Range {
-                start: Position::new(0, 12),
-                end: Position::new(0, 18),
-            },
-            Range {
-                start: Position::new(0, 24),
-                end: Position::new(0, 25),
-            },
-            Range {
-                start: Position::new(0, 28),
-                end: Position::new(0, 29),
-            },
-            Range {
-                start: Position::new(0, 24),
-                end: Position::new(0, 29),
-            },
-            Range {
-                start: Position::new(0, 20),
-                end: Position::new(0, 29),
-            },
-            Range {
-                start: Position::new(0, 31),
-                end: Position::new(0, 33),
-            },
-        ],
+        functions: vec![Function {
+            instructions: vec![
+                Instruction::Constant(0),
+                Instruction::StoreGlobal(0),
+                Instruction::LoadGlobal(0),
+                Instruction::Constant(1),
+                Instruction::Le,
+                Instruction::JumpNotTruthy(11),
+                Instruction::LoadGlobal(0),
+                Instruction::Constant(2),
+                Instruction::Add,
+                Instruction::StoreGlobal(0),
+                Instruction::Jump(2),
+            ],
+            ranges: vec![
+                Range {
+                    start: Position::new(0, 9),
+                    end: Position::new(0, 10),
+                },
+                Range {
+                    start: Position::new(0, 5),
+                    end: Position::new(0, 10),
+                },
+                Range {
+                    start: Position::new(0, 12),
+                    end: Position::new(0, 13),
+                },
+                Range {
+                    start: Position::new(0, 16),
+                    end: Position::new(0, 18),
+                },
+                Range {
+                    start: Position::new(0, 12),
+                    end: Position::new(0, 18),
+                },
+                Range {
+                    start: Position::new(0, 12),
+                    end: Position::new(0, 18),
+                },
+                Range {
+                    start: Position::new(0, 24),
+                    end: Position::new(0, 25),
+                },
+                Range {
+                    start: Position::new(0, 28),
+                    end: Position::new(0, 29),
+                },
+                Range {
+                    start: Position::new(0, 24),
+                    end: Position::new(0, 29),
+                },
+                Range {
+                    start: Position::new(0, 20),
+                    end: Position::new(0, 29),
+                },
+                Range {
+                    start: Position::new(0, 31),
+                    end: Position::new(0, 33),
+                },
+            ],
+        }],
+        main_function: 0,
     };
 
     let program = parse(input).unwrap();
@@ -974,82 +1032,86 @@ fn if_statement() {
             "if (true) {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(4),
-                    Instruction::Null,
-                    Instruction::Jump(5),
-                    Instruction::Null,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 10),
-                        end: Position::new(0, 12),
-                    },
-                    Range {
-                        start: Position::new(0, 10),
-                        end: Position::new(0, 12),
-                    },
-                    Range {
-                        start: Position::new(0, 10),
-                        end: Position::new(0, 12),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 12),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(4),
+                        Instruction::Null,
+                        Instruction::Jump(5),
+                        Instruction::Null,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                        Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                        Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 12),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
         (
             "if (true) {} else {}",
             Bytecode {
                 constants: vec![Object::Boolean(true)],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(4),
-                    Instruction::Null,
-                    Instruction::Jump(5),
-                    Instruction::Null,
-                    Instruction::Pop,
-                ],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 8),
-                    },
-                    Range {
-                        start: Position::new(0, 10),
-                        end: Position::new(0, 12),
-                    },
-                    Range {
-                        start: Position::new(0, 10),
-                        end: Position::new(0, 12),
-                    },
-                    Range {
-                        start: Position::new(0, 18),
-                        end: Position::new(0, 20),
-                    },
-                    Range {
-                        start: Position::new(0, 0),
-                        end: Position::new(0, 20),
-                    },
-                ],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(4),
+                        Instruction::Null,
+                        Instruction::Jump(5),
+                        Instruction::Null,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 8),
+                        },
+                        Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                        Range {
+                            start: Position::new(0, 10),
+                            end: Position::new(0, 12),
+                        },
+                        Range {
+                            start: Position::new(0, 18),
+                            end: Position::new(0, 20),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 20),
+                        },
+                    ],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -1071,18 +1133,20 @@ fn if_statement() {
                     Object::Integer(0),
                     Object::Integer(10),
                 ],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(6),
-                    Instruction::Constant(1),
-                    Instruction::StoreGlobal(0),
-                    Instruction::Null,
-                    Instruction::Jump(7),
-                    Instruction::Constant(2),
-                    Instruction::Pop,
-                ],
-                ranges: vec![],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(6),
+                        Instruction::Constant(1),
+                        Instruction::StoreGlobal(0),
+                        Instruction::Null,
+                        Instruction::Jump(7),
+                        Instruction::Constant(2),
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![],
+                }],
+                main_function: 0,
             },
         ),
         (
@@ -1094,22 +1158,24 @@ fn if_statement() {
                     Object::Boolean(false),
                     Object::Integer(10),
                 ],
-                functions: vec![],
-                instructions: vec![
-                    Instruction::Constant(0),
-                    Instruction::JumpNotTruthy(6),
-                    Instruction::Constant(1),
-                    Instruction::StoreGlobal(0),
-                    Instruction::Null,
-                    Instruction::Jump(11),
-                    Instruction::Constant(2),
-                    Instruction::JumpNotTruthy(10),
-                    Instruction::Constant(3),
-                    Instruction::Jump(11),
-                    Instruction::Null,
-                    Instruction::Pop,
-                ],
-                ranges: vec![],
+                functions: vec![Function {
+                    instructions: vec![
+                        Instruction::Constant(0),
+                        Instruction::JumpNotTruthy(6),
+                        Instruction::Constant(1),
+                        Instruction::StoreGlobal(0),
+                        Instruction::Null,
+                        Instruction::Jump(11),
+                        Instruction::Constant(2),
+                        Instruction::JumpNotTruthy(10),
+                        Instruction::Constant(3),
+                        Instruction::Jump(11),
+                        Instruction::Null,
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![],
+                }],
+                main_function: 0,
             },
         ),
     ];
@@ -1118,7 +1184,7 @@ fn if_statement() {
         let program = parse(input).unwrap();
         let compiler = Compiler::new();
         let mut bytecode = compiler.compile(&program).unwrap();
-        bytecode.ranges = vec![];
+        bytecode.functions[0].ranges = vec![];
 
         assert_eq!(bytecode, expected);
     }
@@ -1130,36 +1196,41 @@ fn function_literal() {
         "fn(){}",
         Bytecode {
             constants: vec![],
-            functions: vec![Function {
-                instructions: vec![Instruction::Null, Instruction::Return],
-                ranges: vec![
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 6),
-                    },
-                    Range {
-                        start: Position::new(0, 4),
-                        end: Position::new(0, 6),
-                    },
-                ],
-            }],
-            instructions: vec![
-                Instruction::CreateClosure {
-                    function_index: 0,
-                    nr_free_variables: 0,
+            functions: vec![
+                Function {
+                    instructions: vec![Instruction::Null, Instruction::Return],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 6),
+                        },
+                    ],
                 },
-                Instruction::Pop,
+                Function {
+                    instructions: vec![
+                        Instruction::CreateClosure {
+                            function_index: 0,
+                            nr_free_variables: 0,
+                        },
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 6),
+                        },
+                    ],
+                },
             ],
-            ranges: vec![
-                Range {
-                    start: Position::new(0, 0),
-                    end: Position::new(0, 6),
-                },
-                Range {
-                    start: Position::new(0, 0),
-                    end: Position::new(0, 6),
-                },
-            ],
+            main_function: 1,
         },
     )];
 

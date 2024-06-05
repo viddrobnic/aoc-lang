@@ -6,8 +6,10 @@ use crate::{
     object::{Array, Closure, DataType, Dictionary, HashKey, Object},
 };
 
+use self::frame::Frame;
 use self::gc::GarbageCollector;
 
+mod frame;
 pub(crate) mod gc;
 
 #[cfg(test)]
@@ -22,6 +24,7 @@ pub struct VirtualMachine {
 
     globals: Vec<Object>,
 
+    frames: Vec<Frame>,
     stack: Vec<Object>,
     // StackPointer which points to the next value.
     // Top of the stack is stack[sp-1]
@@ -33,6 +36,7 @@ impl VirtualMachine {
         Self {
             gc: GarbageCollector::new(),
             globals: vec![Object::Null; GLOBALS_SIZE],
+            frames: vec![],
             stack: vec![Object::Null; STACK_SIZE],
             sp: 0,
         }
@@ -58,16 +62,46 @@ impl VirtualMachine {
         self.stack[self.sp].clone()
     }
 
+    fn current_frame(&self) -> &Frame {
+        self.frames
+            .last()
+            .expect("There should be at least one frame on vm stack")
+    }
+
+    fn current_frame_mut(&mut self) -> &mut Frame {
+        self.frames
+            .last_mut()
+            .expect("There should be at least one frame on vm stack")
+    }
+
     /// Runs the program.
     pub fn run(&mut self, bytecode: &Bytecode) -> Result<(), Error> {
-        let mut ip = 0;
-        while ip < bytecode.instructions.len() {
-            ip = self
-                .execute_instruction(ip, bytecode)
+        let main_closure = Closure {
+            function_index: bytecode.main_function,
+            free_variables: Rc::new(vec![]),
+        };
+        let main_frame = Frame {
+            closure: main_closure,
+            ip: 0,
+            base_pointer: 0,
+        };
+        self.frames.push(main_frame);
+
+        loop {
+            let ip = self.current_frame().ip;
+            let function = &bytecode.functions[self.current_frame().closure.function_index];
+
+            if ip >= function.instructions.len() {
+                break;
+            }
+
+            let new_ip = self
+                .execute_instruction(ip, &function.instructions, &bytecode.constants)
                 .map_err(|kind| Error {
                     kind,
-                    range: bytecode.ranges[ip],
+                    range: function.ranges[ip],
                 })?;
+            self.current_frame_mut().ip = new_ip;
 
             if self.gc.should_free() {
                 self.gc.free(&self.stack[0..self.sp]);
@@ -77,10 +111,15 @@ impl VirtualMachine {
         Ok(())
     }
 
-    fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<usize, ErrorKind> {
-        match bytecode.instructions[ip] {
+    fn execute_instruction(
+        &mut self,
+        ip: usize,
+        instructions: &[Instruction],
+        constants: &[Object],
+    ) -> Result<usize, ErrorKind> {
+        match instructions[ip] {
             Instruction::Null => self.push(Object::Null)?,
-            Instruction::Constant(idx) => self.push(bytecode.constants[idx].clone())?,
+            Instruction::Constant(idx) => self.push(constants[idx].clone())?,
             Instruction::Pop => {
                 self.pop();
             }

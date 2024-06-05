@@ -106,12 +106,17 @@ impl Compiler {
 
         // If compiler works correctly, we should have one scope.
         let scope = self.scopes.pop().expect("Invalid number of scopes");
+        let main_fn = Function {
+            instructions: scope.instructions,
+            ranges: scope.ranges,
+        };
+        self.functions.push(main_fn);
+        let main_fn_idx = self.functions.len() - 1;
 
         Ok(Bytecode {
             constants: self.constants,
             functions: self.functions,
-            instructions: scope.instructions,
-            ranges: scope.ranges,
+            main_function: main_fn_idx,
         })
     }
 

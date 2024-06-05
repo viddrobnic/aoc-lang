@@ -56,6 +56,6 @@ pub struct Bytecode {
     pub constants: Vec<Object>,
     pub functions: Vec<Function>,
 
-    pub instructions: Vec<Instruction>,
-    pub ranges: Vec<Range>,
+    // Index of the main function
+    pub main_function: usize,
 }
