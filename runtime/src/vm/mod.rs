@@ -58,12 +58,8 @@ impl VirtualMachine {
         self.stack[self.sp].clone()
     }
 
-    /// Runs the program and returns the first element on the stack.
-    ///
-    /// This is primarily used to test if the vm works correctly.
-    /// The first element on the stack should be the last popped element
-    /// if the compiler and vm both work correctly.
-    pub fn run(&mut self, bytecode: &Bytecode) -> Result<Object, Error> {
+    /// Runs the program.
+    pub fn run(&mut self, bytecode: &Bytecode) -> Result<(), Error> {
         let mut ip = 0;
         while ip < bytecode.instructions.len() {
             ip = self
@@ -78,7 +74,7 @@ impl VirtualMachine {
             }
         }
 
-        Ok(self.stack[0].clone())
+        Ok(())
     }
 
     fn execute_instruction(&mut self, ip: usize, bytecode: &Bytecode) -> Result<usize, ErrorKind> {

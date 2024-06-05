@@ -18,10 +18,33 @@ mod symbol_table;
 #[cfg(test)]
 mod test;
 
+#[derive(Debug)]
+struct LoopInfo {
+    // Indices of break instructions
+    breaks: Vec<usize>,
+    // Indices of continue instructions
+    continues: Vec<usize>,
+}
+
 #[derive(Debug, Default)]
 struct Scope {
     instructions: Vec<Instruction>,
     ranges: Vec<Range>,
+
+    loops: Vec<LoopInfo>,
+}
+
+impl Scope {
+    fn enter_loop(&mut self) {
+        self.loops.push(LoopInfo {
+            breaks: vec![],
+            continues: vec![],
+        })
+    }
+
+    fn exit_loop(&mut self) -> Option<LoopInfo> {
+        self.loops.pop()
+    }
 }
 
 #[derive(Debug)]
@@ -115,8 +138,8 @@ impl Compiler {
             ast::NodeValue::If(if_node) => self.compile_if(if_node)?,
             ast::NodeValue::While(while_loop) => self.compile_while(while_loop)?,
             ast::NodeValue::For(for_loop) => self.compile_for(for_loop)?,
-            ast::NodeValue::Break => todo!(),
-            ast::NodeValue::Continue => todo!(),
+            ast::NodeValue::Break => self.compile_break(node.range)?,
+            ast::NodeValue::Continue => self.compile_continue(node.range)?,
             ast::NodeValue::FunctionLiteral { .. } => todo!(),
             ast::NodeValue::FunctionCall { .. } => todo!(),
             ast::NodeValue::Return(_) => todo!(),
@@ -233,6 +256,8 @@ impl Compiler {
 
     fn compile_while(&mut self, while_loop: &ast::While) -> Result<(), Error> {
         let start_index = self.current_scope().instructions.len();
+        self.current_scope().enter_loop();
+
         self.compile_node(&while_loop.condition)?;
 
         // Jump position will be fixed after
@@ -245,6 +270,15 @@ impl Compiler {
         let end_index = self.current_scope().instructions.len();
         self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);
 
+        // We entered the loop, so it's safe to unwrap.
+        let loop_info = self.current_scope().exit_loop().unwrap();
+        for break_idx in &loop_info.breaks {
+            self.current_scope().instructions[*break_idx] = Instruction::Jump(end_index);
+        }
+        for continue_idx in &loop_info.continues {
+            self.current_scope().instructions[*continue_idx] = Instruction::Jump(start_index);
+        }
+
         Ok(())
     }
 
@@ -252,6 +286,8 @@ impl Compiler {
         self.compile_node(&for_loop.initial)?;
 
         let start_index = self.current_scope().instructions.len();
+        self.current_scope().enter_loop();
+
         self.compile_node(&for_loop.condition)?;
 
         // Jump position will be fixed after
@@ -259,6 +295,8 @@ impl Compiler {
 
         // Compile the body
         self.compile_block(&for_loop.body, false)?;
+
+        let after_index = self.current_scope().instructions.len();
         self.compile_node(&for_loop.after)?;
         if for_loop.after.kind() == ast::NodeKind::Expression {
             self.emit(Instruction::Pop, for_loop.after.range);
@@ -268,6 +306,15 @@ impl Compiler {
 
         let end_index = self.current_scope().instructions.len();
         self.current_scope().instructions[jump_index] = Instruction::JumpNotTruthy(end_index);
+
+        // We entered the loop, so it's safe to unwrap.
+        let loop_info = self.current_scope().exit_loop().unwrap();
+        for break_idx in loop_info.breaks {
+            self.current_scope().instructions[break_idx] = Instruction::Jump(end_index);
+        }
+        for continue_idx in loop_info.continues {
+            self.current_scope().instructions[continue_idx] = Instruction::Jump(after_index);
+        }
 
         Ok(())
     }
@@ -344,6 +391,37 @@ impl Compiler {
 
             _ => panic!("Invalid asignee: {ident:?}"),
         }
+
+        Ok(())
+    }
+
+    fn compile_break(&mut self, range: Range) -> Result<(), Error> {
+        let idx = self.current_scope().instructions.len();
+        let Some(loop_info) = self.current_scope().loops.last_mut() else {
+            return Err(Error {
+                kind: ErrorKind::ControlFlowOutsideOfLoop,
+                range,
+            });
+        };
+        loop_info.breaks.push(idx);
+
+        // Jump index will be fixed in compile loop function.
+        self.emit(Instruction::Jump(0), range);
+
+        Ok(())
+    }
+
+    fn compile_continue(&mut self, range: Range) -> Result<(), Error> {
+        let idx = self.current_scope().instructions.len();
+        let Some(loop_info) = self.current_scope().loops.last_mut() else {
+            return Err(Error {
+                kind: ErrorKind::ControlFlowOutsideOfLoop,
+                range,
+            });
+        };
+        loop_info.continues.push(idx);
+
+        self.emit(Instruction::Jump(0), range);
 
         Ok(())
     }

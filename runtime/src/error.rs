@@ -15,6 +15,7 @@ pub enum ErrorKind {
     UnpackLengthMismatch { expected: usize, got: usize },
     UnpackTooLarge { max: usize, got: usize },
     NotIndexable(DataType),
+    ControlFlowOutsideOfLoop,
 
     InvalidIndexType(DataType),
     InvalidAddType(DataType, DataType),
@@ -94,6 +95,10 @@ impl Display for ErrorKind {
             ErrorKind::InvalidEqualityType(left, right) => write!(
                 f,
                 "Can't compare equality of {left} and {right}. Can compare equality of integers, floats, booleans and strings."
+            ),
+            ErrorKind::ControlFlowOutsideOfLoop => write!(
+                f,
+                "Break and continue can be used only inside of for and while loops."
             ),
         }
     }

@@ -1,6 +1,5 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
-
 use parser::position::{Position, Range};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     compiler::Compiler,
@@ -16,9 +15,18 @@ fn run_test(input: &str, expected: Result<Object, Error>) {
     let bytecode = compiler.compile(&program).unwrap();
 
     let mut vm = VirtualMachine::new();
-    let obj = vm.run(&bytecode);
+    let vm_res = vm.run(&bytecode);
 
-    assert_eq!(obj, expected);
+    // We check the first element on the stack. If compiler and vm both
+    // work correctly, the vm should get cleaned up and the first element on
+    // the stack should be the last popped element.
+    let obj = vm.stack[0].clone();
+    let res = match vm_res {
+        Ok(_) => Ok(obj),
+        Err(err) => Err(err),
+    };
+
+    assert_eq!(res, expected);
 }
 
 #[test]
@@ -343,6 +351,69 @@ fn if_statement() {
             }
             "#,
             Object::Integer(69),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
+fn loop_break() {
+    let tests = [
+        ("while (true) {foo = 0\n break}\n foo", Object::Integer(0)),
+        (
+            "for (i = 0; i < 10; i = i + 1) {break}\n i",
+            Object::Integer(0),
+        ),
+        (
+            r#"
+            for (i = 0; i < 100; i = i + 1) {
+                if (i == 42) {
+                    break
+                }
+            }
+            i
+            "#,
+            Object::Integer(42),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
+fn loop_continue() {
+    let tests = [
+        (
+            r#"
+            foo = 69
+            i = 0
+            while (i < 1) {
+                i = i + 1
+                continue
+                foo = 50
+            }
+            foo
+            "#,
+            Object::Integer(69),
+        ),
+        (
+            r#"
+            sum = 0
+            for (i = 0; i < 10; i = i + 1) {
+                if (i <= 1) {
+                    continue
+                }
+
+                sum = sum + i
+            }
+            sum
+            "#,
+            Object::Integer(44),
         ),
     ];
 
