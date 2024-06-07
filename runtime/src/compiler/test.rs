@@ -1429,6 +1429,89 @@ fn function_literal() {
 
         assert_eq!(bytecode, expected);
     }
+
+    // No ranges
+    let tests = [(
+        r#"
+        fn(a) {
+            fn(b) {
+                fn(c) {
+                    a + b + c
+                }
+            }
+        }
+
+        "#,
+        Bytecode {
+            constants: vec![],
+            functions: vec![
+                Function {
+                    instructions: vec![
+                        Instruction::LoadFree(0),
+                        Instruction::LoadFree(1),
+                        Instruction::Add,
+                        Instruction::LoadLocal(0),
+                        Instruction::Add,
+                        Instruction::Return,
+                    ],
+                    ranges: vec![],
+                    nr_local_variables: 1,
+                    nr_arguments: 1,
+                },
+                Function {
+                    instructions: vec![
+                        Instruction::LoadFree(0),
+                        Instruction::LoadLocal(0),
+                        Instruction::CreateClosure(CreateClosure {
+                            function_index: 0,
+                            nr_free_variables: 2,
+                        }),
+                        Instruction::Return,
+                    ],
+                    ranges: vec![],
+                    nr_local_variables: 1,
+                    nr_arguments: 1,
+                },
+                Function {
+                    instructions: vec![
+                        Instruction::LoadLocal(0),
+                        Instruction::CreateClosure(CreateClosure {
+                            function_index: 1,
+                            nr_free_variables: 1,
+                        }),
+                        Instruction::Return,
+                    ],
+                    ranges: vec![],
+                    nr_local_variables: 1,
+                    nr_arguments: 1,
+                },
+                Function {
+                    instructions: vec![
+                        Instruction::CreateClosure(CreateClosure {
+                            function_index: 2,
+                            nr_free_variables: 0,
+                        }),
+                        Instruction::Pop,
+                    ],
+                    ranges: vec![],
+                    nr_local_variables: 0,
+                    nr_arguments: 0,
+                },
+            ],
+            main_function: 3,
+        },
+    )];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let mut bytecode = compiler.compile(&program).unwrap();
+        for fun in bytecode.functions.iter_mut() {
+            fun.ranges = vec![];
+        }
+
+        assert_eq!(bytecode, expected);
+    }
 }
 
 #[test]
