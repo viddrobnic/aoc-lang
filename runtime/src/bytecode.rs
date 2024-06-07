@@ -29,10 +29,7 @@ pub enum Instruction {
     JumpNotTruthy(usize),
 
     Return,
-    CreateClosure {
-        function_index: usize,
-        nr_free_variables: usize,
-    },
+    CreateClosure(CreateClosure),
     FnCall,
 
     // Puts all array values on stack, where
@@ -44,12 +41,22 @@ pub enum Instruction {
 
     StoreGlobal(usize),
     LoadGlobal(usize),
+    StoreLocal(usize),
+    LoadLocal(usize),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub struct CreateClosure {
+    pub function_index: usize,
+    pub nr_free_variables: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Function {
     pub instructions: Vec<Instruction>,
     pub ranges: Vec<Range>,
+
+    pub nr_local_variables: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]

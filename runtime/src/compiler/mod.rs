@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    bytecode::{Bytecode, Function, Instruction},
+    bytecode::{Bytecode, CreateClosure, Function, Instruction},
     error::{Error, ErrorKind},
     object::Object,
 };
@@ -74,13 +74,16 @@ impl Compiler {
     fn enter_scope(&mut self) {
         self.scopes.push(Scope::default());
         self.scope_index += 1;
+
+        self.symbol_table.enter_scope();
     }
 
-    fn exist_scope(&mut self) -> Scope {
-        let scope = self.scopes.pop();
+    fn exist_scope(&mut self) -> (Scope, symbol_table::Scope) {
+        let scope = self.scopes.pop().expect("Exiting on nos scopes");
         self.scope_index -= 1;
 
-        scope.expect("Existing on no scopes.")
+        let sym_scope = self.symbol_table.leave_scope();
+        (scope, sym_scope)
     }
 
     fn current_scope(&mut self) -> &mut Scope {
@@ -109,6 +112,7 @@ impl Compiler {
         let main_fn = Function {
             instructions: scope.instructions,
             ranges: scope.ranges,
+            nr_local_variables: 0,
         };
         self.functions.push(main_fn);
         let main_fn_idx = self.functions.len() - 1;
@@ -384,6 +388,7 @@ impl Compiler {
 
         match symbol {
             Symbol::Global(index) => self.emit(Instruction::LoadGlobal(index), range),
+            Symbol::Local(index) => self.emit(Instruction::LoadLocal(index), range),
         };
 
         Ok(())
@@ -471,18 +476,19 @@ impl Compiler {
         self.compile_block(&fn_literal.body, true)?;
         self.emit(Instruction::Return, fn_literal.body.range);
 
-        let scope = self.exist_scope();
+        let (scope, sym_scope) = self.exist_scope();
         let func = Function {
             instructions: scope.instructions,
             ranges: scope.ranges,
+            nr_local_variables: sym_scope.num_definitions,
         };
         self.functions.push(func);
 
         self.emit(
-            Instruction::CreateClosure {
+            Instruction::CreateClosure(CreateClosure {
                 function_index: self.functions.len() - 1,
                 nr_free_variables: 0,
-            },
+            }),
             range,
         );
 
@@ -501,6 +507,7 @@ impl Compiler {
     fn compile_store_instruction(&mut self, symbol: Symbol, range: Range) {
         match symbol {
             Symbol::Global(index) => self.emit(Instruction::StoreGlobal(index), range),
+            Symbol::Local(index) => self.emit(Instruction::StoreLocal(index), range),
         };
     }
 }

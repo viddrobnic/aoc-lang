@@ -456,6 +456,28 @@ fn call_closure() {
             "#,
             Object::Integer(42),
         ),
+        (
+            r#"
+            global = 10
+            fun = fn() {
+                res = global + 1
+                global = 5
+                res = res + global
+                res
+            }
+
+            fun()
+            "#,
+            Object::Integer(16),
+        ),
+        (
+            r#"
+            global = 42
+            fn() {global = 69}()
+            global
+            "#,
+            Object::Integer(42),
+        ),
     ];
 
     for (input, expected) in tests {

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
-    bytecode::{Bytecode, Instruction},
+    bytecode::{Bytecode, CreateClosure, Function, Instruction},
     error::{Error, ErrorKind},
     object::{Array, Closure, DataType, Dictionary, HashKey, Object},
 };
@@ -102,7 +102,12 @@ impl VirtualMachine {
             }
 
             let new_ip = self
-                .execute_instruction(ip, &function.instructions, &bytecode.constants)
+                .execute_instruction(
+                    ip,
+                    &function.instructions,
+                    &bytecode.constants,
+                    &bytecode.functions,
+                )
                 .map_err(|kind| Error {
                     kind,
                     range: function.ranges[ip],
@@ -125,6 +130,7 @@ impl VirtualMachine {
         ip: usize,
         instructions: &[Instruction],
         constants: &[Object],
+        functions: &[Function],
     ) -> Result<Option<usize>, ErrorKind> {
         match instructions[ip] {
             Instruction::Null => self.push(Object::Null)?,
@@ -181,14 +187,13 @@ impl VirtualMachine {
                 self.execute_return()?;
                 return Ok(None);
             }
-            Instruction::CreateClosure {
-                function_index,
-                nr_free_variables,
-            } => self.create_closure(function_index, nr_free_variables)?,
+            Instruction::CreateClosure(closure) => self.create_closure(&closure)?,
             Instruction::FnCall => {
-                self.fn_call()?;
+                self.fn_call(functions)?;
                 return Ok(None);
             }
+            Instruction::StoreLocal(index) => self.store_local(index),
+            Instruction::LoadLocal(index) => self.load_local(index)?,
         }
 
         Ok(Some(ip + 1))
@@ -570,14 +575,10 @@ impl VirtualMachine {
         Ok(())
     }
 
-    fn create_closure(
-        &mut self,
-        function_index: usize,
-        _nr_free_variables: usize,
-    ) -> Result<(), ErrorKind> {
+    fn create_closure(&mut self, closure: &CreateClosure) -> Result<(), ErrorKind> {
         // TODO: handle capture of free variables.
         let cl = Object::Closure(Closure {
-            function_index,
+            function_index: closure.function_index,
             free_variables: Rc::new(vec![]),
         });
         self.push(cl)?;
@@ -585,18 +586,21 @@ impl VirtualMachine {
         Ok(())
     }
 
-    fn fn_call(&mut self) -> Result<(), ErrorKind> {
+    fn fn_call(&mut self, functions: &[Function]) -> Result<(), ErrorKind> {
         // TODO: arguments
         let obj = self.pop();
         let Object::Closure(closure) = obj else {
             return Err(ErrorKind::InvalidFunctionCalee(obj.into()));
         };
 
+        let nr_local = functions[closure.function_index].nr_local_variables;
+
         let frame = Frame {
             closure,
             ip: 0,
             base_pointer: self.sp,
         };
+        self.sp += nr_local;
         self.frames.push(frame);
 
         Ok(())
@@ -611,5 +615,19 @@ impl VirtualMachine {
         self.push(val)?;
 
         Ok(())
+    }
+
+    fn store_local(&mut self, index: usize) {
+        let obj = self.pop();
+
+        let pointer = self.current_frame().base_pointer + index;
+        self.stack[pointer] = obj;
+    }
+
+    fn load_local(&mut self, index: usize) -> Result<(), ErrorKind> {
+        let pointer = self.current_frame().base_pointer + index;
+        let obj = self.stack[pointer].clone();
+
+        self.push(obj)
     }
 }

@@ -6,7 +6,7 @@ use parser::{
 };
 
 use crate::{
-    bytecode::{Bytecode, Function, Instruction},
+    bytecode::{Bytecode, CreateClosure, Function, Instruction},
     compiler::Compiler,
     object::Object,
 };
@@ -27,6 +27,7 @@ fn constants() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -44,6 +45,7 @@ fn constants() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -61,6 +63,7 @@ fn constants() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -78,6 +81,7 @@ fn constants() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -108,6 +112,7 @@ fn arrays() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -136,6 +141,7 @@ fn arrays() {
                             end: Position::new(0, 3),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -172,6 +178,7 @@ fn arrays() {
                             end: Position::new(0, 10),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -205,6 +212,7 @@ fn arrays() {
                     Instruction::Pop,
                 ],
                 ranges: vec![],
+                nr_local_variables: 0,
             }],
             main_function: 0,
         },
@@ -236,6 +244,7 @@ fn hash_map() {
                         };
                         2
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -269,6 +278,7 @@ fn hash_map() {
                             end: Position::new(0, 6),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -304,6 +314,7 @@ fn hash_map() {
                     Instruction::Pop,
                 ],
                 ranges: vec![],
+                nr_local_variables: 0,
             }],
             main_function: 0,
         },
@@ -346,6 +357,7 @@ fn prefix_operator() {
                             end: Position::new(0, 3),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -374,6 +386,7 @@ fn prefix_operator() {
                             end: Position::new(0, 4),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -402,6 +415,7 @@ fn prefix_operator() {
                             end: Position::new(0, 3),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -430,6 +444,7 @@ fn prefix_operator() {
                             end: Position::new(0, 6),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -472,6 +487,7 @@ fn while_loop() {
                             end: Position::new(0, 15),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -510,6 +526,7 @@ fn while_loop() {
                             end: Position::new(0, 16),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -552,6 +569,7 @@ fn assign() {
                             end: Position::new(0, 8),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -585,6 +603,7 @@ fn assign() {
                             end: Position::new(0, 11),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -628,6 +647,7 @@ fn assign() {
                             end: Position::new(0, 19),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -671,6 +691,7 @@ fn assign() {
                             end: Position::new(1, 10),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -705,6 +726,7 @@ fn assign() {
                         Instruction::StoreGlobal(2),
                     ],
                     ranges: vec![],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -734,6 +756,7 @@ fn assign() {
                         Instruction::IndexSet,
                     ],
                     ranges: vec![],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -782,6 +805,7 @@ fn infix_operator() {
                             end: Position::new(0, 5),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -815,6 +839,7 @@ fn infix_operator() {
                             end: Position::new(0, 5),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -848,6 +873,7 @@ fn infix_operator() {
                             end: Position::new(0, 6),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -900,6 +926,7 @@ fn index() {
                             end: Position::new(0, 7),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -933,6 +960,7 @@ fn index() {
                             end: Position::new(0, 6),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -1014,6 +1042,7 @@ fn for_loop() {
                     end: Position::new(0, 33),
                 },
             ],
+            nr_local_variables: 0,
         }],
         main_function: 0,
     };
@@ -1067,6 +1096,7 @@ fn if_statement() {
                             end: Position::new(0, 12),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -1110,6 +1140,7 @@ fn if_statement() {
                             end: Position::new(0, 20),
                         },
                     ],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -1145,6 +1176,7 @@ fn if_statement() {
                         Instruction::Pop,
                     ],
                     ranges: vec![],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -1174,6 +1206,7 @@ fn if_statement() {
                         Instruction::Pop,
                     ],
                     ranges: vec![],
+                    nr_local_variables: 0,
                 }],
                 main_function: 0,
             },
@@ -1192,47 +1225,107 @@ fn if_statement() {
 
 #[test]
 fn function_literal() {
-    let tests = [(
-        "fn(){}",
-        Bytecode {
-            constants: vec![],
-            functions: vec![
-                Function {
-                    instructions: vec![Instruction::Null, Instruction::Return],
-                    ranges: vec![
-                        Range {
-                            start: Position::new(0, 4),
-                            end: Position::new(0, 6),
-                        },
-                        Range {
-                            start: Position::new(0, 4),
-                            end: Position::new(0, 6),
-                        },
-                    ],
-                },
-                Function {
-                    instructions: vec![
-                        Instruction::CreateClosure {
-                            function_index: 0,
-                            nr_free_variables: 0,
-                        },
-                        Instruction::Pop,
-                    ],
-                    ranges: vec![
-                        Range {
-                            start: Position::new(0, 0),
-                            end: Position::new(0, 6),
-                        },
-                        Range {
-                            start: Position::new(0, 0),
-                            end: Position::new(0, 6),
-                        },
-                    ],
-                },
-            ],
-            main_function: 1,
-        },
-    )];
+    let tests = [
+        (
+            "fn(){}",
+            Bytecode {
+                constants: vec![],
+                functions: vec![
+                    Function {
+                        instructions: vec![Instruction::Null, Instruction::Return],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 4),
+                                end: Position::new(0, 6),
+                            },
+                            Range {
+                                start: Position::new(0, 4),
+                                end: Position::new(0, 6),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                    },
+                    Function {
+                        instructions: vec![
+                            Instruction::CreateClosure(CreateClosure {
+                                function_index: 0,
+                                nr_free_variables: 0,
+                            }),
+                            Instruction::Pop,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 6),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 6),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                    },
+                ],
+                main_function: 1,
+            },
+        ),
+        (
+            "fn(){a = 10}",
+            Bytecode {
+                constants: vec![Object::Integer(10)],
+                functions: vec![
+                    Function {
+                        instructions: vec![
+                            Instruction::Constant(0),
+                            Instruction::StoreLocal(0),
+                            Instruction::Null,
+                            Instruction::Return,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 9),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 4),
+                                end: Position::new(0, 12),
+                            },
+                        ],
+                        nr_local_variables: 1,
+                    },
+                    Function {
+                        instructions: vec![
+                            Instruction::CreateClosure(CreateClosure {
+                                function_index: 0,
+                                nr_free_variables: 0,
+                            }),
+                            Instruction::Pop,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 12),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 12),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                    },
+                ],
+                main_function: 1,
+            },
+        ),
+    ];
 
     for (input, expected) in tests {
         let program = parse(input).unwrap();
@@ -1262,13 +1355,14 @@ fn fn_call() {
                             end: Position::new(0, 7),
                         },
                     ],
+                    nr_local_variables: 0,
                 },
                 Function {
                     instructions: vec![
-                        Instruction::CreateClosure {
+                        Instruction::CreateClosure(CreateClosure {
                             function_index: 0,
                             nr_free_variables: 0,
-                        },
+                        }),
                         Instruction::FnCall,
                         Instruction::Pop,
                     ],
@@ -1286,6 +1380,7 @@ fn fn_call() {
                             end: Position::new(0, 9),
                         },
                     ],
+                    nr_local_variables: 0,
                 },
             ],
             main_function: 1,
