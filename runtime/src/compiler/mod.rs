@@ -387,11 +387,7 @@ impl Compiler {
             });
         };
 
-        match symbol {
-            Symbol::Global(index) => self.emit(Instruction::LoadGlobal(index), range),
-            Symbol::Local(index) => self.emit(Instruction::LoadLocal(index), range),
-        };
-
+        self.compile_load_instruction(symbol, range);
         Ok(())
     }
 
@@ -485,6 +481,8 @@ impl Compiler {
 
         // Exit scope
         let (scope, sym_scope) = self.exist_scope();
+
+        // Create function
         let func = Function {
             instructions: scope.instructions,
             ranges: scope.ranges,
@@ -493,10 +491,16 @@ impl Compiler {
         };
         self.functions.push(func);
 
+        // Push captured on stack for creating closure
+        for sym in &sym_scope.captured {
+            self.compile_load_instruction(*sym, range)
+        }
+
+        // Create closure
         self.emit(
             Instruction::CreateClosure(CreateClosure {
                 function_index: self.functions.len() - 1,
-                nr_free_variables: 0,
+                nr_free_variables: sym_scope.captured.len(),
             }),
             range,
         );
@@ -519,6 +523,15 @@ impl Compiler {
         match symbol {
             Symbol::Global(index) => self.emit(Instruction::StoreGlobal(index), range),
             Symbol::Local(index) => self.emit(Instruction::StoreLocal(index), range),
+            Symbol::Free(_) => panic!("Can't store to free symbol"),
+        };
+    }
+
+    fn compile_load_instruction(&mut self, symbol: Symbol, range: Range) {
+        match symbol {
+            Symbol::Global(index) => self.emit(Instruction::LoadGlobal(index), range),
+            Symbol::Local(index) => self.emit(Instruction::LoadLocal(index), range),
+            Symbol::Free(index) => self.emit(Instruction::LoadFree(index), range),
         };
     }
 }

@@ -43,6 +43,7 @@ pub enum Instruction {
     LoadGlobal(usize),
     StoreLocal(usize),
     LoadLocal(usize),
+    LoadFree(usize),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

@@ -4,12 +4,14 @@ use std::collections::HashMap;
 pub enum Symbol {
     Global(usize),
     Local(usize),
+    Free(usize),
 }
 
 #[derive(Debug)]
 pub struct Scope {
     store: HashMap<String, Symbol>,
     pub num_definitions: usize,
+    pub captured: Vec<Symbol>,
 }
 
 #[derive(Debug)]
@@ -20,6 +22,7 @@ impl SymbolTable {
         Self(vec![Scope {
             store: HashMap::new(),
             num_definitions: 0,
+            captured: vec![],
         }])
     }
 
@@ -27,6 +30,7 @@ impl SymbolTable {
         self.0.push(Scope {
             store: HashMap::new(),
             num_definitions: 0,
+            captured: vec![],
         })
     }
 
@@ -45,7 +49,9 @@ impl SymbolTable {
             .expect("Symbol table should have at least one store");
 
         if let Some(symbol) = store.store.get(&name) {
-            return *symbol;
+            if matches!(symbol, Symbol::Global(_) | Symbol::Local(_)) {
+                return *symbol;
+            }
         }
 
         let symbol = if is_global {
@@ -60,11 +66,11 @@ impl SymbolTable {
         symbol
     }
 
-    pub fn resolve(&self, name: &str) -> Option<Symbol> {
+    pub fn resolve(&mut self, name: &str) -> Option<Symbol> {
         self.resolve_at(self.0.len() - 1, name)
     }
 
-    fn resolve_at(&self, idx: usize, name: &str) -> Option<Symbol> {
+    fn resolve_at(&mut self, idx: usize, name: &str) -> Option<Symbol> {
         let store = &self.0[idx];
         match store.store.get(name) {
             Some(sym) => Some(*sym),
@@ -72,10 +78,28 @@ impl SymbolTable {
                 if idx == 0 {
                     None
                 } else {
-                    self.resolve_at(idx - 1, name)
+                    self.resolve_parent(idx, name)
                 }
             }
         }
+    }
+
+    fn resolve_parent(&mut self, idx: usize, name: &str) -> Option<Symbol> {
+        let symbol = self.resolve_at(idx - 1, name);
+        match symbol {
+            None => None,
+            Some(Symbol::Global(_)) => symbol,
+            Some(sym) => Some(self.define_free(idx, sym, name)),
+        }
+    }
+
+    fn define_free(&mut self, idx: usize, symbol: Symbol, name: &str) -> Symbol {
+        let scope = &mut self.0[idx];
+        scope.captured.push(symbol);
+
+        let res = Symbol::Free(scope.captured.len() - 1);
+        scope.store.insert(name.to_string(), res);
+        res
     }
 }
 
@@ -110,5 +134,32 @@ mod test {
         table.leave_scope();
         assert_eq!(table.resolve("a"), Some(Symbol::Global(0)));
         assert_eq!(table.resolve("b"), None);
+    }
+
+    #[test]
+    fn free_scope() {
+        let mut table = SymbolTable::new();
+
+        table.define("a".to_string());
+
+        table.enter_scope();
+
+        assert_eq!(table.resolve("a"), Some(Symbol::Global(0)));
+
+        table.define("b".to_string());
+        assert_eq!(table.resolve("b"), Some(Symbol::Local(0)));
+
+        table.enter_scope();
+        assert_eq!(table.resolve("a"), Some(Symbol::Global(0)));
+        assert_eq!(table.resolve("b"), Some(Symbol::Free(0)));
+
+        table.define("b".to_string());
+        assert_eq!(table.resolve("b"), Some(Symbol::Local(0)));
+        table.define("c".to_string());
+        assert_eq!(table.resolve("c"), Some(Symbol::Local(1)));
+
+        let scope = table.leave_scope();
+        assert_eq!(scope.num_definitions, 2);
+        assert_eq!(scope.captured, vec![Symbol::Local(0)]);
     }
 }

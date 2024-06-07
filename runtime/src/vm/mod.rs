@@ -194,6 +194,7 @@ impl VirtualMachine {
             }
             Instruction::StoreLocal(index) => self.store_local(index),
             Instruction::LoadLocal(index) => self.load_local(index)?,
+            Instruction::LoadFree(index) => self.load_free(index)?,
         }
 
         Ok(Some(ip + 1))
@@ -576,10 +577,13 @@ impl VirtualMachine {
     }
 
     fn create_closure(&mut self, closure: &CreateClosure) -> Result<(), ErrorKind> {
-        // TODO: handle capture of free variables.
+        let start = self.sp - closure.nr_free_variables;
+        let free = self.stack[start..self.sp].to_vec();
+        self.sp = start;
+
         let cl = Object::Closure(Closure {
             function_index: closure.function_index,
-            free_variables: Rc::new(vec![]),
+            free_variables: Rc::new(free),
         });
         self.push(cl)?;
 
@@ -634,6 +638,11 @@ impl VirtualMachine {
         let pointer = self.current_frame().base_pointer + index;
         let obj = self.stack[pointer].clone();
 
+        self.push(obj)
+    }
+
+    fn load_free(&mut self, index: usize) -> Result<(), ErrorKind> {
+        let obj = self.current_frame().closure.free_variables[index].clone();
         self.push(obj)
     }
 }

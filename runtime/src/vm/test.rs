@@ -492,6 +492,23 @@ fn call_closure() {
             "#,
             Object::Integer(200),
         ),
+        (
+            r#"
+            foo = fn(a) {
+                fn(b) {
+                    fn (c) {
+                        a + b + c
+                    }
+                }
+            }
+            a = foo(1)
+            b = a(2)
+            c = b(3)
+
+            c
+            "#,
+            Object::Integer(6),
+        ),
     ];
 
     for (input, expected) in tests {
