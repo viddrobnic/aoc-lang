@@ -28,6 +28,7 @@ fn constants() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -46,6 +47,7 @@ fn constants() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -64,6 +66,7 @@ fn constants() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -82,6 +85,7 @@ fn constants() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -113,6 +117,7 @@ fn arrays() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -142,6 +147,7 @@ fn arrays() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -179,6 +185,7 @@ fn arrays() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -213,6 +220,7 @@ fn arrays() {
                 ],
                 ranges: vec![],
                 nr_local_variables: 0,
+                nr_arguments: 0,
             }],
             main_function: 0,
         },
@@ -245,6 +253,7 @@ fn hash_map() {
                         2
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -279,6 +288,7 @@ fn hash_map() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -315,6 +325,7 @@ fn hash_map() {
                 ],
                 ranges: vec![],
                 nr_local_variables: 0,
+                nr_arguments: 0,
             }],
             main_function: 0,
         },
@@ -358,6 +369,7 @@ fn prefix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -387,6 +399,7 @@ fn prefix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -416,6 +429,7 @@ fn prefix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -445,6 +459,7 @@ fn prefix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -488,6 +503,7 @@ fn while_loop() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -527,6 +543,7 @@ fn while_loop() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -570,6 +587,7 @@ fn assign() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -604,6 +622,7 @@ fn assign() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -648,6 +667,7 @@ fn assign() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -692,6 +712,7 @@ fn assign() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -727,6 +748,7 @@ fn assign() {
                     ],
                     ranges: vec![],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -757,6 +779,7 @@ fn assign() {
                     ],
                     ranges: vec![],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -806,6 +829,7 @@ fn infix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -840,6 +864,7 @@ fn infix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -874,6 +899,7 @@ fn infix_operator() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -927,6 +953,7 @@ fn index() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -961,6 +988,7 @@ fn index() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -1043,6 +1071,7 @@ fn for_loop() {
                 },
             ],
             nr_local_variables: 0,
+            nr_arguments: 0,
         }],
         main_function: 0,
     };
@@ -1097,6 +1126,7 @@ fn if_statement() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -1141,6 +1171,7 @@ fn if_statement() {
                         },
                     ],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -1177,6 +1208,7 @@ fn if_statement() {
                     ],
                     ranges: vec![],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -1207,6 +1239,7 @@ fn if_statement() {
                     ],
                     ranges: vec![],
                     nr_local_variables: 0,
+                    nr_arguments: 0,
                 }],
                 main_function: 0,
             },
@@ -1244,6 +1277,7 @@ fn function_literal() {
                             },
                         ],
                         nr_local_variables: 0,
+                        nr_arguments: 0,
                     },
                     Function {
                         instructions: vec![
@@ -1264,6 +1298,7 @@ fn function_literal() {
                             },
                         ],
                         nr_local_variables: 0,
+                        nr_arguments: 0,
                     },
                 ],
                 main_function: 1,
@@ -1300,6 +1335,7 @@ fn function_literal() {
                             },
                         ],
                         nr_local_variables: 1,
+                        nr_arguments: 0,
                     },
                     Function {
                         instructions: vec![
@@ -1320,6 +1356,65 @@ fn function_literal() {
                             },
                         ],
                         nr_local_variables: 0,
+                        nr_arguments: 0,
+                    },
+                ],
+                main_function: 1,
+            },
+        ),
+        (
+            "fn(a){a * 2}",
+            Bytecode {
+                constants: vec![Object::Integer(2)],
+                functions: vec![
+                    Function {
+                        instructions: vec![
+                            Instruction::LoadLocal(0),
+                            Instruction::Constant(0),
+                            Instruction::Multiply,
+                            Instruction::Return,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 6),
+                                end: Position::new(0, 7),
+                            },
+                            Range {
+                                start: Position::new(0, 10),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 6),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 12),
+                            },
+                        ],
+                        nr_local_variables: 1,
+                        nr_arguments: 1,
+                    },
+                    Function {
+                        instructions: vec![
+                            Instruction::CreateClosure(CreateClosure {
+                                function_index: 0,
+                                nr_free_variables: 0,
+                            }),
+                            Instruction::Pop,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 12),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 12),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                        nr_arguments: 0,
                     },
                 ],
                 main_function: 1,
@@ -1338,54 +1433,113 @@ fn function_literal() {
 
 #[test]
 fn fn_call() {
-    let tests = [(
-        "fn(){1}()",
-        Bytecode {
-            constants: vec![Object::Integer(1)],
-            functions: vec![
-                Function {
-                    instructions: vec![Instruction::Constant(0), Instruction::Return],
-                    ranges: vec![
-                        Range {
-                            start: Position::new(0, 5),
-                            end: Position::new(0, 6),
-                        },
-                        Range {
-                            start: Position::new(0, 4),
-                            end: Position::new(0, 7),
-                        },
-                    ],
-                    nr_local_variables: 0,
-                },
-                Function {
-                    instructions: vec![
-                        Instruction::CreateClosure(CreateClosure {
-                            function_index: 0,
-                            nr_free_variables: 0,
-                        }),
-                        Instruction::FnCall,
-                        Instruction::Pop,
-                    ],
-                    ranges: vec![
-                        Range {
-                            start: Position::new(0, 0),
-                            end: Position::new(0, 7),
-                        },
-                        Range {
-                            start: Position::new(0, 0),
-                            end: Position::new(0, 9),
-                        },
-                        Range {
-                            start: Position::new(0, 0),
-                            end: Position::new(0, 9),
-                        },
-                    ],
-                    nr_local_variables: 0,
-                },
-            ],
-            main_function: 1,
-        },
-    )];
+    let tests = [
+        (
+            "fn(){1}()",
+            Bytecode {
+                constants: vec![Object::Integer(1)],
+                functions: vec![
+                    Function {
+                        instructions: vec![Instruction::Constant(0), Instruction::Return],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 6),
+                            },
+                            Range {
+                                start: Position::new(0, 4),
+                                end: Position::new(0, 7),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                        nr_arguments: 0,
+                    },
+                    Function {
+                        instructions: vec![
+                            Instruction::CreateClosure(CreateClosure {
+                                function_index: 0,
+                                nr_free_variables: 0,
+                            }),
+                            Instruction::FnCall(0),
+                            Instruction::Pop,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 7),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 9),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 9),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                        nr_arguments: 0,
+                    },
+                ],
+                main_function: 1,
+            },
+        ),
+        (
+            "fn(a){1}(5)",
+            Bytecode {
+                constants: vec![Object::Integer(5), Object::Integer(1)],
+                functions: vec![
+                    Function {
+                        instructions: vec![Instruction::Constant(1), Instruction::Return],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 6),
+                                end: Position::new(0, 7),
+                            },
+                            Range {
+                                start: Position::new(0, 5),
+                                end: Position::new(0, 8),
+                            },
+                        ],
+                        nr_local_variables: 1,
+                        nr_arguments: 1,
+                    },
+                    Function {
+                        instructions: vec![
+                            Instruction::Constant(0),
+                            Instruction::CreateClosure(CreateClosure {
+                                function_index: 0,
+                                nr_free_variables: 0,
+                            }),
+                            Instruction::FnCall(1),
+                            Instruction::Pop,
+                        ],
+                        ranges: vec![
+                            Range {
+                                start: Position::new(0, 9),
+                                end: Position::new(0, 10),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 8),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 11),
+                            },
+                            Range {
+                                start: Position::new(0, 0),
+                                end: Position::new(0, 11),
+                            },
+                        ],
+                        nr_local_variables: 0,
+                        nr_arguments: 0,
+                    },
+                ],
+                main_function: 1,
+            },
+        ),
+    ];
 
     for (input, expected) in tests {
         let program = parse(input).unwrap();

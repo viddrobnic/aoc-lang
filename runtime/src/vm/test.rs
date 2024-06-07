@@ -478,6 +478,20 @@ fn call_closure() {
             "#,
             Object::Integer(42),
         ),
+        ("fn(a){a * 2}(2)", Object::Integer(4)),
+        (
+            r#"
+            global = 10
+            global = fn(a) {
+                local = 10 + global
+                global = 20
+                a * local - global
+            }(2) * global
+
+            global
+            "#,
+            Object::Integer(200),
+        ),
     ];
 
     for (input, expected) in tests {

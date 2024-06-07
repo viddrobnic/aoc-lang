@@ -113,6 +113,7 @@ impl Compiler {
             instructions: scope.instructions,
             ranges: scope.ranges,
             nr_local_variables: 0,
+            nr_arguments: 0,
         };
         self.functions.push(main_fn);
         let main_fn_idx = self.functions.len() - 1;
@@ -469,18 +470,26 @@ impl Compiler {
         fn_literal: &ast::FunctionLiteral,
         range: Range,
     ) -> Result<(), Error> {
-        // TODO: Do something with arguments
         // TODO: Do something with recursion
 
         self.enter_scope();
+
+        // Define argument symbols
+        for param in &fn_literal.parameters {
+            self.symbol_table.define(param.to_string());
+        }
+
+        // Compile body
         self.compile_block(&fn_literal.body, true)?;
         self.emit(Instruction::Return, fn_literal.body.range);
 
+        // Exit scope
         let (scope, sym_scope) = self.exist_scope();
         let func = Function {
             instructions: scope.instructions,
             ranges: scope.ranges,
             nr_local_variables: sym_scope.num_definitions,
+            nr_arguments: fn_literal.parameters.len(),
         };
         self.functions.push(func);
 
@@ -496,11 +505,13 @@ impl Compiler {
     }
 
     fn compile_fn_call(&mut self, fn_call: &ast::FunctionCall, range: Range) -> Result<(), Error> {
+        for arg in &fn_call.arguments {
+            self.compile_node(arg)?;
+        }
+
         self.compile_node(&fn_call.function)?;
-        // TODO: Compile arguments
 
-        self.emit(Instruction::FnCall, range);
-
+        self.emit(Instruction::FnCall(fn_call.arguments.len()), range);
         Ok(())
     }
 

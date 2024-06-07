@@ -30,7 +30,7 @@ pub enum Instruction {
 
     Return,
     CreateClosure(CreateClosure),
-    FnCall,
+    FnCall(usize),
 
     // Puts all array values on stack, where
     // array should be given size long.
@@ -57,6 +57,7 @@ pub struct Function {
     pub ranges: Vec<Range>,
 
     pub nr_local_variables: usize,
+    pub nr_arguments: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]

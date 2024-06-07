@@ -188,8 +188,8 @@ impl VirtualMachine {
                 return Ok(None);
             }
             Instruction::CreateClosure(closure) => self.create_closure(&closure)?,
-            Instruction::FnCall => {
-                self.fn_call(functions)?;
+            Instruction::FnCall(nr_args) => {
+                self.fn_call(nr_args, functions)?;
                 return Ok(None);
             }
             Instruction::StoreLocal(index) => self.store_local(index),
@@ -586,21 +586,27 @@ impl VirtualMachine {
         Ok(())
     }
 
-    fn fn_call(&mut self, functions: &[Function]) -> Result<(), ErrorKind> {
-        // TODO: arguments
+    fn fn_call(&mut self, nr_args: usize, functions: &[Function]) -> Result<(), ErrorKind> {
         let obj = self.pop();
         let Object::Closure(closure) = obj else {
             return Err(ErrorKind::InvalidFunctionCalee(obj.into()));
         };
 
-        let nr_local = functions[closure.function_index].nr_local_variables;
+        let fun = &functions[closure.function_index];
+        if fun.nr_arguments != nr_args {
+            todo!("return error");
+        }
+
+        let nr_local = fun.nr_local_variables;
+
+        let base_pointer = self.sp - nr_args;
+        self.sp = base_pointer + nr_local;
 
         let frame = Frame {
             closure,
             ip: 0,
-            base_pointer: self.sp,
+            base_pointer,
         };
-        self.sp += nr_local;
         self.frames.push(frame);
 
         Ok(())
