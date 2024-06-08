@@ -466,9 +466,11 @@ impl Compiler {
         fn_literal: &ast::FunctionLiteral,
         range: Range,
     ) -> Result<(), Error> {
-        // TODO: Do something with recursion
-
         self.enter_scope();
+
+        if let Some(name) = &fn_literal.name {
+            self.symbol_table.define_current_closure(name.to_string());
+        }
 
         // Define argument symbols
         for param in &fn_literal.parameters {
@@ -524,6 +526,7 @@ impl Compiler {
             Symbol::Global(index) => self.emit(Instruction::StoreGlobal(index), range),
             Symbol::Local(index) => self.emit(Instruction::StoreLocal(index), range),
             Symbol::Free(_) => panic!("Can't store to free symbol"),
+            Symbol::CurrentClosure => panic!("Can't store to current closure symbol"),
         };
     }
 
@@ -532,6 +535,7 @@ impl Compiler {
             Symbol::Global(index) => self.emit(Instruction::LoadGlobal(index), range),
             Symbol::Local(index) => self.emit(Instruction::LoadLocal(index), range),
             Symbol::Free(index) => self.emit(Instruction::LoadFree(index), range),
+            Symbol::CurrentClosure => self.emit(Instruction::CurrentClosure, range),
         };
     }
 }

@@ -195,6 +195,10 @@ impl VirtualMachine {
             Instruction::StoreLocal(index) => self.store_local(index),
             Instruction::LoadLocal(index) => self.load_local(index)?,
             Instruction::LoadFree(index) => self.load_free(index)?,
+            Instruction::CurrentClosure => {
+                let closure = self.current_frame().closure.clone();
+                self.push(Object::Closure(closure))?;
+            }
         }
 
         Ok(Some(ip + 1))
@@ -598,7 +602,10 @@ impl VirtualMachine {
 
         let fun = &functions[closure.function_index];
         if fun.nr_arguments != nr_args {
-            todo!("return error");
+            return Err(ErrorKind::InvalidNrOfArgs {
+                expected: fun.nr_arguments,
+                got: nr_args,
+            });
         }
 
         let nr_local = fun.nr_local_variables;

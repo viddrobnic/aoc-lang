@@ -44,6 +44,7 @@ pub enum Instruction {
     StoreLocal(usize),
     LoadLocal(usize),
     LoadFree(usize),
+    CurrentClosure,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

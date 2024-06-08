@@ -515,3 +515,61 @@ fn call_closure() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn recursion() {
+    let tests = [
+        (
+            r#"
+            fib = fn(n) {
+                if (n <= 2) {
+                    return 1
+                } else {
+                    return fib(n-1) + fib(n-2)
+                }
+            }
+
+            fib(5)
+            "#,
+            Object::Integer(5),
+        ),
+        (
+            r#"
+            wrap = fn() {
+                fib = fn(n) {
+                    if (n <= 2) {
+                        return 1
+                    } else {
+                        return fib(n-1) + fib(n-2)
+                    }
+                }
+                fib(5)
+            }
+
+            wrap()
+            "#,
+            Object::Integer(5),
+        ),
+        (
+            r#"
+            outer = fn(do) {
+                inner = fn() {
+                    outer(false)
+                }
+
+                if (do) {
+                    inner()
+                } else {
+                    42
+                }
+            }
+            outer(true)
+            "#,
+            Object::Integer(42),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

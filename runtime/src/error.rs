@@ -29,6 +29,7 @@ pub enum ErrorKind {
     InvalidOrderingType(DataType, DataType),
     InvalidEqualityType(DataType, DataType),
     InvalidFunctionCalee(DataType),
+    InvalidNrOfArgs { expected: usize, got: usize },
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -104,6 +105,7 @@ impl Display for ErrorKind {
             ),
             ErrorKind::ReturnOutsideOfFunction => write!(f, "Return can't be used outside of a function."),
             ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
+            ErrorKind::InvalidNrOfArgs { expected, got } =>write!(f, "Invalid number of arguments, expected: {expected}, got: {got}")
         }
     }
 }

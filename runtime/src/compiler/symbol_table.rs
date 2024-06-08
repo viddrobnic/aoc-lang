@@ -5,6 +5,7 @@ pub enum Symbol {
     Global(usize),
     Local(usize),
     Free(usize),
+    CurrentClosure,
 }
 
 #[derive(Debug)]
@@ -38,6 +39,17 @@ impl SymbolTable {
         self.0
             .pop()
             .expect("Symbol table should have at least one store")
+    }
+
+    pub fn define_current_closure(&mut self, name: String) -> Symbol {
+        let symbol = Symbol::CurrentClosure;
+
+        self.0
+            .last_mut()
+            .expect("Symbol table should have at least one store")
+            .store
+            .insert(name, symbol);
+        symbol
     }
 
     pub fn define(&mut self, name: String) -> Symbol {
