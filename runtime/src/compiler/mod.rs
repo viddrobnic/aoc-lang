@@ -527,6 +527,7 @@ impl Compiler {
             Symbol::Local(index) => self.emit(Instruction::StoreLocal(index), range),
             Symbol::Free(_) => panic!("Can't store to free symbol"),
             Symbol::CurrentClosure => panic!("Can't store to current closure symbol"),
+            Symbol::Builtin(_) => panic!("Can't store to builtin"),
         };
     }
 
@@ -536,6 +537,7 @@ impl Compiler {
             Symbol::Local(index) => self.emit(Instruction::LoadLocal(index), range),
             Symbol::Free(index) => self.emit(Instruction::LoadFree(index), range),
             Symbol::CurrentClosure => self.emit(Instruction::CurrentClosure, range),
+            Symbol::Builtin(bltin) => self.emit(Instruction::Builtin(bltin), range),
         };
     }
 }

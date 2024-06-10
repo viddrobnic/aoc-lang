@@ -188,10 +188,7 @@ impl VirtualMachine {
                 return Ok(None);
             }
             Instruction::CreateClosure(closure) => self.create_closure(&closure)?,
-            Instruction::FnCall(nr_args) => {
-                self.fn_call(nr_args, functions)?;
-                return Ok(None);
-            }
+            Instruction::FnCall(nr_args) => return self.fn_call(ip, nr_args, functions),
             Instruction::StoreLocal(index) => self.store_local(index),
             Instruction::LoadLocal(index) => self.load_local(index)?,
             Instruction::LoadFree(index) => self.load_free(index)?,
@@ -199,6 +196,7 @@ impl VirtualMachine {
                 let closure = self.current_frame().closure.clone();
                 self.push(Object::Closure(closure))?;
             }
+            Instruction::Builtin(bltin) => self.push(Object::Builtin(bltin))?,
         }
 
         Ok(Some(ip + 1))
@@ -594,33 +592,50 @@ impl VirtualMachine {
         Ok(())
     }
 
-    fn fn_call(&mut self, nr_args: usize, functions: &[Function]) -> Result<(), ErrorKind> {
+    fn fn_call(
+        &mut self,
+        ip: usize,
+        nr_args: usize,
+        functions: &[Function],
+    ) -> Result<Option<usize>, ErrorKind> {
         let obj = self.pop();
-        let Object::Closure(closure) = obj else {
-            return Err(ErrorKind::InvalidFunctionCalee(obj.into()));
-        };
+        match obj {
+            Object::Closure(closure) => {
+                let fun = &functions[closure.function_index];
+                if fun.nr_arguments != nr_args {
+                    return Err(ErrorKind::InvalidNrOfArgs {
+                        expected: fun.nr_arguments,
+                        got: nr_args,
+                    });
+                }
 
-        let fun = &functions[closure.function_index];
-        if fun.nr_arguments != nr_args {
-            return Err(ErrorKind::InvalidNrOfArgs {
-                expected: fun.nr_arguments,
-                got: nr_args,
-            });
+                let nr_local = fun.nr_local_variables;
+
+                let base_pointer = self.sp - nr_args;
+                self.sp = base_pointer + nr_local;
+
+                let frame = Frame {
+                    closure,
+                    ip: 0,
+                    base_pointer,
+                };
+                self.frames.push(frame);
+
+                Ok(None)
+            }
+            Object::Builtin(bltin) => {
+                let start = self.sp - nr_args;
+                let args = &self.stack[start..self.sp];
+                let res = bltin.call(args)?;
+
+                self.sp -= nr_args;
+                self.push(res)?;
+
+                Ok(Some(ip + 1))
+            }
+
+            _ => Err(ErrorKind::InvalidFunctionCalee(obj.into())),
         }
-
-        let nr_local = fun.nr_local_variables;
-
-        let base_pointer = self.sp - nr_args;
-        self.sp = base_pointer + nr_local;
-
-        let frame = Frame {
-            closure,
-            ip: 0,
-            base_pointer,
-        };
-        self.frames.push(frame);
-
-        Ok(())
     }
 
     fn execute_return(&mut self) -> Result<(), ErrorKind> {

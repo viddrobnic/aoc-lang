@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
+use crate::builtin::Builtin;
 use crate::error::ErrorKind;
 use crate::vm::gc;
 
@@ -13,6 +14,7 @@ pub enum Object {
     Array(Array),
     Dictionary(Dictionary),
     Closure(Closure),
+    Builtin(Builtin),
 }
 
 impl Object {
@@ -86,6 +88,7 @@ pub enum DataType {
     Array,
     HashMap,
     Closure,
+    Builtin,
 }
 
 impl From<&Object> for DataType {
@@ -99,6 +102,7 @@ impl From<&Object> for DataType {
             Object::Array(_) => Self::Array,
             Object::Dictionary(_) => Self::HashMap,
             Object::Closure(_) => Self::Closure,
+            Object::Builtin(_) => Self::Builtin,
         }
     }
 }
@@ -120,6 +124,7 @@ impl Display for DataType {
             DataType::Array => write!(f, "ARRAY"),
             DataType::HashMap => write!(f, "HASH_MAP"),
             DataType::Closure => write!(f, "CLOSURE"),
+            DataType::Builtin => write!(f, "BUILTIN"),
         }
     }
 }

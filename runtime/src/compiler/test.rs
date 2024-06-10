@@ -6,6 +6,7 @@ use parser::{
 };
 
 use crate::{
+    builtin::Builtin,
     bytecode::{Bytecode, CreateClosure, Function, Instruction},
     compiler::Compiler,
     object::Object,
@@ -1631,4 +1632,49 @@ fn fn_call() {
 
         assert_eq!(bytecode, expected);
     }
+}
+
+#[test]
+fn builtin() {
+    let input = r#"len("foo")"#;
+
+    let program = parse(input).unwrap();
+    let compiler = Compiler::new();
+    let bytecode = compiler.compile(&program).unwrap();
+
+    assert_eq!(
+        bytecode,
+        Bytecode {
+            constants: vec![Object::String(Rc::new("foo".to_string()))],
+            functions: vec![Function {
+                instructions: vec![
+                    Instruction::Constant(0),
+                    Instruction::Builtin(Builtin::Len),
+                    Instruction::FnCall(1),
+                    Instruction::Pop,
+                ],
+                ranges: vec![
+                    Range {
+                        start: Position::new(0, 4),
+                        end: Position::new(0, 9)
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 3)
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 10)
+                    },
+                    Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 10)
+                    }
+                ],
+                nr_local_variables: 0,
+                nr_arguments: 0
+            }],
+            main_function: 0
+        }
+    );
 }

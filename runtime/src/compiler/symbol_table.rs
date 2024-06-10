@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
+use crate::builtin::Builtin;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Symbol {
     Global(usize),
     Local(usize),
     Free(usize),
     CurrentClosure,
+    Builtin(Builtin),
 }
 
 #[derive(Debug)]
@@ -88,7 +91,7 @@ impl SymbolTable {
             Some(sym) => Some(*sym),
             None => {
                 if idx == 0 {
-                    None
+                    Builtin::from_ident(name).map(Symbol::Builtin)
                 } else {
                     self.resolve_parent(idx, name)
                 }

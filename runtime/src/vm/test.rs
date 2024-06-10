@@ -573,3 +573,27 @@ fn recursion() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn builtin() {
+    let tests = [
+        // Len
+        ("len(\"foo\")", Ok(Object::Integer(3))),
+        ("len([1])", Ok(Object::Integer(1))),
+        ("len({\"foo\": \"bar\", 2: false})", Ok(Object::Integer(2))),
+        (
+            "len(10)",
+            Err(Error {
+                kind: ErrorKind::InvalidLengthCalle(DataType::Integer),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 7),
+                },
+            }),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, expected);
+    }
+}

@@ -2,6 +2,7 @@ use parser::ast;
 
 pub mod error;
 
+mod builtin;
 mod bytecode;
 mod compiler;
 mod object;

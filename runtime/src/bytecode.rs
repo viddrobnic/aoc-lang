@@ -1,4 +1,4 @@
-use crate::object::Object;
+use crate::{builtin::Builtin, object::Object};
 
 use parser::position::Range;
 
@@ -45,6 +45,7 @@ pub enum Instruction {
     LoadLocal(usize),
     LoadFree(usize),
     CurrentClosure,
+    Builtin(Builtin),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

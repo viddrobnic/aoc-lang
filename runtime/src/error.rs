@@ -30,6 +30,8 @@ pub enum ErrorKind {
     InvalidEqualityType(DataType, DataType),
     InvalidFunctionCalee(DataType),
     InvalidNrOfArgs { expected: usize, got: usize },
+
+    InvalidLengthCalle(DataType),
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -105,7 +107,9 @@ impl Display for ErrorKind {
             ),
             ErrorKind::ReturnOutsideOfFunction => write!(f, "Return can't be used outside of a function."),
             ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
-            ErrorKind::InvalidNrOfArgs { expected, got } =>write!(f, "Invalid number of arguments, expected: {expected}, got: {got}")
+            ErrorKind::InvalidNrOfArgs { expected, got } =>write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
+
+            ErrorKind::InvalidLengthCalle(dt)=>write!(f,"Can't call len on {dt}. Len can be called on strings, arrays and dictionaries.")
         }
     }
 }
