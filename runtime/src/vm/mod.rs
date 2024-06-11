@@ -626,7 +626,7 @@ impl VirtualMachine {
             Object::Builtin(bltin) => {
                 let start = self.sp - nr_args;
                 let args = &self.stack[start..self.sp];
-                let res = bltin.call(args)?;
+                let res = bltin.call(args, &mut self.gc)?;
 
                 self.sp -= nr_args;
                 self.push(res)?;

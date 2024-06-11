@@ -638,3 +638,75 @@ fn builtin_float() {
         run_test(input, Ok(expected));
     }
 }
+
+#[test]
+fn builtin_string() {
+    let tests = [
+        ("trim_start(\"hey\")", "hey".to_string()),
+        ("trim_start(\" \t  \nhey  \")", "hey  ".to_string()),
+        ("trim_end(\"  hey \n \")", "  hey".to_string()),
+        ("trim(\"  hey \n \")", "hey".to_string()),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(Object::String(Rc::new(expected))));
+    }
+}
+
+#[test]
+fn builtin_split() {
+    let tests = [
+        (
+            "split(\"hey\", \"a\")",
+            vec![Object::String(Rc::new("hey".to_string()))],
+        ),
+        (
+            "split(\"hey\", \"\")",
+            vec![
+                Object::String(Rc::new("h".to_string())),
+                Object::String(Rc::new("e".to_string())),
+                Object::String(Rc::new("y".to_string())),
+            ],
+        ),
+        (
+            "split(\"first second\", \" \")",
+            vec![
+                Object::String(Rc::new("first".to_string())),
+                Object::String(Rc::new("second".to_string())),
+            ],
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Array(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Array(arr)));
+    }
+}
+
+#[test]
+fn builtin_push() {
+    let tests = [
+        ("a = []\npush(a, 10)\n a", vec![Object::Integer(10)]),
+        (
+            "a = [11, 12]\n push(a, 13)\n a",
+            vec![
+                Object::Integer(11),
+                Object::Integer(12),
+                Object::Integer(13),
+            ],
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Array(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Array(arr)));
+    }
+}
