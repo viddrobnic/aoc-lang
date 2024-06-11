@@ -3,7 +3,7 @@ use std::fmt::Display;
 use parser::position::Range;
 use thiserror::Error;
 
-use crate::object::DataType;
+use crate::{builtin::Builtin, object::DataType};
 
 #[derive(Debug, PartialEq)]
 pub enum ErrorKind {
@@ -12,8 +12,14 @@ pub enum ErrorKind {
     InvalidNegateOperand(DataType),
     UndefinedSymbol(String),
     NotUnpackable(DataType),
-    UnpackLengthMismatch { expected: usize, got: usize },
-    UnpackTooLarge { max: usize, got: usize },
+    UnpackLengthMismatch {
+        expected: usize,
+        got: usize,
+    },
+    UnpackTooLarge {
+        max: usize,
+        got: usize,
+    },
     NotIndexable(DataType),
     ControlFlowOutsideOfLoop,
     ReturnOutsideOfFunction,
@@ -29,9 +35,15 @@ pub enum ErrorKind {
     InvalidOrderingType(DataType, DataType),
     InvalidEqualityType(DataType, DataType),
     InvalidFunctionCalee(DataType),
-    InvalidNrOfArgs { expected: usize, got: usize },
+    InvalidNrOfArgs {
+        expected: usize,
+        got: usize,
+    },
 
-    InvalidLengthCalle(DataType),
+    InvalidBuiltinArg {
+        builtin: Builtin,
+        data_type: DataType,
+    },
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -109,7 +121,7 @@ impl Display for ErrorKind {
             ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
             ErrorKind::InvalidNrOfArgs { expected, got } =>write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
 
-            ErrorKind::InvalidLengthCalle(dt)=>write!(f,"Can't call len on {dt}. Len can be called on strings, arrays and dictionaries.")
+            ErrorKind::InvalidBuiltinArg { builtin, data_type } =>write!(f, "Can't call {builtin} on {data_type}."),
         }
     }
 }

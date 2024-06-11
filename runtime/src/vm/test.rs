@@ -2,6 +2,7 @@ use parser::position::{Position, Range};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
+    builtin::Builtin,
     compiler::Compiler,
     error::{Error, ErrorKind},
     object::{Array, Closure, DataType, Dictionary, HashKey, Object},
@@ -584,16 +585,56 @@ fn builtin() {
         (
             "len(10)",
             Err(Error {
-                kind: ErrorKind::InvalidLengthCalle(DataType::Integer),
+                kind: ErrorKind::InvalidBuiltinArg {
+                    builtin: Builtin::Len,
+                    data_type: DataType::Integer,
+                },
                 range: Range {
                     start: Position::new(0, 0),
                     end: Position::new(0, 7),
                 },
             }),
         ),
+        // Str
+        ("str(1)", Ok(Object::String(Rc::new("1".to_string())))),
+        (
+            "str(1.1234)",
+            Ok(Object::String(Rc::new("1.1234".to_string()))),
+        ),
+        ("str(1.0000)", Ok(Object::String(Rc::new("1".to_string())))),
+        ("str(true)", Ok(Object::String(Rc::new("true".to_string())))),
+        // Int
+        ("int(1)", Ok(Object::Integer(1))),
+        ("int(4.2)", Ok(Object::Integer(4))),
+        ("int(\"420\")", Ok(Object::Integer(420))),
+        ("int(\"4.20\")", Ok(Object::Null)),
+        ("int(\"0x10\")", Ok(Object::Null)),
+        // Float
+        ("float(1)", Ok(Object::Float(1.0))),
+        ("float(4.2)", Ok(Object::Float(4.2))),
+        ("float(\"4.20\")", Ok(Object::Float(4.2))),
+        ("float(\"420\")", Ok(Object::Float(420.0))),
+        ("float(\"0x10\")", Ok(Object::Null)),
     ];
 
     for (input, expected) in tests {
         run_test(input, expected);
+    }
+}
+
+#[test]
+fn builtin_float() {
+    let tests = [
+        ("floor(4.2)", Object::Float(4.0)),
+        ("floor(4.0)", Object::Float(4.0)),
+        ("ceil(4.2)", Object::Float(5.0)),
+        ("ceil(4.0)", Object::Float(4.0)),
+        ("round(4.2)", Object::Float(4.0)),
+        ("round(4.0)", Object::Float(4.0)),
+        ("round(4.5)", Object::Float(5.0)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
     }
 }
