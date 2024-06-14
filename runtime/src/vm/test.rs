@@ -710,3 +710,21 @@ fn builtin_push() {
         run_test(input, Ok(Object::Array(arr)));
     }
 }
+
+#[test]
+fn use_statement() {
+    let tests = [
+        ("use \"src/test_import/constant.aoc\"", Object::Integer(42)),
+        (
+            r#"
+            obj = use "src/test_import/object.aoc"
+            obj.function(obj.value)
+            "#,
+            Object::Integer(138),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}

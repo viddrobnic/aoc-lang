@@ -23,6 +23,15 @@ pub enum ErrorKind {
     NotIndexable(DataType),
     ControlFlowOutsideOfLoop,
     ReturnOutsideOfFunction,
+    InvalidImportPath(String),
+    ImportParserError {
+        path: String,
+        error: parser::error::Error,
+    },
+    ImportCompilerError {
+        path: String,
+        error: Box<Error>,
+    },
 
     InvalidIndexType(DataType),
     InvalidAddType(DataType, DataType),
@@ -75,6 +84,10 @@ impl Display for ErrorKind {
                 "Too many elements to unpack. Max allowed: {max}, got: {got}"
             ),
             ErrorKind::NotIndexable(dt) => write!(f, "Data type {dt} can't be indexed"),
+            ErrorKind::InvalidImportPath(path)=>write!(f, "File {path} could not be imported"),
+            ErrorKind::ImportParserError{path, error}=>write!(f, "Parser error during import {path}: {error}"),
+            ErrorKind::ImportCompilerError { path, error }=>write!(f, "Compiler error during import {path}: {error}"),
+
             ErrorKind::InvalidIndexType(dt) => write!(f, "Invalid index type: {dt}"),
 
             ErrorKind::InvalidAddType(left, right) => write!(

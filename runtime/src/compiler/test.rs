@@ -9,6 +9,7 @@ use crate::{
     builtin::Builtin,
     bytecode::{Bytecode, CreateClosure, Function, Instruction},
     compiler::Compiler,
+    error::{Error, ErrorKind},
     object::Object,
 };
 
@@ -1677,4 +1678,66 @@ fn builtin() {
             main_function: 0
         }
     );
+}
+
+#[test]
+fn use_statement_error() {
+    let tests = [
+        (
+            "use \"foo/bar\"",
+            Error {
+                kind: ErrorKind::InvalidImportPath("foo/bar".to_string()),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 13),
+                },
+            },
+        ),
+        (
+            "use \"src/test_import/parse_error.aoc\"",
+            Error {
+                kind: ErrorKind::ImportParserError {
+                    path: "src/test_import/parse_error.aoc".to_string(),
+                    error: parser::error::Error {
+                        kind: parser::error::ErrorKind::ExpectedEol,
+                        range: Range {
+                            start: Position::new(0, 4),
+                            end: Position::new(0, 7),
+                        },
+                    },
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 37),
+                },
+            },
+        ),
+        (
+            "use \"src/test_import/compile_error.aoc\"",
+            Error {
+                kind: ErrorKind::ImportCompilerError {
+                    path: "src/test_import/compile_error.aoc".to_string(),
+                    error: Box::new(Error {
+                        kind: ErrorKind::UndefinedSymbol("undefined".to_string()),
+                        range: Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 9),
+                        },
+                    }),
+                },
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 39),
+                },
+            },
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let program = parse(input).unwrap();
+        let compiler = Compiler::new();
+        let bytecode = compiler.compile(&program);
+
+        assert_eq!(Err(expected), bytecode);
+    }
 }

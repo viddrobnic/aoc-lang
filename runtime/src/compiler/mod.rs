@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{fs::File, io::Read, mem, rc::Rc};
 
 use crate::{
     bytecode::{Bytecode, CreateClosure, Function, Instruction},
@@ -167,7 +167,7 @@ impl Compiler {
             }
             ast::NodeValue::FunctionCall(fn_call) => self.compile_fn_call(fn_call, node.range)?,
             ast::NodeValue::Return(ret_node) => self.compile_return(ret_node, node.range)?,
-            ast::NodeValue::Use(_) => todo!(),
+            ast::NodeValue::Use(path) => self.compile_use(path, node.range)?,
         }
 
         Ok(())
@@ -518,6 +518,64 @@ impl Compiler {
         self.compile_node(&fn_call.function)?;
 
         self.emit(Instruction::FnCall(fn_call.arguments.len()), range);
+        Ok(())
+    }
+
+    fn compile_use(&mut self, path: &str, range: Range) -> Result<(), Error> {
+        // Read file
+        let mut file = File::open(path).map_err(|_| Error {
+            kind: ErrorKind::InvalidImportPath(path.to_string()),
+            range,
+        })?;
+        let mut content = String::new();
+        file.read_to_string(&mut content).map_err(|_| Error {
+            kind: ErrorKind::InvalidImportPath(path.to_string()),
+            range,
+        })?;
+
+        // Parse
+        let program = parser::parse(&content).map_err(|err| Error {
+            kind: ErrorKind::ImportParserError {
+                path: path.to_string(),
+                error: err,
+            },
+            range,
+        })?;
+
+        // Transform to function call
+        let import = ast::FunctionCall {
+            function: Box::new(ast::Node {
+                value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
+                    name: None,
+                    parameters: vec![],
+                    body: ast::Block {
+                        nodes: program.statements,
+                        range,
+                    },
+                }),
+                range,
+            }),
+            arguments: vec![],
+        };
+
+        // Swap symbol table with empty symbol table, to avoid using
+        // globals in current file and capturing variables from current
+        // file in imported file.
+        let mut sym_table = SymbolTable::new();
+        mem::swap(&mut self.symbol_table, &mut sym_table);
+
+        // Compile the call
+        self.compile_fn_call(&import, range).map_err(|err| Error {
+            kind: ErrorKind::ImportCompilerError {
+                path: path.to_string(),
+                error: Box::new(err),
+            },
+            range,
+        })?;
+
+        // Swap symbol table back
+        mem::swap(&mut self.symbol_table, &mut sym_table);
+
         Ok(())
     }
 

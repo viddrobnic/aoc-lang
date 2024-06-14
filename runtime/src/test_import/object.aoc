@@ -1,0 +1,4 @@
+{
+    "value": 69,
+    "function": fn(foo) {foo * 2},
+}
