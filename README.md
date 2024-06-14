@@ -14,15 +14,15 @@ For the language to be almost operational it should have:
 
 ### Language features:
 
-- [ ] integers
+- [x] integers
   - from float
   - from string
-- [ ] floats
+- [x] floats
   - from int
   - from string
 - [ ] booleans
   - from string
-- [ ] strings
+- [x] strings
   - concatenate
   - append
   - split
@@ -31,26 +31,26 @@ For the language to be almost operational it should have:
   - push
   - pop
   - unpacking via assignment: `[a, b] = [42, "foo"]`
-- [ ] hash maps
+- [x] hash maps
   - add
   - remove
-- [ ] arithmetic operations (`+`, `-`, `*`, `/`, `%`)
-- [ ] bit-wise operations (`&`, `|`, `!`)
-- [ ] comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
-- [ ] logical operations (`!`, `&`, `|`)
-- [ ] variables
-- [ ] if/else statements
-- [ ] while loop
-- [ ] for loop
-- [ ] break
-- [ ] continue
-- [ ] functions
+- [x] arithmetic operations (`+`, `-`, `*`, `/`, `%`)
+- [x] bit-wise operations (`&`, `|`, `!`)
+- [x] comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
+- [x] logical operations (`!`, `&`, `|`)
+- [x] variables
+- [x] if/else statements
+- [x] while loop
+- [x] for loop
+- [x] break
+- [x] continue
+- [x] functions
   - return
   - recursion
-- [ ] comments
+- [x] comments
 - [ ] stdin, stdout
-- [ ] imports
-- [ ] error reporting with line numbers
+- [x] imports
+- [x] error reporting with line numbers
 
 ### Syntax highlighting
 
