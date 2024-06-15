@@ -1,0 +1,208 @@
+// This file contains the overview of the language.
+// Let's start with the basics: primitive data types.
+
+// We have ints:
+42
+
+// floats
+4.2
+
+// booleans
+true
+false
+
+// string
+"foo"
+
+// We have two composite data types, that we will take a look at later
+// First, variables:
+foo = 42
+bar = 4.2
+[x, y] = [-1, 1]
+
+// As one would expect, we have all the binary operations you could want:
+1 == 1
+1 < 2 == 4 > 3
+1 + 2 * 3 - 4 / 5 + (-1 * 2)
+
+// We also have modulo, which is euiclid rem, and not the weird c thing
+-1 % 2 == 1
+
+// Now we can move onto if/else
+if (1 < 2) {
+    print("math works!")
+} else if (1 == 2) {
+    print("huh, that's weird...")
+} else {
+    print("how did we get here???")
+}
+
+// The fun part about if and else is, that it's an expression
+string = "foo"
+length = if (len(string) < 3) {
+    "short"
+} else if (len(string) >= 3 & len(string) < 5 ) {
+    "medium"
+} else {
+    "long"
+}
+print(length) // short
+
+// Let's take a look at loops now
+i = 0
+sum = 0
+while (i < 10) {
+   sum = sum + i 
+   i = i + 1
+}
+print(sum)
+
+// That is a bit long. We can use for loop instead!
+sum = 0
+for (i = 0; i < 10; i = i + 1) {
+    sum = sum + i
+}
+print(sum)
+
+// if/else and loops take anything, not just booleans. We have
+// is truthy behavior. Additionally, we don't have exceptions, things
+// just return null most of the time. We can use this two things together
+// to check if stuff was successful. For instance, conversion from string to int:
+foo = "10"
+if (int(foo)) {
+    // We have an int, let's double it
+    print("foo * 2 = " + str(int(foo) * 2))
+}
+
+foo = "asdf"
+if (int(foo)) {
+    // Do something with an int
+} else {
+    print("foo is not an int :(")
+}
+
+
+// Now let's return to composite data types. First arrays:
+arr = [1, 2]
+print(len(arr)) // 2
+
+// We can add an element to it
+push(arr, 3)
+
+// And we can remove it
+last = pop(arr)
+print(last) // 3
+
+// We can also access any element we want
+for (i = 0; i < len(arr); i = i + 1) {
+    print(arr[i])
+}
+
+// Access outside of bounds return null:
+print(arr[-1]) // null
+
+// Second, dictionaries.
+dict = {"foo": 42}
+
+// We can add an element to it
+dict["bar"] = 69
+print(dict["bar"])
+
+// We can also remove it
+print(del(dict, "bar")) // 69
+print(dict["bar"]) // null
+
+// We also have a syntax sugar for accessing dictionary elements.
+// If the key is a string in the form of identifier, we can use
+// a dot notation:
+print(dict.foo) // 42
+
+// Combined with closures, this makes dictionaries a poor man version
+// of objects :)
+
+// Speaking of closures:
+fun = fn() { return 420 }
+print(fun())
+
+// Since everything is an expression, we can omit return
+fun = fn() { 420 }
+print(fun())
+
+// Let's look at the poor man's objects:
+obj = {
+    "value": 21,
+}
+obj.double = fn() {
+    obj.value * 2
+}
+print(obj.double())
+
+// And lastly, of course we have recursion:
+rec_sum = fn(n) {
+    if (n == 0) {
+        return 0
+    }
+
+    rec_sum(n-1) + n
+}
+print(rec_sum(10)) // 55
+
+// Now let's do a speedrun through the builtin functions:
+len([1, 2]) // 2
+len({1: 2}) // 1
+len("foo")  // 3
+
+str(1) // "1"
+str(1.2) // "1.2"
+str(true) // "true"
+str("foo") // "foo"
+
+int(1) // 1
+int(1.1) // 1
+int("1") // 1
+int("foo") // null
+
+float(1.1) // 1.1
+float(1) // 1.0
+float("1.1") // 1.1
+float("asdf") // null
+
+bool(false) // false
+bool("true") // true
+
+floor(1.9) // 1.0
+ceil(1.1) // 2.0
+round(1.4) // 1.0
+round(1.6) // 2.0
+
+trim_start("  asdf ") // "asdf "
+trim_end("  asdf ") // "  asdf"
+trim("  asdf ") // "asdf"
+
+split("foo bar", " ") // ["foo", "bar"]
+split("asdf", "") // ["a", "s", "d", "f"]
+split("ab,bc", ",") // ["ab", "bc"]
+
+push([], 1) // [1]
+pop([]) // null
+pop([1]) // 1
+
+del({}, "foo") // null
+del({"foo": 42}, "foo") // 42
+
+print("asdf") // prints stuff to stdout
+// input() reads a single line from stdin. Returns null if eof.
+// See `examples/hello_world.aoc`
+
+// This file is getting a little long now, perhaps we would like to split it
+// into two. We can do that with `use`:
+// use "import.aoc"
+// Use will execute the file as a function in a context, where current variables
+// are not available. Whatever the function returns (implicitly as last expression, 
+// or explicitly with return), is returned by the use statements.
+// This means that an imported file could return a function, and we could do:
+// fun = use "import_fun.aoc"
+// fun()
+
+// See `src/runtime/test_import/` for examples
+

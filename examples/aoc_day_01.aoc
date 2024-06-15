@@ -1,0 +1,96 @@
+// Solution for day 01 of advent of code 2024
+// https://adventofcode.com/2023/day/1
+//
+// Run it as:
+// aoc-lang examples/aoc_day_01.aoc < input
+
+// Read input
+data = []
+for (line = input(); line; line = input()) {
+    push(data, line)
+}
+
+// Part one
+res = 0
+for (i = 0; i < len(data); i = i + 1) {
+    chars = split(data[i], "")
+    n = 0
+
+    // First number
+    for (j = 0; j < len(chars); j = j + 1) {
+        if (int(chars[j])) {
+            n = int(chars[j])
+            break
+        }
+    }
+
+    // Last number
+    for (j = len(chars) - 1; j >= 0; j = j - 1) {
+        if (int(chars[j])) {
+            n = n * 10 + int(chars[j])
+            break
+        }
+    }
+
+    res = res + n
+}
+
+print("Part one: " + str(res))
+
+// Part two
+substr_is = fn(target_ch, position, lookup_ch) {
+    if (position + len(lookup_ch) > len(target_ch)) {
+        return false
+    }
+
+    for (i = 0; i < len(lookup_ch); i = i + 1) {
+        if (target_ch[position + i] != lookup_ch[i]) {
+            return false
+        }
+    }
+
+    return true
+}
+
+digits = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+digit = fn(chars, position) {
+    if (int(chars[position])) {
+        return int(chars[position])
+    }
+
+    for (d = 0; d < len(digits); d = d + 1) {
+        if (substr_is(chars, position, split(digits[d], ""))) {
+            return d + 1
+        }
+    }
+}
+
+
+res = 0
+for (i = 0; i < len(data); i = i + 1) {
+    chars = split(data[i], "")
+    n = 0
+
+    // First number
+    for (j = 0; j < len(chars); j = j + 1) {
+        d = digit(chars, j)
+        if (d) {
+            n = d
+            break
+        }
+
+    }
+
+    // Last number
+    for (j = len(chars) - 1; j >= 0; j = j - 1) {
+        d = digit(chars, j)
+        if (d) {
+            n = n * 10 + d
+            break
+        }
+    }
+
+    res = res + n
+}
+
+print("Part two: " + str(res))

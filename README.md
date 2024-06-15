@@ -6,51 +6,57 @@ Advent of Code 2024.
 
 For the language to be almost operational it should have:
 
-- an interpreter,
-- syntax highlighting,
-- basic LSP.
+- [x] an interpreter,
+- [ ] syntax highlighting,
+- [ ] basic LSP.
+
+## Usage
+
+1. Clone this repository:
+   ```sh
+   git clone https://github.com/viddrobnic/aoc-lang.git
+   ```
+2. Build and install the interpreter:
+   ```sh
+   cd aoc-lang
+   cargo install --path .
+   ```
+3. Run some code:
+   ```sh
+   aoc-lang examples/hello_world.aoc
+   ```
+
+## Language features
+
+AoC language supports the following features:
+
+- integers
+- floats
+- booleans
+- strings:
+- arrays
+- hash maps
+- arithmetic operations (`+`, `-`, `*`, `/`, `%`)
+- bit-wise operations (`&`, `|`, `!`)
+- comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
+- logical operations (`!`, `&`, `|`)
+- variables
+- multi variable assignment (`[a, b] = [10, 20]`)
+- if/else statements
+- while loop
+- for loop
+- break
+- continue
+- functions
+- comments
+- stdin, stdout
+- imports
+- error reporting with line numbers
+
+For more detailed overview of the syntax, see `examples` directory,
+which contains examples of code with comments.
 
 ## Wishlist:
-
-### Language features:
-
-- [x] integers
-  - from float
-  - from string
-- [x] floats
-  - from int
-  - from string
-- [x] booleans
-  - from string
-- [x] strings
-  - concatenate
-  - append
-  - split
-- [x] arrays
-  - concatenate
-  - push
-  - pop
-  - unpacking via assignment: `[a, b] = [42, "foo"]`
-- [x] hash maps
-  - add
-  - remove
-- [x] arithmetic operations (`+`, `-`, `*`, `/`, `%`)
-- [x] bit-wise operations (`&`, `|`, `!`)
-- [x] comparison operations (`<`, `>`, `<=`, `>=`, `==`, `!=`)
-- [x] logical operations (`!`, `&`, `|`)
-- [x] variables
-- [x] if/else statements
-- [x] while loop
-- [x] for loop
-- [x] break
-- [x] continue
-- [x] functions
-  - return
-  - recursion
-- [x] comments
-- [x] stdin, stdout
-- [x] imports
-- [x] error reporting with line numbers
 
 ### Syntax highlighting
 

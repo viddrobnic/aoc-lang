@@ -48,6 +48,7 @@ pub enum ErrorKind {
         expected: usize,
         got: usize,
     },
+    IndexOutOfBounds,
 
     InvalidBuiltinArg {
         builtin: Builtin,
@@ -134,6 +135,7 @@ impl Display for ErrorKind {
             ErrorKind::ReturnOutsideOfFunction => write!(f, "Return can't be used outside of a function."),
             ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
             ErrorKind::InvalidNrOfArgs { expected, got } => write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
+            ErrorKind::IndexOutOfBounds => write!(f, "Index you are assigning to is out of bounds"),
 
             ErrorKind::InvalidBuiltinArg { builtin, data_type } => write!(f, "Can't call {builtin} on {data_type}."),
             ErrorKind::InputError => write!(f, "Could not read from stdin"),

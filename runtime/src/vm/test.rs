@@ -753,6 +753,18 @@ fn builtin_pop() {
 }
 
 #[test]
+fn builtin_del() {
+    let tests = [
+        ("del({}, \"foo\")", Object::Null),
+        ("del({\"foo\": 42}, \"foo\")", Object::Integer(42)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
 fn use_statement() {
     let tests = [
         ("use \"src/test_import/constant.aoc\"", Object::Integer(42)),

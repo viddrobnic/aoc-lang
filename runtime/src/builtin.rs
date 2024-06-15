@@ -2,7 +2,7 @@ use std::{fmt::Display, io, rc::Rc};
 
 use crate::{
     error::ErrorKind,
-    object::{self, Array, Object},
+    object::{self, Array, Dictionary, HashKey, Object},
     vm::gc::GarbageCollector,
 };
 
@@ -26,6 +26,7 @@ pub enum Builtin {
 
     Push,
     Pop,
+    Del,
 
     Print,
     Input,
@@ -48,6 +49,7 @@ impl Display for Builtin {
             Builtin::Split => write!(f, "split"),
             Builtin::Push => write!(f, "push"),
             Builtin::Pop => write!(f, "pop"),
+            Builtin::Del => write!(f, "del"),
             Builtin::Print => write!(f, "print"),
             Builtin::Input => write!(f, "input"),
         }
@@ -71,6 +73,7 @@ impl Builtin {
             "split" => Self::Split,
             "push" => Self::Push,
             "pop" => Self::Pop,
+            "del" => Self::Del,
             "print" => Self::Print,
             "input" => Self::Input,
 
@@ -102,6 +105,7 @@ impl Builtin {
 
             Builtin::Push => call_push(args),
             Builtin::Pop => call_pop(args),
+            Builtin::Del => call_del(args),
 
             Builtin::Print => call_print(args),
             Builtin::Input => call_input(args),
@@ -207,6 +211,7 @@ fn call_bool(args: &[Object]) -> Result<Object, ErrorKind> {
     validate_args_len(args, 1)?;
 
     let res = match &args[0] {
+        Object::Boolean(bool) => *bool,
         Object::String(str) => match str.parse() {
             Ok(res) => res,
             Err(_) => return Ok(Object::Null),
@@ -314,6 +319,25 @@ fn call_pop(args: &[Object]) -> Result<Object, ErrorKind> {
 
     let rc = arr.value.upgrade().unwrap();
     let obj = rc.borrow_mut().pop();
+    match obj {
+        Some(obj) => Ok(obj),
+        None => Ok(Object::Null),
+    }
+}
+
+fn call_del(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 2)?;
+
+    let Object::Dictionary(Dictionary(dict)) = &args[0] else {
+        return Err(ErrorKind::InvalidBuiltinArg {
+            builtin: Builtin::Del,
+            data_type: (&args[0]).into(),
+        });
+    };
+
+    let key: HashKey = args[1].clone().try_into()?;
+    let rc = dict.value.upgrade().unwrap();
+    let obj = rc.borrow_mut().remove(&key);
     match obj {
         Some(obj) => Ok(obj),
         None => Ok(Object::Null),

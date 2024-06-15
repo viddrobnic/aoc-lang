@@ -297,9 +297,17 @@ impl VirtualMachine {
                     return Err(ErrorKind::InvalidIndexType(index.into()));
                 };
 
-                // TODO: Handle out of bounds
+                if idx < 0 {
+                    return Err(ErrorKind::IndexOutOfBounds);
+                }
+                let idx = idx as usize;
+
                 let rc = arr.0.value.upgrade().unwrap();
-                rc.borrow_mut()[idx as usize] = value;
+                let mut arr = rc.borrow_mut();
+                if idx >= arr.len() {
+                    return Err(ErrorKind::IndexOutOfBounds);
+                }
+                arr[idx] = value;
             }
             Object::Dictionary(dict) => {
                 let key: HashKey = index.try_into()?;
