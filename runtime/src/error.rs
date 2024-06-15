@@ -53,6 +53,7 @@ pub enum ErrorKind {
         builtin: Builtin,
         data_type: DataType,
     },
+    InputError,
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -135,6 +136,7 @@ impl Display for ErrorKind {
             ErrorKind::InvalidNrOfArgs { expected, got } => write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
 
             ErrorKind::InvalidBuiltinArg { builtin, data_type } => write!(f, "Can't call {builtin} on {data_type}."),
+            ErrorKind::InputError => write!(f, "Could not read from stdin"),
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{fmt::Display, rc::Rc};
+use std::{fmt::Display, io, rc::Rc};
 
 use crate::{
     error::ErrorKind,
@@ -26,6 +26,9 @@ pub enum Builtin {
 
     Push,
     Pop,
+
+    Print,
+    Input,
 }
 
 impl Display for Builtin {
@@ -45,6 +48,8 @@ impl Display for Builtin {
             Builtin::Split => write!(f, "split"),
             Builtin::Push => write!(f, "push"),
             Builtin::Pop => write!(f, "pop"),
+            Builtin::Print => write!(f, "print"),
+            Builtin::Input => write!(f, "input"),
         }
     }
 }
@@ -66,6 +71,8 @@ impl Builtin {
             "split" => Self::Split,
             "push" => Self::Push,
             "pop" => Self::Pop,
+            "print" => Self::Print,
+            "input" => Self::Input,
 
             _ => return None,
         };
@@ -95,6 +102,9 @@ impl Builtin {
 
             Builtin::Push => call_push(args),
             Builtin::Pop => call_pop(args),
+
+            Builtin::Print => call_print(args),
+            Builtin::Input => call_input(args),
         }
     }
 }
@@ -307,5 +317,44 @@ fn call_pop(args: &[Object]) -> Result<Object, ErrorKind> {
     match obj {
         Some(obj) => Ok(obj),
         None => Ok(Object::Null),
+    }
+}
+
+fn call_print(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 1)?;
+
+    match &args[0] {
+        Object::Null => println!("null"),
+        Object::Integer(val) => println!("{val}"),
+        Object::Float(val) => println!("{val}"),
+        Object::Boolean(val) => println!("{val}"),
+        Object::String(val) => println!("{val}"),
+
+        obj => {
+            return Err(ErrorKind::InvalidBuiltinArg {
+                builtin: Builtin::Print,
+                data_type: obj.into(),
+            })
+        }
+    }
+
+    Ok(Object::Null)
+}
+
+fn call_input(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 0)?;
+
+    let mut line = String::new();
+    let read = io::stdin()
+        .read_line(&mut line)
+        .map_err(|_| ErrorKind::InputError)?;
+
+    if read == 0 {
+        // Handle eof
+        Ok(Object::Null)
+    } else {
+        // Remove \n that is always read
+        line.pop();
+        Ok(Object::String(Rc::new(line)))
     }
 }
