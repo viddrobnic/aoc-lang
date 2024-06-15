@@ -48,7 +48,7 @@ For the language to be almost operational it should have:
   - return
   - recursion
 - [x] comments
-- [ ] stdin, stdout
+- [x] stdin, stdout
 - [x] imports
 - [x] error reporting with line numbers
 
