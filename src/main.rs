@@ -28,7 +28,9 @@ fn run(path: PathBuf) {
         Err(err) => {
             println!(
                 "Syntax error on line {}, character {}:\n  {}",
-                err.range.start.line, err.range.start.character, err
+                err.range.start.line + 1,
+                err.range.start.character + 1,
+                err
             );
             exit(1);
         }
@@ -39,7 +41,9 @@ fn run(path: PathBuf) {
         Err(err) => {
             println!(
                 "Runtime error on line {}, character {}:\n  {}",
-                err.range.start.line, err.range.start.character, err
+                err.range.start.line + 1,
+                err.range.start.character + 1,
+                err
             );
             exit(1);
         }

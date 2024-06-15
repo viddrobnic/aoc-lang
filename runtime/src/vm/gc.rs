@@ -61,11 +61,15 @@ impl GarbageCollector {
         rc_ref
     }
 
-    pub fn free(&mut self, used_stack: &[Object]) {
+    pub fn free(&mut self, used_stack: &[Object], globals: &[Object]) {
         self.mark_all(true);
 
         for obj in used_stack {
             self.traverse(obj);
+        }
+
+        for obj in globals {
+            self.traverse(obj)
         }
 
         self.owners.retain(|_, owner| !owner.marked);

@@ -118,7 +118,7 @@ impl VirtualMachine {
             }
 
             if self.gc.should_free() {
-                self.gc.free(&self.stack[0..self.sp]);
+                self.gc.free(&self.stack[0..self.sp], &self.globals);
             }
         }
 
