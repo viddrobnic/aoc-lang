@@ -20,13 +20,13 @@ For the language to be almost operational it should have:
 - [x] floats
   - from int
   - from string
-- [ ] booleans
+- [x] booleans
   - from string
 - [x] strings
   - concatenate
   - append
   - split
-- [ ] arrays
+- [x] arrays
   - concatenate
   - push
   - pop

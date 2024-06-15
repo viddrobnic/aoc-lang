@@ -34,7 +34,7 @@ pub struct VirtualMachine {
 impl VirtualMachine {
     pub fn new() -> Self {
         Self {
-            gc: GarbageCollector::new(),
+            gc: GarbageCollector::default(),
             globals: vec![Object::Null; GLOBALS_SIZE],
             frames: vec![],
             stack: vec![Object::Null; STACK_SIZE],

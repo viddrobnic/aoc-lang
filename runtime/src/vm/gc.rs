@@ -31,18 +31,12 @@ impl Debug for Owner {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct GarbageCollector {
     owners: HashMap<usize, Owner>,
 }
 
 impl GarbageCollector {
-    pub fn new() -> Self {
-        Self {
-            owners: HashMap::new(),
-        }
-    }
-
     pub fn should_free(&self) -> bool {
         self.owners.len() > MAX_OBJECTS
     }

@@ -13,6 +13,7 @@ pub enum Builtin {
     Str,
     Int,
     Float,
+    Bool,
 
     Floor,
     Ceil,
@@ -24,6 +25,7 @@ pub enum Builtin {
     Split,
 
     Push,
+    Pop,
 }
 
 impl Display for Builtin {
@@ -33,6 +35,7 @@ impl Display for Builtin {
             Builtin::Str => write!(f, "str"),
             Builtin::Int => write!(f, "int"),
             Builtin::Float => write!(f, "float"),
+            Builtin::Bool => write!(f, "bool"),
             Builtin::Floor => write!(f, "floor"),
             Builtin::Ceil => write!(f, "ceil"),
             Builtin::Round => write!(f, "round"),
@@ -41,6 +44,7 @@ impl Display for Builtin {
             Builtin::Trim => write!(f, "trim"),
             Builtin::Split => write!(f, "split"),
             Builtin::Push => write!(f, "push"),
+            Builtin::Pop => write!(f, "pop"),
         }
     }
 }
@@ -52,6 +56,7 @@ impl Builtin {
             "str" => Self::Str,
             "int" => Self::Int,
             "float" => Self::Float,
+            "bool" => Self::Bool,
             "floor" => Self::Floor,
             "ceil" => Self::Ceil,
             "round" => Self::Round,
@@ -60,6 +65,7 @@ impl Builtin {
             "trim" => Self::Trim,
             "split" => Self::Split,
             "push" => Self::Push,
+            "pop" => Self::Pop,
 
             _ => return None,
         };
@@ -74,6 +80,7 @@ impl Builtin {
             Builtin::Str => call_str(args),
             Builtin::Int => call_int(args),
             Builtin::Float => call_float(args),
+            Builtin::Bool => call_bool(args),
 
             Builtin::Floor => call_round(args, |f| f.floor(), Builtin::Floor),
             Builtin::Ceil => call_round(args, |f| f.ceil(), Builtin::Ceil),
@@ -87,6 +94,7 @@ impl Builtin {
             Builtin::Split => call_split(args, gc),
 
             Builtin::Push => call_push(args),
+            Builtin::Pop => call_pop(args),
         }
     }
 }
@@ -185,6 +193,26 @@ fn call_float(args: &[Object]) -> Result<Object, ErrorKind> {
     Ok(Object::Float(res))
 }
 
+fn call_bool(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 1)?;
+
+    let res = match &args[0] {
+        Object::String(str) => match str.parse() {
+            Ok(res) => res,
+            Err(_) => return Ok(Object::Null),
+        },
+
+        obj => {
+            return Err(ErrorKind::InvalidBuiltinArg {
+                builtin: Builtin::Bool,
+                data_type: obj.into(),
+            })
+        }
+    };
+
+    Ok(Object::Boolean(res))
+}
+
 fn call_round<F>(args: &[Object], round: F, builtin: Builtin) -> Result<Object, ErrorKind>
 where
     F: Fn(f64) -> f64,
@@ -262,4 +290,22 @@ fn call_push(args: &[Object]) -> Result<Object, ErrorKind> {
     rc.borrow_mut().push(args[1].clone());
 
     Ok(Object::Null)
+}
+
+fn call_pop(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 1)?;
+
+    let Object::Array(Array(arr)) = &args[0] else {
+        return Err(ErrorKind::InvalidBuiltinArg {
+            builtin: Builtin::Pop,
+            data_type: (&args[0]).into(),
+        });
+    };
+
+    let rc = arr.value.upgrade().unwrap();
+    let obj = rc.borrow_mut().pop();
+    match obj {
+        Some(obj) => Ok(obj),
+        None => Ok(Object::Null),
+    }
 }

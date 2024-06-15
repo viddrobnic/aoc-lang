@@ -640,6 +640,18 @@ fn builtin_float() {
 }
 
 #[test]
+fn builtin_bool() {
+    let tests = [
+        ("bool(\"true\")", Object::Boolean(true)),
+        ("bool(\"false\")", Object::Boolean(false)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+}
+
+#[test]
 fn builtin_string() {
     let tests = [
         ("trim_start(\"hey\")", "hey".to_string()),
@@ -698,6 +710,35 @@ fn builtin_push() {
                 Object::Integer(12),
                 Object::Integer(13),
             ],
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let rc = Rc::new(RefCell::new(expected));
+        let arr = Array(gc::Ref {
+            value: Rc::downgrade(&rc),
+            id: 0,
+        });
+        run_test(input, Ok(Object::Array(arr)));
+    }
+}
+
+#[test]
+fn builtin_pop() {
+    let tests = [
+        ("pop([])", Object::Null),
+        ("pop([1,2,3])", Object::Integer(3)),
+    ];
+
+    for (input, expected) in tests {
+        run_test(input, Ok(expected));
+    }
+
+    let tests = [
+        ("a = []\npop(a)\na", vec![]),
+        (
+            "a = [1,2,3]\npop(a)\na",
+            vec![Object::Integer(1), Object::Integer(2)],
         ),
     ];
 

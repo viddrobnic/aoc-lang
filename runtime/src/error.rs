@@ -132,9 +132,9 @@ impl Display for ErrorKind {
             ),
             ErrorKind::ReturnOutsideOfFunction => write!(f, "Return can't be used outside of a function."),
             ErrorKind::InvalidFunctionCalee(dt) => write!(f,"Can only call functions, not {dt}"),
-            ErrorKind::InvalidNrOfArgs { expected, got } =>write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
+            ErrorKind::InvalidNrOfArgs { expected, got } => write!(f, "Invalid number of arguments, expected: {expected}, got: {got}"),
 
-            ErrorKind::InvalidBuiltinArg { builtin, data_type } =>write!(f, "Can't call {builtin} on {data_type}."),
+            ErrorKind::InvalidBuiltinArg { builtin, data_type } => write!(f, "Can't call {builtin} on {data_type}."),
         }
     }
 }
