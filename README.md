@@ -33,7 +33,8 @@ AoC language supports the following features:
 - integers
 - floats
 - booleans
-- strings:
+- strings
+- characters
 - arrays
 - hash maps
 - arithmetic operations (`+`, `-`, `*`, `/`, `%`)

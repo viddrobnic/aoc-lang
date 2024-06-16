@@ -14,6 +14,10 @@ false
 // string
 "foo"
 
+// chars
+'a'
+"foo"[0] // 'f'
+
 // We have two composite data types, that we will take a look at later
 // First, variables:
 foo = 42
@@ -156,11 +160,15 @@ str(1) // "1"
 str(1.2) // "1.2"
 str(true) // "true"
 str("foo") // "foo"
+str('a') // "a"
 
 int(1) // 1
 int(1.1) // 1
 int("1") // 1
 int("foo") // null
+int('a') // 97
+
+char(97) // 'a'
 
 float(1.1) // 1.1
 float(1) // 1.0
