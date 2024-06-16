@@ -1,0 +1,45 @@
+// AoC lang support utf8, so we can do cool stuff like this:
+string = "🚗"
+print(string) // 🚗
+
+// But it makes some things counter intuitive:
+print(len(string)) // 4
+
+// The behavior is similar to that of rust strings, so you can read
+// all about it here: https://doc.rust-lang.org/std/string/struct.String.html#utf-8
+
+// TL;DR of the above article is: strings are always utf8, which means that one 
+// graphene can span multiple characters. In AoC lang, char is a single byte.
+// This makes everything work nicely if you are using just ascii strings,
+// but you have to be careful when using other chars.
+
+// Let's take a look at some examples. You can construct a single char as:
+ch = 'A'
+print(ch) // A
+
+// And convert it to string with builtin str
+string = str(ch)
+print(string) // A
+
+// Length returns number of bytes, which as we saw above is not the same as number of
+// graphenes
+print(len("AB")) // 2
+print(len("🚗")) // 4
+
+// We can use index notation to get a specific char from the string:
+print("AB"[0]) // A
+
+// If index is out of bounds, null is returned
+print("AB"[5]) // null
+
+// Since char is a single byte, not a graphene, weird stuff can happen:
+print("🚗"[0]) // ð
+
+// We can also convert chars to ints
+print(int('A')) // 65
+
+// And we can also go in the other direction
+print(char(65)) // A
+
+// If int is larger than 256, it just overflows
+print(char(1090)) // B  // explanation: 1090 % 256 = 66, and 66 is 'B'

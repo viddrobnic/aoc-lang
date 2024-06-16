@@ -12,6 +12,7 @@ pub enum Builtin {
 
     Str,
     Int,
+    Char,
     Float,
     Bool,
 
@@ -38,6 +39,7 @@ impl Display for Builtin {
             Builtin::Len => write!(f, "len"),
             Builtin::Str => write!(f, "str"),
             Builtin::Int => write!(f, "int"),
+            Builtin::Char => write!(f, "char"),
             Builtin::Float => write!(f, "float"),
             Builtin::Bool => write!(f, "bool"),
             Builtin::Floor => write!(f, "floor"),
@@ -62,6 +64,7 @@ impl Builtin {
             "len" => Self::Len,
             "str" => Self::Str,
             "int" => Self::Int,
+            "char" => Self::Char,
             "float" => Self::Float,
             "bool" => Self::Bool,
             "floor" => Self::Floor,
@@ -89,6 +92,7 @@ impl Builtin {
 
             Builtin::Str => call_str(args),
             Builtin::Int => call_int(args),
+            Builtin::Char => call_char(args),
             Builtin::Float => call_float(args),
             Builtin::Bool => call_bool(args),
 
@@ -151,6 +155,7 @@ fn call_str(args: &[Object]) -> Result<Object, ErrorKind> {
         Object::Integer(int) => Rc::new(int.to_string()),
         Object::Boolean(boolean) => Rc::new(boolean.to_string()),
         Object::Float(float) => Rc::new(float.to_string()),
+        Object::Char(ch) => Rc::new((*ch as char).to_string()),
 
         obj => {
             return Err(ErrorKind::InvalidBuiltinArg {
@@ -173,6 +178,7 @@ fn call_int(args: &[Object]) -> Result<Object, ErrorKind> {
             Ok(res) => res,
             Err(_) => return Ok(Object::Null),
         },
+        Object::Char(ch) => *ch as i64,
 
         obj => {
             return Err(ErrorKind::InvalidBuiltinArg {
@@ -183,6 +189,24 @@ fn call_int(args: &[Object]) -> Result<Object, ErrorKind> {
     };
 
     Ok(Object::Integer(res))
+}
+
+fn call_char(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 1)?;
+
+    let res = match &args[0] {
+        Object::Char(ch) => *ch,
+        Object::Integer(int) => *int as u8,
+
+        obj => {
+            return Err(ErrorKind::InvalidBuiltinArg {
+                builtin: Builtin::Char,
+                data_type: obj.into(),
+            })
+        }
+    };
+
+    Ok(Object::Char(res))
 }
 
 fn call_float(args: &[Object]) -> Result<Object, ErrorKind> {
@@ -353,6 +377,7 @@ fn call_print(args: &[Object]) -> Result<Object, ErrorKind> {
         Object::Float(val) => println!("{val}"),
         Object::Boolean(val) => println!("{val}"),
         Object::String(val) => println!("{val}"),
+        Object::Char(ch) => println!("{}", *ch as char),
 
         obj => {
             return Err(ErrorKind::InvalidBuiltinArg {

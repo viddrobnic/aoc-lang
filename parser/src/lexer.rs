@@ -93,6 +93,48 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    fn read_char(&mut self, start_position: Position) -> Result<TokenKind> {
+        let (_, ch) = self.chars.next().ok_or(Error {
+            kind: ErrorKind::UnexpectedEof,
+            range: Range {
+                start: start_position,
+                end: self.position,
+            },
+        })?;
+        self.position.character += ch.len_utf8();
+
+        let (_, end) = self.chars.next().ok_or(Error {
+            kind: ErrorKind::UnexpectedEof,
+            range: Range {
+                start: start_position,
+                end: self.position,
+            },
+        })?;
+        self.position.character += end.len_utf8();
+
+        if end != '\'' {
+            return Err(Error {
+                kind: ErrorKind::InvalidChar(end),
+                range: Range {
+                    start: start_position,
+                    end: self.position,
+                },
+            });
+        }
+
+        if !ch.is_ascii() {
+            return Err(Error {
+                kind: ErrorKind::NonAsciiChar(ch),
+                range: Range {
+                    start: start_position,
+                    end: self.position,
+                },
+            });
+        }
+
+        Ok(TokenKind::Char(ch as u8))
+    }
+
     // Read ident or keywoard, where the first char is at `self.input[start]`
     // and `end` is start + utf8 len of first char
     fn read_ident(&mut self, start: usize, mut end: usize) -> TokenKind {
@@ -249,6 +291,10 @@ impl Iterator for Lexer<'_> {
             '>' => self.peek_parse('=', TokenKind::Geq, TokenKind::Ge),
             '=' => self.peek_parse('=', TokenKind::Eq, TokenKind::Assign),
             '!' => self.peek_parse('=', TokenKind::Neq, TokenKind::Bang),
+            '\'' => match self.read_char(start_position) {
+                Ok(token) => token,
+                Err(err) => return Some(Err(err)),
+            },
             '"' => match self.read_string(start_position) {
                 Ok(token) => token,
                 Err(err) => return Some(Err(err)),
@@ -425,6 +471,7 @@ mod test {
             "normal string" "\n\t\\\""
             // line comment
             false //inline comment
+            'A'
         "#;
 
         let lexer = Lexer::new(input);
@@ -666,6 +713,14 @@ mod test {
                     start: Position::new(9, 34),
                     end: Position::new(10, 0),
                 },
+                Range {
+                    start: Position::new(10, 12),
+                    end: Position::new(10, 15),
+                },
+                Range {
+                    start: Position::new(10, 15),
+                    end: Position::new(11, 0),
+                },
             ]
         );
 
@@ -729,7 +784,24 @@ mod test {
                 TokenKind::False,
                 TokenKind::Comment("inline comment".to_string()),
                 TokenKind::Eol,
+                TokenKind::Char(b'A'),
+                TokenKind::Eol,
             ]
+        );
+    }
+
+    #[test]
+    fn non_ascii_char() {
+        let mut lexer = Lexer::new("'🚗'");
+        assert_eq!(
+            lexer.next(),
+            Some(Err(Error {
+                kind: ErrorKind::NonAsciiChar('🚗'),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 6),
+                }
+            }))
         );
     }
 }

@@ -182,6 +182,7 @@ impl Parser<'_> {
             TokenKind::Ident(ident) => (ast::NodeValue::Identifier(ident), range.end),
             TokenKind::Integer(int) => (ast::NodeValue::IntegerLiteral(int), range.end),
             TokenKind::Float(flt) => (ast::NodeValue::FloatLiteral(flt), range.end),
+            TokenKind::Char(ch) => (ast::NodeValue::CharLiteral(ch), range.end),
             TokenKind::True => (ast::NodeValue::BoolLiteral(true), range.end),
             TokenKind::False => (ast::NodeValue::BoolLiteral(false), range.end),
             TokenKind::String(string) => (ast::NodeValue::StringLiteral(string), range.end),

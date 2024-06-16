@@ -37,6 +37,7 @@ fn constants() {
         ("6.9", Object::Float(6.9)),
         ("\"foo\"", Object::String(Rc::new("foo".to_string()))),
         ("true", Object::Boolean(true)),
+        ("'Y'", Object::Char(b'Y')),
     ];
 
     for (input, expected) in tests {
@@ -286,6 +287,10 @@ fn infix_operator() {
         ("1 < 2 & 3 < 4 | 5 == 2", Object::Boolean(true)),
         ("\"abc\" < \"aab\"", Object::Boolean(false)),
         ("\"abc\" == \"abc\"", Object::Boolean(true)),
+        ("'a' == 'A'", Object::Boolean(false)),
+        ("'a' < 'A' == 'b' < 'B'", Object::Boolean(true)),
+        ("'b' >= 'A'", Object::Boolean(true)),
+        ("\"foo\"[0] == 'f'", Object::Boolean(true)),
     ];
 
     for (input, expected) in tests {
@@ -312,6 +317,10 @@ fn index() {
             "foo = {\"property\": {\"nested\": 42}}\n foo.property.nested",
             Object::Integer(42),
         ),
+        ("\"foo\"[0]", Object::Char(b'f')),
+        ("\"foo\"[-1]", Object::Null),
+        ("\"foo\"[4]", Object::Null),
+        ("\"🚗\"[1]", Object::Char(159)),
     ];
 
     for (input, expected) in tests {
@@ -603,18 +612,24 @@ fn builtin() {
         ),
         ("str(1.0000)", Ok(Object::String(Rc::new("1".to_string())))),
         ("str(true)", Ok(Object::String(Rc::new("true".to_string())))),
+        ("str('a')", Ok(Object::String(Rc::new("a".to_string())))),
         // Int
         ("int(1)", Ok(Object::Integer(1))),
         ("int(4.2)", Ok(Object::Integer(4))),
         ("int(\"420\")", Ok(Object::Integer(420))),
         ("int(\"4.20\")", Ok(Object::Null)),
         ("int(\"0x10\")", Ok(Object::Null)),
+        ("int('a')", Ok(Object::Integer(97))),
         // Float
         ("float(1)", Ok(Object::Float(1.0))),
         ("float(4.2)", Ok(Object::Float(4.2))),
         ("float(\"4.20\")", Ok(Object::Float(4.2))),
         ("float(\"420\")", Ok(Object::Float(420.0))),
         ("float(\"0x10\")", Ok(Object::Null)),
+        // Char
+        ("char('a')", Ok(Object::Char(b'a'))),
+        ("char(97)", Ok(Object::Char(b'a'))),
+        ("char(10000)", Ok(Object::Char(16))),
     ];
 
     for (input, expected) in tests {

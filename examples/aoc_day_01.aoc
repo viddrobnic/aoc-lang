@@ -13,21 +13,23 @@ for (line = input(); line; line = input()) {
 // Part one
 res = 0
 for (i = 0; i < len(data); i = i + 1) {
-    chars = split(data[i], "")
+    line = data[i]
     n = 0
 
     // First number
-    for (j = 0; j < len(chars); j = j + 1) {
-        if (int(chars[j])) {
-            n = int(chars[j])
+    for (j = 0; j < len(line); j = j + 1) {
+        c = int(line[j]) - int('0')
+        if (c >= 0 & c < 10) {
+            n = c
             break
         }
     }
 
     // Last number
-    for (j = len(chars) - 1; j >= 0; j = j - 1) {
-        if (int(chars[j])) {
-            n = n * 10 + int(chars[j])
+    for (j = len(line) - 1; j >= 0; j = j - 1) {
+        c = int(line[j]) - int('0')
+        if (c >= 0 & c < 10) {
+            n = n * 10 + c
             break
         }
     }
@@ -38,13 +40,13 @@ for (i = 0; i < len(data); i = i + 1) {
 print("Part one: " + str(res))
 
 // Part two
-substr_is = fn(target_ch, position, lookup_ch) {
-    if (position + len(lookup_ch) > len(target_ch)) {
+substr_is = fn(target, position, lookup) {
+    if (position + len(lookup) > len(target)) {
         return false
     }
 
-    for (i = 0; i < len(lookup_ch); i = i + 1) {
-        if (target_ch[position + i] != lookup_ch[i]) {
+    for (i = 0; i < len(lookup); i = i + 1) {
+        if (target[position + i] != lookup[i]) {
             return false
         }
     }
@@ -53,13 +55,14 @@ substr_is = fn(target_ch, position, lookup_ch) {
 }
 
 digits = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
-digit = fn(chars, position) {
-    if (int(chars[position])) {
-        return int(chars[position])
+digit = fn(string, position) {
+    d = int(string[position]) - int('0')
+    if (d >= 0 & d < 10) {
+        return d
     }
-
+    
     for (d = 0; d < len(digits); d = d + 1) {
-        if (substr_is(chars, position, split(digits[d], ""))) {
+        if (substr_is(string, position, digits[d])) {
             return d + 1
         }
     }
@@ -68,12 +71,12 @@ digit = fn(chars, position) {
 
 res = 0
 for (i = 0; i < len(data); i = i + 1) {
-    chars = split(data[i], "")
+    line = data[i]
     n = 0
 
     // First number
-    for (j = 0; j < len(chars); j = j + 1) {
-        d = digit(chars, j)
+    for (j = 0; j < len(line); j = j + 1) {
+        d = digit(line, j)
         if (d) {
             n = d
             break
@@ -82,8 +85,8 @@ for (i = 0; i < len(data); i = i + 1) {
     }
 
     // Last number
-    for (j = len(chars) - 1; j >= 0; j = j - 1) {
-        d = digit(chars, j)
+    for (j = len(line) - 1; j >= 0; j = j - 1) {
+        d = digit(line, j)
         if (d) {
             n = n * 10 + d
             break

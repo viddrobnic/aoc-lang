@@ -134,6 +134,7 @@ impl Compiler {
             ast::NodeValue::FloatLiteral(flt) => {
                 self.compile_constant(Object::Float(*flt), node.range);
             }
+            ast::NodeValue::CharLiteral(ch) => self.compile_constant(Object::Char(*ch), node.range),
             ast::NodeValue::BoolLiteral(boolean) => {
                 self.compile_constant(Object::Boolean(*boolean), node.range);
             }

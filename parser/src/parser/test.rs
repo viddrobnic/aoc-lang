@@ -25,6 +25,7 @@ fn simple_prefix_expression() -> Result<()> {
         "bar"
         break
         continue
+        '~'
     "#;
 
     let program = parse(input)?;
@@ -86,6 +87,13 @@ fn simple_prefix_expression() -> Result<()> {
                     start: Position::new(8, 8),
                     end: Position::new(8, 16)
                 },
+            },
+            ast::Node {
+                value: ast::NodeValue::CharLiteral(b'~'),
+                range: Range {
+                    start: Position::new(9, 8),
+                    end: Position::new(9, 11),
+                }
             },
         ]
     );

@@ -19,6 +19,7 @@ pub enum NodeValue {
     Identifier(String),
     IntegerLiteral(i64),
     FloatLiteral(f64),
+    CharLiteral(u8),
     BoolLiteral(bool),
     StringLiteral(String),
     ArrayLiteral(Vec<Node>),
@@ -227,6 +228,7 @@ impl Display for NodeValue {
             NodeValue::Identifier(ident) => write!(f, "{ident}"),
             NodeValue::IntegerLiteral(int) => write!(f, "{int}"),
             NodeValue::FloatLiteral(float) => write!(f, "{float}"),
+            NodeValue::CharLiteral(ch) => write!(f, "{}", *ch as char),
             NodeValue::BoolLiteral(boolean) => write!(f, "{boolean}"),
             NodeValue::StringLiteral(string) => write!(f, "\"{string}\""),
             NodeValue::ArrayLiteral(arr) => {

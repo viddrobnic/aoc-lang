@@ -354,6 +354,21 @@ impl VirtualMachine {
                     None => self.push(Object::Null)?,
                 }
             }
+            Object::String(string) => {
+                let Object::Integer(idx) = index else {
+                    return Err(ErrorKind::InvalidIndexType(index.into()));
+                };
+
+                if idx < 0 {
+                    self.push(Object::Null)?;
+                    return Ok(());
+                }
+
+                match string.as_bytes().get(idx as usize) {
+                    Some(ch) => self.push(Object::Char(*ch))?,
+                    None => self.push(Object::Null)?,
+                }
+            }
 
             _ => return Err(ErrorKind::NotIndexable(container.into())),
         }
@@ -490,6 +505,9 @@ impl VirtualMachine {
             (Object::String(left), Object::String(right)) => {
                 self.push(Object::Boolean(left < right))?;
             }
+            (Object::Char(left), Object::Char(right)) => {
+                self.push(Object::Boolean(left < right))?;
+            }
 
             _ => {
                 return Err(ErrorKind::InvalidOrderingType(
@@ -514,6 +532,9 @@ impl VirtualMachine {
                 self.push(Object::Boolean(left <= right))?;
             }
             (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left <= right))?;
+            }
+            (Object::Char(left), Object::Char(right)) => {
                 self.push(Object::Boolean(left <= right))?;
             }
 
@@ -545,6 +566,9 @@ impl VirtualMachine {
             (Object::String(left), Object::String(right)) => {
                 self.push(Object::Boolean(left == right))?;
             }
+            (Object::Char(left), Object::Char(right)) => {
+                self.push(Object::Boolean(left == right))?;
+            }
 
             _ => {
                 return Err(ErrorKind::InvalidEqualityType(
@@ -572,6 +596,9 @@ impl VirtualMachine {
                 self.push(Object::Boolean(left != right))?;
             }
             (Object::String(left), Object::String(right)) => {
+                self.push(Object::Boolean(left != right))?;
+            }
+            (Object::Char(left), Object::Char(right)) => {
                 self.push(Object::Boolean(left != right))?;
             }
 

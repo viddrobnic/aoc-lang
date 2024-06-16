@@ -10,6 +10,7 @@ pub enum ErrorKind {
     UnexpectedEof,
     InvalidEscapeChar(char),
     InvalidChar(char),
+    NonAsciiChar(char),
     InvalidExpression(TokenKind),
     ExpectedEol,
     InvalidNodeKind { expected: NodeKind, got: NodeKind },
@@ -40,6 +41,10 @@ impl Display for ErrorKind {
             ErrorKind::UnexpectedEof => write!(f, "Unexpected end of file"),
             ErrorKind::InvalidEscapeChar(ch) => write!(f, "Invalid escape character '{ch}'"),
             ErrorKind::InvalidChar(ch) => write!(f, "Invalid character '{ch}'"),
+            ErrorKind::NonAsciiChar(ch) => write!(
+                f,
+                "Inalid character literal '{ch}'. Char literals only support ascii."
+            ),
             ErrorKind::InvalidExpression(token) => write!(f, "Not a valid expression: {token}"),
             ErrorKind::ExpectedEol => write!(f, "Expression must end with new line"),
             ErrorKind::InvalidNodeKind { expected, got } => {

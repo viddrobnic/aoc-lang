@@ -92,6 +92,25 @@ fn constants() {
                 main_function: 0,
             },
         ),
+        (
+            "'Z'",
+            Bytecode {
+                constants: vec![Object::Char(b'Z')],
+                functions: vec![Function {
+                    instructions: vec![Instruction::Constant(0), Instruction::Pop],
+                    ranges: vec![
+                        Range {
+                            start: Position::new(0, 0),
+                            end: Position::new(0, 3),
+                        };
+                        2
+                    ],
+                    nr_local_variables: 0,
+                    nr_arguments: 0,
+                }],
+                main_function: 0,
+            },
+        ),
     ];
 
     for (input, expected) in tests {
