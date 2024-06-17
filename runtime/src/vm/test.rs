@@ -634,6 +634,10 @@ fn builtin() {
         ("bool(0)", Ok(Object::Boolean(true))),
         ("bool(\"false\")", Ok(Object::Boolean(true))),
         ("bool(int(\"\"))", Ok(Object::Boolean(false))),
+        // IsNull
+        ("is_null(0)", Ok(Object::Boolean(false))),
+        ("is_null(false)", Ok(Object::Boolean(false))),
+        ("is_null(int(\"a\"))", Ok(Object::Boolean(true))),
     ];
 
     for (input, expected) in tests {

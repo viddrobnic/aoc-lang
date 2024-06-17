@@ -15,6 +15,7 @@ pub enum Builtin {
     Char,
     Float,
     Bool,
+    IsNull,
 
     Floor,
     Ceil,
@@ -42,6 +43,7 @@ impl Display for Builtin {
             Builtin::Char => write!(f, "char"),
             Builtin::Float => write!(f, "float"),
             Builtin::Bool => write!(f, "bool"),
+            Builtin::IsNull => write!(f, "is_null"),
             Builtin::Floor => write!(f, "floor"),
             Builtin::Ceil => write!(f, "ceil"),
             Builtin::Round => write!(f, "round"),
@@ -67,6 +69,7 @@ impl Builtin {
             "char" => Self::Char,
             "float" => Self::Float,
             "bool" => Self::Bool,
+            "is_null" => Self::IsNull,
             "floor" => Self::Floor,
             "ceil" => Self::Ceil,
             "round" => Self::Round,
@@ -95,6 +98,7 @@ impl Builtin {
             Builtin::Char => call_char(args),
             Builtin::Float => call_float(args),
             Builtin::Bool => call_bool(args),
+            Builtin::IsNull => is_null(args),
 
             Builtin::Floor => call_round(args, |f| f.floor(), Builtin::Floor),
             Builtin::Ceil => call_round(args, |f| f.ceil(), Builtin::Ceil),
@@ -235,6 +239,11 @@ fn call_bool(args: &[Object]) -> Result<Object, ErrorKind> {
     validate_args_len(args, 1)?;
 
     Ok(Object::Boolean(args[0].is_truthy()))
+}
+
+fn is_null(args: &[Object]) -> Result<Object, ErrorKind> {
+    validate_args_len(args, 1)?;
+    Ok(Object::Boolean(args[0] == Object::Null))
 }
 
 fn call_round<F>(args: &[Object], round: F, builtin: Builtin) -> Result<Object, ErrorKind>
