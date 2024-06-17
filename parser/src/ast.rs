@@ -16,6 +16,7 @@ pub struct Node {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum NodeValue {
+    Null,
     Identifier(String),
     IntegerLiteral(i64),
     FloatLiteral(f64),
@@ -225,6 +226,7 @@ impl Display for Node {
 impl Display for NodeValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            NodeValue::Null => write!(f, "null"),
             NodeValue::Identifier(ident) => write!(f, "{ident}"),
             NodeValue::IntegerLiteral(int) => write!(f, "{int}"),
             NodeValue::FloatLiteral(float) => write!(f, "{float}"),

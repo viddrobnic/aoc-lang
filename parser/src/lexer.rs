@@ -450,6 +450,16 @@ mod test {
                     },
                 },
             ),
+            (
+                "'🚗'",
+                Error {
+                    kind: ErrorKind::NonAsciiChar('🚗'),
+                    range: Range {
+                        start: Position::new(0, 0),
+                        end: Position::new(0, 6),
+                    },
+                },
+            ),
         ];
 
         for (input, expected) in tests {
@@ -472,6 +482,7 @@ mod test {
             // line comment
             false //inline comment
             'A'
+            null
         "#;
 
         let lexer = Lexer::new(input);
@@ -721,6 +732,14 @@ mod test {
                     start: Position::new(10, 15),
                     end: Position::new(11, 0),
                 },
+                Range {
+                    start: Position::new(11, 12),
+                    end: Position::new(11, 16),
+                },
+                Range {
+                    start: Position::new(11, 16),
+                    end: Position::new(12, 0)
+                }
             ]
         );
 
@@ -786,22 +805,9 @@ mod test {
                 TokenKind::Eol,
                 TokenKind::Char(b'A'),
                 TokenKind::Eol,
+                TokenKind::Null,
+                TokenKind::Eol,
             ]
-        );
-    }
-
-    #[test]
-    fn non_ascii_char() {
-        let mut lexer = Lexer::new("'🚗'");
-        assert_eq!(
-            lexer.next(),
-            Some(Err(Error {
-                kind: ErrorKind::NonAsciiChar('🚗'),
-                range: Range {
-                    start: Position::new(0, 0),
-                    end: Position::new(0, 6),
-                }
-            }))
         );
     }
 }

@@ -128,6 +128,7 @@ impl Compiler {
     fn compile_node(&mut self, node: &ast::Node) -> Result<(), Error> {
         match &node.value {
             ast::NodeValue::Identifier(ident) => self.compile_ident(ident, node.range)?,
+            ast::NodeValue::Null => self.compile_constant(Object::Null, node.range),
             ast::NodeValue::IntegerLiteral(int) => {
                 self.compile_constant(Object::Integer(*int), node.range);
             }

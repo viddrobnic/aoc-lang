@@ -179,6 +179,7 @@ impl Parser<'_> {
         } = start_token;
 
         let (node_value, end) = match tkn_kind {
+            TokenKind::Null => (ast::NodeValue::Null, range.end),
             TokenKind::Ident(ident) => (ast::NodeValue::Identifier(ident), range.end),
             TokenKind::Integer(int) => (ast::NodeValue::IntegerLiteral(int), range.end),
             TokenKind::Float(flt) => (ast::NodeValue::FloatLiteral(flt), range.end),

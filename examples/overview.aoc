@@ -18,6 +18,7 @@ false
 'a'
 "foo"[0] // 'f'
 
+
 // We have two composite data types, that we will take a look at later
 // First, variables:
 foo = 42
@@ -151,7 +152,19 @@ rec_sum = fn(n) {
 }
 print(rec_sum(10)) // 55
 
-// Now let's do a speedrun through the builtin functions:
+// We also have a billion dollar mistake: nulls. Nulls have two usages in AoC lang:
+// - most of the things are expressions and return some value. Some things are not expressions and return null.
+//   for instance:
+//   if (false) {10} // null, because the else statement is empty
+// - AoC lang doesn't have error handling and things that would return an error in other languages, return
+//   null here. For instance int("asdf") or array[-42]. We can also construct null with:
+null
+
+// We can check if something is null with builtin function is_null:
+is_null(null) // true
+is_null(false) // false
+
+// Now that the builtin functions were mentioned, let's do a speed run through them:
 len([1, 2]) // 2
 len({1: 2}) // 1
 len("foo")  // 3

@@ -26,6 +26,7 @@ fn simple_prefix_expression() -> Result<()> {
         break
         continue
         '~'
+        null
     "#;
 
     let program = parse(input)?;
@@ -93,6 +94,13 @@ fn simple_prefix_expression() -> Result<()> {
                 range: Range {
                     start: Position::new(9, 8),
                     end: Position::new(9, 11),
+                }
+            },
+            ast::Node {
+                value: ast::NodeValue::Null,
+                range: Range {
+                    start: Position::new(10, 8),
+                    end: Position::new(10, 12)
                 }
             },
         ]

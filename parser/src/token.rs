@@ -45,6 +45,7 @@ pub enum TokenKind {
     Return,
     Fn,
     Use,
+    Null,
     Eol, // \n
     Comment(String),
 }
@@ -63,6 +64,7 @@ impl TokenKind {
             "return" => Self::Return,
             "fn" => Self::Fn,
             "use" => Self::Use,
+            "null" => Self::Null,
             _ => return None,
         };
 
@@ -143,6 +145,7 @@ impl Display for TokenKind {
             TokenKind::Return => write!(f, "RETURN"),
             TokenKind::Fn => write!(f, "FN"),
             TokenKind::Use => write!(f, "USE"),
+            TokenKind::Null => write!(f, "NULL"),
             TokenKind::Eol => write!(f, "EOL"),
             TokenKind::Comment(_) => write!(f, "COMMENT"),
         }
