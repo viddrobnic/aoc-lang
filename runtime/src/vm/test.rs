@@ -630,6 +630,10 @@ fn builtin() {
         ("char('a')", Ok(Object::Char(b'a'))),
         ("char(97)", Ok(Object::Char(b'a'))),
         ("char(10000)", Ok(Object::Char(16))),
+        // Bool (is truthy)
+        ("bool(0)", Ok(Object::Boolean(true))),
+        ("bool(\"false\")", Ok(Object::Boolean(true))),
+        ("bool(int(\"\"))", Ok(Object::Boolean(false))),
     ];
 
     for (input, expected) in tests {
@@ -647,18 +651,6 @@ fn builtin_float() {
         ("round(4.2)", Object::Float(4.0)),
         ("round(4.0)", Object::Float(4.0)),
         ("round(4.5)", Object::Float(5.0)),
-    ];
-
-    for (input, expected) in tests {
-        run_test(input, Ok(expected));
-    }
-}
-
-#[test]
-fn builtin_bool() {
-    let tests = [
-        ("bool(\"true\")", Object::Boolean(true)),
-        ("bool(\"false\")", Object::Boolean(false)),
     ];
 
     for (input, expected) in tests {

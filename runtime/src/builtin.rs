@@ -234,22 +234,7 @@ fn call_float(args: &[Object]) -> Result<Object, ErrorKind> {
 fn call_bool(args: &[Object]) -> Result<Object, ErrorKind> {
     validate_args_len(args, 1)?;
 
-    let res = match &args[0] {
-        Object::Boolean(bool) => *bool,
-        Object::String(str) => match str.parse() {
-            Ok(res) => res,
-            Err(_) => return Ok(Object::Null),
-        },
-
-        obj => {
-            return Err(ErrorKind::InvalidBuiltinArg {
-                builtin: Builtin::Bool,
-                data_type: obj.into(),
-            })
-        }
-    };
-
-    Ok(Object::Boolean(res))
+    Ok(Object::Boolean(args[0].is_truthy()))
 }
 
 fn call_round<F>(args: &[Object], round: F, builtin: Builtin) -> Result<Object, ErrorKind>

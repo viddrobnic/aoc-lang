@@ -175,8 +175,11 @@ float(1) // 1.0
 float("1.1") // 1.1
 float("asdf") // null
 
+// bool builtin does "is truthy" behavior, similar to if/else and loops
 bool(false) // false
 bool("true") // true
+bool("false") // true
+bool(0) //true
 
 floor(1.9) // 1.0
 ceil(1.1) // 2.0
