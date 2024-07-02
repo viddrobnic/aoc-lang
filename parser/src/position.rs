@@ -3,7 +3,7 @@
 pub struct Position {
     /// Line number, starting with 0.
     pub line: usize,
-    /// Character offset in line, starting with 0.
+    /// Character offsets count UTF-16 code units.
     pub character: usize,
 }
 

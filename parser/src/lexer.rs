@@ -28,7 +28,7 @@ impl<'a> Lexer<'a> {
             };
 
             if ch.is_whitespace() && *ch != '\n' {
-                self.position.character += ch.len_utf8();
+                self.position.character += ch.len_utf16();
                 self.chars.next();
             } else {
                 return;
@@ -45,19 +45,19 @@ impl<'a> Lexer<'a> {
         match self.chars.peek() {
             Some((_, ch)) if *ch == expected => {
                 self.chars.next();
-                self.position.character += '='.len_utf8();
+                self.position.character += expected.len_utf16();
                 token
             }
             _ => default_token,
         }
     }
 
-    // Read number where the first digit is at `self.input[start]`
-    // and `end` is start + utf8 len of first digit.
+    // Read number where the first digit is at `self.input[start_utf8]`
+    // and `end_utf8` is start + utf8 len of first digit.
     fn read_number(
         &mut self,
-        start: usize,
-        mut end: usize,
+        start_utf8: usize,
+        mut end_utf8: usize,
     ) -> std::result::Result<TokenKind, ErrorKind> {
         loop {
             let Some((_, ch)) = self.chars.peek() else {
@@ -67,16 +67,14 @@ impl<'a> Lexer<'a> {
             if ch.is_ascii_digit() || *ch == '.' {
                 // We know it is Some(_), so it's safe to unwrap.
                 let (_, ch) = self.chars.next().unwrap();
-                end += ch.len_utf8();
+                end_utf8 += ch.len_utf8();
+                self.position.character += ch.len_utf16();
             } else {
                 break;
             }
         }
 
-        let len = end - start;
-        self.position.character += len;
-
-        let number = &self.input[start..end];
+        let number = &self.input[start_utf8..end_utf8];
 
         if number.contains('.') {
             let float: f64 = number
@@ -101,7 +99,7 @@ impl<'a> Lexer<'a> {
                 end: self.position,
             },
         })?;
-        self.position.character += ch.len_utf8();
+        self.position.character += ch.len_utf16();
 
         let (_, end) = self.chars.next().ok_or(Error {
             kind: ErrorKind::UnexpectedEof,
@@ -110,7 +108,7 @@ impl<'a> Lexer<'a> {
                 end: self.position,
             },
         })?;
-        self.position.character += end.len_utf8();
+        self.position.character += end.len_utf16();
 
         if end != '\'' {
             return Err(Error {
@@ -135,9 +133,9 @@ impl<'a> Lexer<'a> {
         Ok(TokenKind::Char(ch as u8))
     }
 
-    // Read ident or keywoard, where the first char is at `self.input[start]`
-    // and `end` is start + utf8 len of first char
-    fn read_ident(&mut self, start: usize, mut end: usize) -> TokenKind {
+    // Read ident or keyword, where the first char is at `self.input[start_utf8]`
+    // and `end_utf8` is start + utf8 len of first char
+    fn read_ident(&mut self, start_utf8: usize, mut end_utf8: usize) -> TokenKind {
         loop {
             let Some((_, ch)) = self.chars.peek() else {
                 break;
@@ -146,15 +144,14 @@ impl<'a> Lexer<'a> {
             if ch.is_alphabetic() || ch.is_ascii_digit() || *ch == '_' {
                 // We know it is Some(_), so it's safe to unwrap.
                 let (_, ch) = self.chars.next().unwrap();
-                end += ch.len_utf8();
+                end_utf8 += ch.len_utf8();
+                self.position.character += ch.len_utf16();
             } else {
                 break;
             }
         }
 
-        self.position.character += end - start;
-
-        let ident = &self.input[start..end];
+        let ident = &self.input[start_utf8..end_utf8];
         TokenKind::from_ident(ident).unwrap_or_else(|| TokenKind::Ident(ident.to_string()))
     }
 
@@ -170,7 +167,7 @@ impl<'a> Lexer<'a> {
                     end: self.position,
                 },
             })?;
-            self.position.character += ch.len_utf8();
+            self.position.character += ch.len_utf16();
 
             if ch == '"' {
                 break;
@@ -188,7 +185,7 @@ impl<'a> Lexer<'a> {
                     end: self.position,
                 },
             })?;
-            self.position.character += ch.len_utf8();
+            self.position.character += ch.len_utf16();
 
             let escaped = match ch {
                 'n' => '\n',
@@ -196,13 +193,13 @@ impl<'a> Lexer<'a> {
                 '"' => '"',
                 '\\' => '\\',
                 ch => {
-                    let mut position = self.position;
-                    position.character -= ch.len_utf8();
+                    let mut start = self.position;
+                    start.character -= ch.len_utf16();
 
                     return Err(Error {
                         kind: ErrorKind::InvalidEscapeChar(ch),
                         range: Range {
-                            start: position,
+                            start,
                             end: self.position,
                         },
                     });
@@ -227,7 +224,7 @@ impl<'a> Lexer<'a> {
 
         // Increase position after possible error returning,
         // to ensure correct position is in the error.
-        self.position.character += ch.len_utf8();
+        self.position.character += ch.len_utf16();
 
         // Read comment string
         let start = pos + ch.len_utf8();
@@ -242,11 +239,10 @@ impl<'a> Lexer<'a> {
                 break;
             }
 
-            let len = ch.len_utf8();
-            self.chars.next();
+            self.position.character += ch.len_utf16();
+            end += ch.len_utf8();
 
-            self.position.character += len;
-            end += len;
+            self.chars.next();
         }
 
         let comment = &self.input[start..end];
@@ -262,8 +258,8 @@ impl Iterator for Lexer<'_> {
 
         let start_position = self.position;
 
-        let (start, ch) = self.chars.next()?;
-        self.position.character += ch.len_utf8();
+        let (start_utf8, ch) = self.chars.next()?;
+        self.position.character += ch.len_utf16();
 
         let token_type = match ch {
             '[' => TokenKind::LSquare,
@@ -316,9 +312,9 @@ impl Iterator for Lexer<'_> {
                 },
             },
             ch if ch.is_ascii_digit() => {
-                self.position.character -= ch.len_utf8();
+                // self.position.character -= ch.len_utf16();
 
-                match self.read_number(start, start + ch.len_utf8()) {
+                match self.read_number(start_utf8, start_utf8 + ch.len_utf8()) {
                     Ok(token) => token,
                     Err(kind) => {
                         return Some(Err(Error {
@@ -332,8 +328,8 @@ impl Iterator for Lexer<'_> {
                 }
             }
             ch if ch.is_alphabetic() => {
-                self.position.character -= ch.len_utf8();
-                self.read_ident(start, start + ch.len_utf8())
+                // self.position.character -= ch.len_utf8();
+                self.read_ident(start_utf8, start_utf8 + ch.len_utf8())
             }
             ch => {
                 return Some(Err(Error {
@@ -398,6 +394,22 @@ mod test {
     }
 
     #[test]
+    fn parse_string() {
+        let lexer = Lexer::new("\"Aßℝ💣\"");
+        let tokens = lexer.collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token {
+                kind: TokenKind::String("Aßℝ💣".to_owned()),
+                range: Range {
+                    start: Position::new(0, 0),
+                    end: Position::new(0, 7)
+                }
+            }]
+        );
+    }
+
+    #[test]
     fn errors() {
         let tests = [
             (
@@ -456,7 +468,7 @@ mod test {
                     kind: ErrorKind::NonAsciiChar('🚗'),
                     range: Range {
                         start: Position::new(0, 0),
-                        end: Position::new(0, 6),
+                        end: Position::new(0, 4),
                     },
                 },
             ),
