@@ -788,6 +788,14 @@ fn use_statement() {
             "#,
             Object::Integer(138),
         ),
+        (
+            r#"
+            constant = 10
+            use "src/test_import/constant.aoc"
+            constant
+            "#,
+            Object::Integer(10),
+        ),
     ];
 
     for (input, expected) in tests {
