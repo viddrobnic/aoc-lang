@@ -1,0 +1,30 @@
+======
+Prefix
+======
+
+-1
+!false
+!10
+
+!!true
+!-10
+--20
+
+---
+
+(source_file
+    (prefix_expression
+      (integer))
+    (prefix_expression
+      (false))
+    (prefix_expression
+      (integer))
+    (prefix_expression
+      (prefix_expression
+        (true)))
+    (prefix_expression
+      (prefix_expression
+        (integer)))
+    (prefix_expression
+      (prefix_expression
+        (integer))))

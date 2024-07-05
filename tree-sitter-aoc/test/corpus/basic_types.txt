@@ -1,0 +1,198 @@
+===========
+Identifiers
+===========
+
+foo
+BAR
+foo1
+foo_bar
+
+---
+
+(source_file
+    (identifier)
+    (identifier)
+    (identifier)
+    (identifier))
+
+
+========
+Integers
+========
+
+1
+10
+123
+
+---
+
+(source_file
+    (integer)
+    (integer)
+    (integer))
+
+
+======
+Floats
+======
+
+1.1
+12.3
+15.0123
+
+---
+
+(source_file
+    (float)
+    (float)
+    (float))
+
+
+========
+Booleans
+========
+
+true
+false
+
+---
+
+(source_file
+    (true)
+    (false))
+
+
+====
+Null
+====
+
+null
+
+---
+
+(source_file
+    (null))
+
+
+===========
+Empty array
+===========
+
+[]
+[   ]
+[
+
+]
+
+---
+
+(source_file
+    (array)
+    (array)
+    (array))
+
+
+================
+Non Empty Arrays
+================
+
+[1]
+[1, foo, null]
+[
+    1,
+    2,
+]
+
+---
+
+(source_file
+      (array
+        (integer))
+      (array
+        (integer)
+        (identifier)
+        (null))
+      (array
+        (integer)
+        (integer)))
+
+
+=======
+Strings
+=======
+
+""
+"foo"
+"foo\n"
+"foo\\"
+"foo\""
+"foo\t"
+"foo 🚀 \t"
+"foo \t \n \""
+
+---
+
+(source_file
+  (string)
+  (string)
+  (string
+    (escape_sequence))
+  (string
+    (escape_sequence))
+  (string
+    (escape_sequence))
+  (string
+    (escape_sequence))
+  (string
+    (escape_sequence))
+  (string
+    (escape_sequence)
+    (escape_sequence)
+    (escape_sequence)))
+
+
+==================
+Empty Dictionaries
+==================
+
+{}
+{
+
+}
+
+---
+
+(source_file
+    (dictionary)
+    (dictionary))
+
+
+======================
+Non Empty Dictionaries
+======================
+
+{"foo": "bar"}
+{foo: "bar",}
+{
+    "bar": 1,
+    true: null,
+}
+
+---
+
+(source_file
+  (dictionary
+    (dictionary_pair
+      (string)
+      (string)))
+  (dictionary
+    (dictionary_pair
+      (identifier)
+      (string)))
+  (dictionary
+    (dictionary_pair
+      (string)
+      (integer))
+    (dictionary_pair
+      (true)
+      (null))))
