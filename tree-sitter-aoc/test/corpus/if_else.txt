@@ -1,0 +1,82 @@
+===
+If
+===
+
+if (true) {}
+if (true) { 10 }
+if (10 * 3) {
+  1 + 2
+  50
+}
+
+---
+
+(source_file
+    (if_expression
+      (true)
+      (block))
+    (if_expression
+      (true)
+      (block
+        (integer)))
+    (if_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (block
+        (infix_expression
+          (integer)
+          (integer))
+        (integer))))
+
+
+=======
+If else
+=======
+
+if (foo) {} else {10}
+
+if (bar) {
+
+} else {
+  10
+  20
+}
+
+---
+
+(source_file
+    (if_expression
+      (identifier)
+      (block)
+      (block
+        (integer)))
+    (if_expression
+      (identifier)
+      (block)
+      (block
+        (integer)
+        (integer))))
+
+
+==========
+If else if
+==========
+
+if (foo) {} else if (bar) {}
+if(foo){}else if(bar){}else{}
+
+---
+
+(source_file
+    (if_expression
+      (identifier)
+      (block)
+      (identifier)
+      (block))
+    (if_expression
+      (identifier)
+      (block)
+      (identifier)
+      (block)
+      (block)))

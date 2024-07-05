@@ -24,13 +24,16 @@ module.exports = grammar({
   extras: () => [/\s/],
 
   rules: {
-    source_file: ($) => repeat($._rules),
+    source_file: ($) => repeat(seq($._rules, terminator)),
 
-    _rules: ($) => seq(choice($._expression), terminator),
+    _rules: ($) => choice($._expression),
 
     _expression: ($) =>
       choice(
         $.prefix_expression,
+        $.infix_expression,
+        $._grouped_expression,
+        $.if_expression,
 
         $.identifier,
         $.integer,
@@ -47,6 +50,76 @@ module.exports = grammar({
       prec(
         PREC.prefix,
         seq(field("operator", choice("!", "-")), field("right", $._expression)),
+      ),
+
+    infix_expression: ($) => {
+      const operators = [
+        ["-", PREC.sum],
+        ["+", PREC.sum],
+        ["*", PREC.product],
+        ["/", PREC.product],
+        ["%", PREC.product],
+        ["&", PREC.and],
+        ["|", PREC.or],
+        ["<", PREC.less_greater],
+        ["<=", PREC.less_greater],
+        [">", PREC.less_greater],
+        [">=", PREC.less_greater],
+        ["==", PREC.equals],
+        ["!=", PREC.equals],
+      ];
+
+      return choice(
+        ...operators.map(([operator, precedence]) =>
+          prec.left(
+            precedence,
+            seq(
+              field("left", $._expression),
+              field("operator", operator),
+              field("right", $._expression),
+            ),
+          ),
+        ),
+      );
+    },
+
+    _grouped_expression: ($) => seq("(", $._expression, ")"),
+
+    if_expression: ($) =>
+      seq(
+        "if",
+        "(",
+        field("condition", $._expression),
+        ")",
+        field("consequence", $.block),
+
+        // Optional else ifs
+        repeat(
+          seq(
+            "else",
+            "if",
+            "(",
+            field("condition", $._expression),
+            ")",
+            field("consequence", $.block),
+          ),
+        ),
+        // optional else
+        optional(seq("else", field("alternative", $.block))),
+      ),
+
+    block: ($) =>
+      choice(
+        // emtpy block
+        seq("{", "}"),
+
+        // at least one rule
+        seq(
+          "{",
+          repeat(seq($._rules, terminator)),
+          seq($._rules, optional(terminator)),
+          "}",
+        ),
       ),
 
     array: ($) =>

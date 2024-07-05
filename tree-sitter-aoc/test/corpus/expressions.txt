@@ -28,3 +28,101 @@ Prefix
     (prefix_expression
       (prefix_expression
         (integer))))
+
+
+=====
+Infix
+=====
+
+1 + 2 + 3
+1 + 2 * 3
+1 + 2 == 3
+1 != 2 & false
+a & b | c
+a | b & c
+2 <= 3 == 3 > 2
+-1 + 1 * 2 % 3 / 4
+1 + -2
+
+---
+
+(source_file
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (integer))
+    (infix_expression
+      (integer)
+      (infix_expression
+        (integer)
+        (integer)))
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (integer))
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (false))
+    (infix_expression
+      (infix_expression
+        (identifier)
+        (identifier))
+      (identifier))
+    (infix_expression
+      (identifier)
+      (infix_expression
+        (identifier)
+        (identifier)))
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (infix_expression
+        (integer)
+        (integer)))
+    (infix_expression
+      (prefix_expression
+        (integer))
+      (infix_expression
+        (infix_expression
+          (infix_expression
+            (integer)
+            (integer))
+          (integer))
+        (integer)))
+    (infix_expression
+      (integer)
+      (prefix_expression
+        (integer))))
+
+
+======
+Groups
+======
+
+(1 + 1) + 2
+1 + (1 + 2)
+(1 + 2) * 3
+
+---
+
+(source_file
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (integer))
+    (infix_expression
+      (integer)
+      (infix_expression
+        (integer)
+        (integer)))
+    (infix_expression
+      (infix_expression
+        (integer)
+        (integer))
+      (integer)))
