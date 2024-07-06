@@ -1,0 +1,99 @@
+================
+Function literal
+================
+
+fn() {}
+fn(a) {}
+fn(a, b) {}
+fn(
+  a,
+  b,
+) {}
+
+---
+
+(source_file
+    (function_literal
+      (block))
+    (function_literal
+      (identifier)
+      (block))
+    (function_literal
+      (identifier)
+      (identifier)
+      (block))
+    (function_literal
+      (identifier)
+      (identifier)
+      (block)))
+
+
+=============
+Function call
+=============
+
+foo()
+fib(10)
+fn(a, b) {a + b}(
+  10,
+  20,
+)
+
+---
+
+(source_file
+    (function_call
+      (identifier))
+    (function_call
+      (identifier)
+      (integer))
+    (function_call
+      (function_literal
+        (identifier)
+        (identifier)
+        (block
+          (infix_expression
+            (identifier)
+            (identifier))))
+      (integer)
+      (integer)))
+
+
+==========
+Precedence
+==========
+
+10 + foo(20)[0] * 5
+
+---
+
+(source_file
+    (infix_expression
+      (integer)
+      (infix_expression
+        (index
+          (function_call
+            (identifier)
+            (integer))
+          (integer))
+        (integer))))
+
+
+======
+Return
+======
+
+fn() {
+  return 10 + 20
+}
+
+---
+
+(source_file
+    (function_literal
+      (block
+        (return
+          (infix_expression
+            (integer)
+            (integer))))))
+

@@ -153,3 +153,16 @@ foo.bar
       (infix_expression
         (integer)
         (integer))))
+
+
+=======
+Imports
+=======
+
+use "foo.aoc"
+
+---
+
+(source_file
+    (import
+      (string)))

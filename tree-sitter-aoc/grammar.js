@@ -34,6 +34,7 @@ module.exports = grammar({
         $.while_loop,
         $.continue,
         $.break,
+        $.return,
       ),
 
     _expression: ($) =>
@@ -43,6 +44,9 @@ module.exports = grammar({
         $._grouped_expression,
         $.if_expression,
         $.index,
+        $.import,
+        $.function_literal,
+        $.function_call,
 
         $.identifier,
         $.integer,
@@ -161,6 +165,48 @@ module.exports = grammar({
         ")",
         field("body", $.block),
       ),
+
+    import: ($) => seq("use", $.string),
+
+    function_literal: ($) =>
+      seq(
+        "fn",
+        choice(
+          // no arguments
+          seq("(", ")"),
+
+          // at least one argument
+          seq(
+            "(",
+            repeat(seq($.identifier, ",")),
+            seq($.identifier, optional(",")),
+            ")",
+          ),
+        ),
+        $.block,
+      ),
+
+    function_call: ($) =>
+      prec.left(
+        PREC.call_index,
+        seq(
+          $._expression,
+          choice(
+            // no arguments
+            seq("(", ")"),
+
+            // at least one argument
+            seq(
+              "(",
+              repeat(seq($._expression, ",")),
+              seq($._expression, optional(",")),
+              ")",
+            ),
+          ),
+        ),
+      ),
+
+    return: ($) => seq("return", $._expression),
 
     block: ($) =>
       choice(
