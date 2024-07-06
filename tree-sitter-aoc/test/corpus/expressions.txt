@@ -126,3 +126,30 @@ Groups
         (integer)
         (integer))
       (integer)))
+
+
+=====
+Index
+=====
+
+foo[10]
+foo.bar
+[1, 2, 3][10 * 20]
+
+---
+
+(source_file
+    (index
+      (identifier)
+      (integer))
+    (index
+      (identifier)
+      (identifier))
+    (index
+      (array
+        (integer)
+        (integer)
+        (integer))
+      (infix_expression
+        (integer)
+        (integer))))

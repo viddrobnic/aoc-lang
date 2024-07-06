@@ -32,6 +32,73 @@
           "named": true
         },
         {
+          "type": "index",
+          "named": true
+        },
+        {
+          "type": "infix_expression",
+          "named": true
+        },
+        {
+          "type": "integer",
+          "named": true
+        },
+        {
+          "type": "null",
+          "named": true
+        },
+        {
+          "type": "prefix_expression",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "true",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "assignment",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "array",
+          "named": true
+        },
+        {
+          "type": "dictionary",
+          "named": true
+        },
+        {
+          "type": "false",
+          "named": true
+        },
+        {
+          "type": "float",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if_expression",
+          "named": true
+        },
+        {
+          "type": "index",
+          "named": true
+        },
+        {
           "type": "infix_expression",
           "named": true
         },
@@ -71,6 +138,10 @@
           "named": true
         },
         {
+          "type": "assignment",
+          "named": true
+        },
+        {
           "type": "dictionary",
           "named": true
         },
@@ -88,6 +159,10 @@
         },
         {
           "type": "if_expression",
+          "named": true
+        },
+        {
+          "type": "index",
           "named": true
         },
         {
@@ -173,6 +248,10 @@
             "named": true
           },
           {
+            "type": "index",
+            "named": true
+          },
+          {
             "type": "infix_expression",
             "named": true
           },
@@ -232,6 +311,10 @@
           },
           {
             "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "index",
             "named": true
           },
           {
@@ -313,6 +396,10 @@
             "named": true
           },
           {
+            "type": "index",
+            "named": true
+          },
+          {
             "type": "infix_expression",
             "named": true
           },
@@ -344,6 +431,144 @@
         "types": [
           {
             "type": "block",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "index",
+    "named": true,
+    "fields": {
+      "index": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "array",
+            "named": true
+          },
+          {
+            "type": "dictionary",
+            "named": true
+          },
+          {
+            "type": "false",
+            "named": true
+          },
+          {
+            "type": "float",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "index",
+            "named": true
+          },
+          {
+            "type": "infix_expression",
+            "named": true
+          },
+          {
+            "type": "integer",
+            "named": true
+          },
+          {
+            "type": "null",
+            "named": true
+          },
+          {
+            "type": "prefix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "true",
+            "named": true
+          }
+        ]
+      },
+      "left": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "array",
+            "named": true
+          },
+          {
+            "type": "dictionary",
+            "named": true
+          },
+          {
+            "type": "false",
+            "named": true
+          },
+          {
+            "type": "float",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "index",
+            "named": true
+          },
+          {
+            "type": "infix_expression",
+            "named": true
+          },
+          {
+            "type": "integer",
+            "named": true
+          },
+          {
+            "type": "null",
+            "named": true
+          },
+          {
+            "type": "prefix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "true",
             "named": true
           }
         ]
@@ -388,6 +613,10 @@
           },
           {
             "type": "if_expression",
+            "named": true
+          },
+          {
+            "type": "index",
             "named": true
           },
           {
@@ -511,6 +740,10 @@
             "named": true
           },
           {
+            "type": "index",
+            "named": true
+          },
+          {
             "type": "infix_expression",
             "named": true
           },
@@ -593,6 +826,10 @@
             "named": true
           },
           {
+            "type": "index",
+            "named": true
+          },
+          {
             "type": "infix_expression",
             "named": true
           },
@@ -633,6 +870,10 @@
           "named": true
         },
         {
+          "type": "assignment",
+          "named": true
+        },
+        {
           "type": "dictionary",
           "named": true
         },
@@ -650,6 +891,10 @@
         },
         {
           "type": "if_expression",
+          "named": true
+        },
+        {
+          "type": "index",
           "named": true
         },
         {
@@ -747,6 +992,10 @@
     "named": false
   },
   {
+    "type": ".",
+    "named": false
+  },
+  {
     "type": "/",
     "named": false
   },
@@ -760,6 +1009,10 @@
   },
   {
     "type": "<=",
+    "named": false
+  },
+  {
+    "type": "=",
     "named": false
   },
   {

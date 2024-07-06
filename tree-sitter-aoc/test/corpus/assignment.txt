@@ -1,0 +1,82 @@
+============
+Basic assign
+============
+
+foo = 10
+bar = [20]
+foobar = if (true) { 10 }
+
+---
+
+(source_file
+    (assignment
+      (identifier)
+      (integer))
+    (assignment
+      (identifier)
+      (array
+        (integer)))
+    (assignment
+      (identifier)
+      (if_expression
+        (true)
+        (block
+          (integer)))))
+
+
+============
+Index assign
+============
+
+obj.foo = bar
+obj["key"] = "value"
+array[index] = 100
+
+---
+
+(source_file
+    (assignment
+      (index
+        (identifier)
+        (identifier))
+      (identifier))
+    (assignment
+      (index
+        (identifier)
+        (string))
+      (string))
+    (assignment
+      (index
+        (identifier)
+        (identifier))
+      (integer)))
+
+
+===============
+Array unpacking
+===============
+
+[a, b] = [1, 20]
+[a, [b, c]] = [foo, [bar, baz]]
+
+---
+
+(source_file
+    (assignment
+      (array
+        (identifier)
+        (identifier))
+      (array
+        (integer)
+        (integer)))
+    (assignment
+      (array
+        (identifier)
+        (array
+          (identifier)
+          (identifier)))
+      (array
+        (identifier)
+        (array
+          (identifier)
+          (identifier)))))

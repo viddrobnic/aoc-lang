@@ -26,7 +26,7 @@ module.exports = grammar({
   rules: {
     source_file: ($) => repeat(seq($._rules, terminator)),
 
-    _rules: ($) => choice($._expression),
+    _rules: ($) => choice($._expression, $.assignment),
 
     _expression: ($) =>
       choice(
@@ -34,6 +34,7 @@ module.exports = grammar({
         $.infix_expression,
         $._grouped_expression,
         $.if_expression,
+        $.index,
 
         $.identifier,
         $.integer,
@@ -106,6 +107,29 @@ module.exports = grammar({
         ),
         // optional else
         optional(seq("else", field("alternative", $.block))),
+      ),
+
+    index: ($) =>
+      choice(
+        prec.left(
+          PREC.call_index,
+          seq(
+            field("left", $._expression),
+            "[",
+            field("index", $._expression),
+            "]",
+          ),
+        ),
+        prec.left(
+          PREC.call_index,
+          seq(field("left", $._expression), ".", field("index", $.identifier)),
+        ),
+      ),
+
+    assignment: ($) =>
+      prec.left(
+        PREC.assign,
+        seq(choice($.identifier, $.index, $.array), "=", $._expression),
       ),
 
     block: ($) =>
