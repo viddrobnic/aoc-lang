@@ -26,7 +26,15 @@ module.exports = grammar({
   rules: {
     source_file: ($) => repeat(seq($._rules, terminator)),
 
-    _rules: ($) => choice($._expression, $.assignment),
+    _rules: ($) =>
+      choice(
+        $._expression,
+        $.assignment,
+        $.for_loop,
+        $.while_loop,
+        $.continue,
+        $.break,
+      ),
 
     _expression: ($) =>
       choice(
@@ -132,6 +140,28 @@ module.exports = grammar({
         seq(choice($.identifier, $.index, $.array), "=", $._expression),
       ),
 
+    while_loop: ($) =>
+      seq(
+        "while",
+        "(",
+        field("condition", $._expression),
+        ")",
+        field("body", $.block),
+      ),
+
+    for_loop: ($) =>
+      seq(
+        "for",
+        "(",
+        field("initial", $._rules),
+        ";",
+        field("condition", $._expression),
+        ";",
+        field("after", $._rules),
+        ")",
+        field("body", $.block),
+      ),
+
     block: ($) =>
       choice(
         // emtpy block
@@ -185,6 +215,9 @@ module.exports = grammar({
 
     _string_basic_content: () => token.immediate(prec(1, /[^"\n\\]+/)),
     escape_sequence: () => token.immediate(/\\./),
+
+    continue: () => "continue",
+    break: () => "break",
 
     identifier: () => /[a-zA-Z][a-zA-Z_\d]*/,
     integer: () => /\d+/,

@@ -1,0 +1,75 @@
+=====
+While
+=====
+
+while (true) {}
+while(10) {
+  false
+}
+
+---
+
+(source_file
+    (while_loop
+      (true)
+      (block))
+    (while_loop
+      (integer)
+      (block
+        (false))))
+
+
+===
+For
+===
+
+for (null; false; null) {}
+for (i = 0; i < 10; i = i + 1) {}
+
+---
+
+(source_file
+    (for_loop
+      (null)
+      (false)
+      (null)
+      (block))
+    (for_loop
+      (assignment
+        (identifier)
+        (integer))
+      (infix_expression
+        (identifier)
+        (integer))
+      (assignment
+        (identifier)
+        (infix_expression
+          (identifier)
+          (integer)))
+      (block)))
+
+
+================
+Continue & Break
+================
+
+while (true) {
+  if (true) {
+    break
+  } else {
+    continue
+  }
+}
+
+---
+
+(source_file
+    (while_loop
+      (true)
+      (block
+        (if_expression
+          (true)
+          (block
+            (break))
+          (block
+            (continue))))))
