@@ -21,7 +21,7 @@ module.exports = grammar({
 
   word: ($) => $.identifier,
 
-  extras: () => [/\s/],
+  extras: ($) => [$.comment, /\s/],
 
   rules: {
     source_file: ($) => repeat(seq($._rules, terminator)),
@@ -51,6 +51,7 @@ module.exports = grammar({
         $.identifier,
         $.integer,
         $.float,
+        $.char,
         $.true,
         $.false,
         $.null,
@@ -268,8 +269,11 @@ module.exports = grammar({
     identifier: () => /[a-zA-Z][a-zA-Z_\d]*/,
     integer: () => /\d+/,
     float: () => /\d+\.\d+/,
+    char: () => /'.'/,
     true: () => "true",
     false: () => "false",
     null: () => "null",
+
+    comment: () => token(seq("//", /.*/)),
   },
 });

@@ -109,6 +109,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "char"
+        },
+        {
+          "type": "SYMBOL",
           "name": "true"
         },
         {
@@ -1412,6 +1416,10 @@
       "type": "PATTERN",
       "value": "\\d+\\.\\d+"
     },
+    "char": {
+      "type": "PATTERN",
+      "value": "'.'"
+    },
     "true": {
       "type": "STRING",
       "value": "true"
@@ -1423,9 +1431,29 @@
     "null": {
       "type": "STRING",
       "value": "null"
+    },
+    "comment": {
+      "type": "TOKEN",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "//"
+          },
+          {
+            "type": "PATTERN",
+            "value": ".*"
+          }
+        ]
+      }
     }
   },
   "extras": [
+    {
+      "type": "SYMBOL",
+      "name": "comment"
+    },
     {
       "type": "PATTERN",
       "value": "\\s"

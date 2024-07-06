@@ -1,0 +1,99 @@
+=======
+Example
+=======
+
+// recursive fibonacci
+recursive = fn(n) {
+  if (n <= 1) {
+      1
+  } else {
+      recursive(n-1) + recursive(n-2)
+  }
+}
+
+// iterative fibonacci
+iterative = fn(n) {
+  [a, b] = [1, 1]
+  for (i = 2; i <= n; i = i + 1) {
+    [a, b] = [b, a + b]
+  }
+
+  b
+}
+
+print(recursive(10))
+print(iterative(10))
+
+---
+
+(source_file
+    (comment)
+    (assignment
+      (identifier)
+      (function_literal
+        (identifier)
+        (block
+          (if_expression
+            (infix_expression
+              (identifier)
+              (integer))
+            (block
+              (integer))
+            (block
+              (infix_expression
+                (function_call
+                  (identifier)
+                  (infix_expression
+                    (identifier)
+                    (integer)))
+                (function_call
+                  (identifier)
+                  (infix_expression
+                    (identifier)
+                    (integer)))))))))
+    (comment)
+    (assignment
+      (identifier)
+      (function_literal
+        (identifier)
+        (block
+          (assignment
+            (array
+              (identifier)
+              (identifier))
+            (array
+              (integer)
+              (integer)))
+          (for_loop
+            (assignment
+              (identifier)
+              (integer))
+            (infix_expression
+              (identifier)
+              (identifier))
+            (assignment
+              (identifier)
+              (infix_expression
+                (identifier)
+                (integer)))
+            (block
+              (assignment
+                (array
+                  (identifier)
+                  (identifier))
+                (array
+                  (identifier)
+                  (infix_expression
+                    (identifier)
+                    (identifier))))))
+          (identifier))))
+    (function_call
+      (identifier)
+      (function_call
+        (identifier)
+        (integer)))
+    (function_call
+      (identifier)
+      (function_call
+        (identifier)
+        (integer))))

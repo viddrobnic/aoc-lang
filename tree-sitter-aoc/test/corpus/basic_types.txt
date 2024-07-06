@@ -196,3 +196,22 @@ Non Empty Dictionaries
     (dictionary_pair
       (true)
       (null))))
+
+
+====
+Char
+====
+
+'a'
+'1'
+'Z'
+'/'
+
+---
+
+(source_file
+      (char)
+      (char)
+      (char)
+      (char))
+
