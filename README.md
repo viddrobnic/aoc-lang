@@ -65,7 +65,7 @@ If you are using some other editor, you are on your own...
    ```
    ~/.config/nvim/queries/aoc/
    ```
-5. Restart neovim and open a `.aoc` file :)
+5. Restart neovim and open an `.aoc` file :)
 
 ## Language features
 
