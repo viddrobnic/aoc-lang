@@ -44,6 +44,7 @@ module.exports = grammar({
         $._grouped_expression,
         $.if_expression,
         $.index,
+        $.dot_index,
         $.import,
         $.function_literal,
         $.function_call,
@@ -123,26 +124,29 @@ module.exports = grammar({
       ),
 
     index: ($) =>
-      choice(
-        prec.left(
-          PREC.call_index,
-          seq(
-            field("left", $._expression),
-            "[",
-            field("index", $._expression),
-            "]",
-          ),
+      prec.left(
+        PREC.call_index,
+        seq(
+          field("left", $._expression),
+          "[",
+          field("index", $._expression),
+          "]",
         ),
-        prec.left(
-          PREC.call_index,
-          seq(field("left", $._expression), ".", field("index", $.identifier)),
-        ),
+      ),
+    dot_index: ($) =>
+      prec.left(
+        PREC.call_index,
+        seq(field("left", $._expression), ".", field("index", $.identifier)),
       ),
 
     assignment: ($) =>
       prec.left(
         PREC.assign,
-        seq(choice($.identifier, $.index, $.array), "=", $._expression),
+        seq(
+          choice($.identifier, $.index, $.dot_index, $.array),
+          "=",
+          $._expression,
+        ),
       ),
 
     while_loop: ($) =>

@@ -142,7 +142,7 @@ foo.bar
     (index
       (identifier)
       (integer))
-    (index
+    (dot_index
       (identifier)
       (identifier))
     (index

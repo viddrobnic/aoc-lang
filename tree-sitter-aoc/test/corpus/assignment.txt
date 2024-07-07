@@ -36,7 +36,7 @@ array[index] = 100
 
 (source_file
     (assignment
-      (index
+      (dot_index
         (identifier)
         (identifier))
       (identifier))
