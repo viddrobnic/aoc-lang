@@ -191,7 +191,7 @@ module.exports = grammar({
       prec.left(
         PREC.call_index,
         seq(
-          $._expression,
+          field("function", $._expression),
           choice(
             // no arguments
             seq("(", ")"),
