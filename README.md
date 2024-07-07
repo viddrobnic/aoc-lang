@@ -7,10 +7,14 @@ Advent of Code 2024.
 For the language to be almost operational it should have:
 
 - [x] an interpreter,
-- [ ] syntax highlighting,
+- [x] syntax highlighting,
 - [ ] basic LSP.
 
 ## Usage
+
+### Interpreter setup
+
+Rust is required to build the interpreter.
 
 1. Clone this repository:
    ```sh
@@ -25,6 +29,43 @@ For the language to be almost operational it should have:
    ```sh
    aoc-lang examples/hello_world.aoc
    ```
+
+### Syntax highlighting
+
+Syntax highlighting is implemented with [tree sitter](https://tree-sitter.github.io/tree-sitter/).
+I am using neovim as my editor (btw) and this is the standard way of doing it.
+If you are using some other editor, you are on your own...
+
+1. Add the aoc tree sitter parser to your config:
+   ```lua
+   local parser_config = require('nvim-treesitter.parsers').get_parser_configs()
+   parser_config.aoc = {
+     install_info = {
+       url = 'https://github.com/viddrobnic/aoc-lang.git',
+       files = { 'tree-sitter-aoc/src/parser.c' },
+     },
+     filetype = 'aoc',
+   }
+   ```
+2. Open neovim and install the parser
+   ```
+   :TSInstall aoc
+   ```
+3. Configure automatic aoc file type detection:
+   ```lua
+   vim.filetype.add({
+     extension = {
+       aoc = 'aoc',
+     },
+   })
+   ```
+4. Add highlighting queries by copying
+   [this file](https://github.com/viddrobnic/aoc-lang/blob/master/tree-sitter-aoc/queries/highlights.scm)
+   from [the repo](https://github.com/viddrobnic/aoc-lang) to
+   ```
+   ~/.config/nvim/queries/aoc/
+   ```
+5. Restart neovim and open a `.aoc` file :)
 
 ## Language features
 
@@ -58,15 +99,6 @@ For more detailed overview of the syntax, see `examples` directory,
 which contains examples of code with comments.
 
 ## Wishlist:
-
-### Syntax highlighting
-
-Since I am using neovim as my editor, the easiest way to get syntax highlighting
-is with treesitter:
-
-- [ ] define treesitter grammar
-- [ ] write highlighting queries
-- [ ] update neovim config
 
 ### LSP
 
