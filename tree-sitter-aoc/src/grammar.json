@@ -142,7 +142,7 @@
       ]
     },
     "prefix_expression": {
-      "type": "PREC",
+      "type": "PREC_LEFT",
       "value": 8,
       "content": {
         "type": "SEQ",

@@ -62,7 +62,7 @@ module.exports = grammar({
       ),
 
     prefix_expression: ($) =>
-      prec(
+      prec.left(
         PREC.prefix,
         seq(field("operator", choice("!", "-")), field("right", $._expression)),
       ),
