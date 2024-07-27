@@ -1,5 +1,5 @@
 [workspace]
-members = ["parser", "runtime"]
+members = ["language_server", "parser", "runtime"]
 
 [package]
 name = "aoc-lang"
@@ -10,3 +10,4 @@ edition = "2021"
 clap = { version = "4.5.4", features = ["derive"] }
 parser = { path = "./parser" }
 runtime = { path = "./runtime" }
+language_server = { path = "./language_server" }

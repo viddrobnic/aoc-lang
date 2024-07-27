@@ -1,17 +1,37 @@
 use std::{fs, path::PathBuf, process::exit};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use language_server::Server;
 
 #[derive(Debug, Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    /// Path of the file to run
-    path: PathBuf,
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    Run {
+        /// Path of the file to run
+        path: PathBuf,
+    },
+    Lsp {
+        /// Optional debug path
+        #[arg(short, long)]
+        debug_log_path: Option<PathBuf>,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
-    run(cli.path);
+    match cli.command {
+        Commands::Run { path } => run(path),
+        Commands::Lsp { debug_log_path } => {
+            let mut server = Server::new(debug_log_path);
+            server.start()
+        }
+    }
 }
 
 fn run(path: PathBuf) {
