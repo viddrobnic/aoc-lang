@@ -1,12 +1,16 @@
 use core::fmt;
 use std::{
+    collections::HashMap,
     fs::{self, OpenOptions},
     io::{self, Write},
     path::PathBuf,
 };
 
+use error::Error;
 use message::{initialize::*, *};
+use text::{DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams};
 
+pub mod error;
 mod message;
 
 #[derive(Clone, Copy)]
@@ -20,6 +24,7 @@ enum LogLevel {
 
 pub struct Server {
     log_file: Option<fs::File>,
+    documents: HashMap<String, String>,
 }
 
 impl fmt::Display for LogLevel {
@@ -45,7 +50,10 @@ impl Server {
                 .expect("Failed to open log file")
         });
 
-        Self { log_file }
+        Self {
+            log_file,
+            documents: HashMap::new(),
+        }
     }
 
     fn log(&mut self, level: LogLevel, message: &str) {
@@ -75,7 +83,15 @@ impl Server {
                     msg.write(&mut stdout).unwrap();
                     self.log(LogLevel::Debug, "Writtten response")
                 }
-                Message::Notification(notification) => self.handle_notification(notification),
+                Message::Notification(notification) => {
+                    let res = self.handle_notification(notification);
+                    if let Err(err) = res {
+                        self.log(
+                            LogLevel::Error,
+                            &format!("Invalid notification params: {}", err),
+                        );
+                    }
+                }
                 Message::Response(_) => {
                     unreachable!("Got response from client instead of request/notification")
                 }
@@ -83,11 +99,48 @@ impl Server {
         }
     }
 
-    fn handle_notification(&mut self, notification: Notification) {
+    fn handle_notification(&mut self, notification: Notification) -> Result<(), Error> {
         self.log(
-            LogLevel::Info,
-            &format!("Got notification: {:?}", notification),
+            LogLevel::Debug,
+            &format!("Got notification: {}", &notification.method),
         );
+
+        match notification.method.as_ref() {
+            "textDocument/didOpen" => {
+                let params: DidOpenTextDocumentParams = notification.extract()?;
+                let params = params.text_document;
+                self.log(
+                    LogLevel::Info,
+                    &format!("Setting contents for opened file: {}", params.uri),
+                );
+
+                self.documents.insert(params.uri, params.text);
+            }
+            "textDocument/didChange" => {
+                let mut params: DidChangeTextDocumentParams = notification.extract()?;
+                self.log(
+                    LogLevel::Info,
+                    &format!("Updating contents for file: {}", params.text_document.uri),
+                );
+
+                if let Some(content) = params.content_changes.pop() {
+                    self.documents
+                        .insert(params.text_document.uri, content.text);
+                }
+            }
+            "textDocument/didClose" => {
+                let params: DidCloseTextDocumentParams = notification.extract()?;
+                self.log(
+                    LogLevel::Info,
+                    &format!("Closing file: {}", params.text_document.uri),
+                );
+
+                self.documents.remove(&params.text_document.uri);
+            }
+            _ => (),
+        }
+
+        Ok(())
     }
 
     fn handle_request(&mut self, req: Request) -> Response {

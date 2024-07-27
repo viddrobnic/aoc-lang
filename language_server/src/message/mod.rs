@@ -1,11 +1,14 @@
 use std::{fmt, io};
 
 use headers::Headers;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::error::Error;
 
 mod headers;
 pub mod initialize;
+pub mod text;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -168,5 +171,19 @@ impl Response {
             result: None,
             error: Some(error),
         }
+    }
+}
+
+impl Request {
+    pub fn extract<P: DeserializeOwned>(self) -> Result<(RequestId, P), Error> {
+        let params = serde_json::from_value(self.params)?;
+        Ok((self.id, params))
+    }
+}
+
+impl Notification {
+    pub fn extract<P: DeserializeOwned>(self) -> Result<P, Error> {
+        let params = serde_json::from_value(self.params)?;
+        Ok(params)
     }
 }
