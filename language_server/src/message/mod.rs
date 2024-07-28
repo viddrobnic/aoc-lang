@@ -6,6 +6,7 @@ use serde_json::Value;
 
 use crate::error::{Error, ErrorKind};
 
+pub mod diagnostics;
 pub mod initialize;
 pub mod reference;
 pub mod text;
@@ -205,6 +206,13 @@ impl Request {
 }
 
 impl Notification {
+    pub fn new<P: Serialize>(method: String, params: P) -> Notification {
+        Notification {
+            method,
+            params: serde_json::to_value(params).unwrap(),
+        }
+    }
+
     pub fn extract<P: DeserializeOwned>(self) -> Result<P, ErrorKind> {
         let params = serde_json::from_value(self.params).map_err(ErrorKind::ExtractError)?;
 

@@ -1,5 +1,5 @@
-use document_info::{DefinitionInfo, DocumentInfo, ReferencesInfo};
-use location::{LocationData, LocationEntry};
+use document_info::{DefinitionInfo, DocumentInfo, Documentation, ReferencesInfo};
+use location::LocationEntry;
 use parser::{ast, position::Range};
 use symbol_table::SymbolTable;
 
@@ -23,10 +23,7 @@ impl Analyzer {
     fn new() -> Self {
         Self {
             symbol_table: SymbolTable::new(),
-            document_info: DocumentInfo {
-                definitions: LocationData::new(),
-                references: LocationData::new(),
-            },
+            document_info: DocumentInfo::default(),
         }
     }
 
@@ -60,7 +57,7 @@ impl Analyzer {
                 self.analyze_node(&infix.right);
             }
             ast::NodeValue::Assign(assign) => {
-                self.analyze_assign(&assign.ident);
+                self.analyze_assign(&assign.ident, node);
                 self.analyze_node(&assign.value);
             }
             ast::NodeValue::Index(index) => {
@@ -89,7 +86,7 @@ impl Analyzer {
                 self.symbol_table.enter_scope();
 
                 for arg in &fn_lit.parameters {
-                    self.define_ident(arg.name.to_string(), arg.range);
+                    self.define_ident(arg.name.to_string(), arg.range, None);
                 }
                 self.analyze_block(&fn_lit.body);
 
@@ -119,10 +116,10 @@ impl Analyzer {
         }
     }
 
-    fn analyze_assign(&mut self, ident: &ast::Node) {
+    fn analyze_assign(&mut self, ident: &ast::Node, assign_node: &ast::Node) {
         match &ident.value {
             ast::NodeValue::Identifier(name) => {
-                self.define_ident(name.to_string(), ident.range);
+                self.define_ident(name.to_string(), ident.range, Some(assign_node));
             }
             ast::NodeValue::Index(index) => {
                 self.analyze_node(&index.left);
@@ -130,7 +127,7 @@ impl Analyzer {
             }
             ast::NodeValue::ArrayLiteral(arr) => {
                 for node in arr {
-                    self.analyze_assign(node);
+                    self.analyze_assign(node, assign_node);
                 }
             }
 
@@ -164,7 +161,10 @@ impl Analyzer {
         references.entry.references.push(location);
     }
 
-    fn define_ident(&mut self, ident: String, location: Range) {
+    // Adds definition to document info. Documentation is only added if node is part
+    // of an ast::Asign. In this case assign_node should be Some(_). If assign_node is None,
+    // no documentation info is added.
+    fn define_ident(&mut self, ident: String, location: Range, assign_node: Option<&ast::Node>) {
         let defined_at = self.symbol_table.define(ident, location);
 
         // We are scanning the ast from top to bottom, which means that
@@ -191,6 +191,20 @@ impl Analyzer {
                 },
             })
             .unwrap();
+
+            // Add to documentation info if needed.
+            if let Some(assign_node) = assign_node {
+                self.document_info
+                    .documentation
+                    .push(LocationEntry {
+                        location,
+                        entry: Documentation {
+                            documentation: "TODO".to_string(),
+                            definition: assign_node.to_string(),
+                        },
+                    })
+                    .unwrap();
+            }
         } else {
             // The symbol is already defined, we are just mutating it.
             // We update the existing references entry.
@@ -209,7 +223,7 @@ mod test {
 
     use crate::analyze::{
         location::{LocationData, LocationEntry},
-        DefinitionInfo, DocumentInfo, ReferencesInfo,
+        DefinitionInfo, ReferencesInfo,
     };
 
     use super::analyze;
@@ -237,7 +251,7 @@ mod test {
             end: Position::new(2, 30),
         };
 
-        let mut definitions = LocationData::new();
+        let mut definitions = LocationData::default();
         definitions
             .push(LocationEntry {
                 location: a_range,
@@ -285,7 +299,7 @@ mod test {
             })
             .unwrap();
 
-        let mut references = LocationData::new();
+        let mut references = LocationData::default();
         references
             .push(LocationEntry {
                 location: a_range,
@@ -323,12 +337,7 @@ mod test {
             })
             .unwrap();
 
-        assert_eq!(
-            doc,
-            DocumentInfo {
-                definitions,
-                references,
-            }
-        );
+        assert_eq!(doc.definitions, definitions);
+        assert_eq!(doc.references, references);
     }
 }

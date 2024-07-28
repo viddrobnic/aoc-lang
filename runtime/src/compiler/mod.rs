@@ -55,8 +55,8 @@ pub struct Compiler {
     scope_index: usize,
 }
 
-impl Compiler {
-    pub fn new() -> Self {
+impl Default for Compiler {
+    fn default() -> Self {
         Self {
             constants: vec![],
             functions: vec![],
@@ -64,6 +64,12 @@ impl Compiler {
             scopes: vec![Scope::default()],
             scope_index: 0,
         }
+    }
+}
+
+impl Compiler {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     fn add_constant(&mut self, obj: Object) -> usize {

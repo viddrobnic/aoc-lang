@@ -7,10 +7,12 @@ use std::{
 };
 
 use analyze::{analyze, document_info::DocumentInfo};
+use diagnostics::{Diagnostic, DiagnosticSeverity, PublishDiagnosticsParams};
 use error::{Error, ErrorKind};
 use message::{initialize::*, *};
 use parser::position::PositionOrdering;
 use reference::ReferenceParams;
+use runtime::compiler;
 use text::*;
 
 pub mod error;
@@ -30,7 +32,11 @@ enum LogLevel {
 pub struct Server {
     log_file: Option<fs::File>,
     running: bool,
+
+    publish_diagnostics_for: Option<String>,
+
     documents: HashMap<String, DocumentInfo>,
+    diagnostics: HashMap<String, Vec<Diagnostic>>,
 }
 
 impl fmt::Display for LogLevel {
@@ -59,7 +65,9 @@ impl Server {
         Self {
             log_file,
             running: false,
+            publish_diagnostics_for: None,
             documents: HashMap::new(),
+            diagnostics: HashMap::new(),
         }
     }
 
@@ -82,6 +90,16 @@ impl Server {
         while self.running {
             // It's fine to unwrap. If stdin/stdout pipe is broken, we can't
             // do anything else but fail.
+
+            if let Some(ntf) = self.get_push_diagnostics() {
+                let msg: Message = ntf.into();
+                msg.write(&mut stdout).unwrap();
+
+                self.publish_diagnostics_for = None;
+
+                self.log(LogLevel::Info, "Published diagnostics");
+            }
+
             let message = Message::read(&mut stdin).unwrap();
 
             match message {
@@ -131,7 +149,8 @@ impl Server {
                     &format!("Setting contents for opened file: {}", params.uri),
                 );
 
-                self.set_document_info(params.uri, params.text);
+                self.set_diagnostics(params.uri.clone(), &params.text);
+                self.set_document_info(params.uri, &params.text);
             }
             "textDocument/didChange" => {
                 let mut params: DidChangeTextDocumentParams = notification.extract()?;
@@ -141,7 +160,8 @@ impl Server {
                 );
 
                 if let Some(content) = params.content_changes.pop() {
-                    self.set_document_info(params.text_document.uri, content.text)
+                    self.set_diagnostics(params.text_document.uri.clone(), &content.text);
+                    self.set_document_info(params.text_document.uri, &content.text)
                 }
             }
             "textDocument/didClose" => {
@@ -151,6 +171,7 @@ impl Server {
                     &format!("Closing file: {}", params.text_document.uri),
                 );
 
+                self.diagnostics.remove(&params.text_document.uri);
                 self.documents.remove(&params.text_document.uri);
             }
             "exit" => {
@@ -257,8 +278,8 @@ impl Server {
         }
     }
 
-    fn set_document_info(&mut self, name: String, content: String) {
-        let Ok(program) = parser::parse(&content) else {
+    fn set_document_info(&mut self, name: String, content: &str) {
+        let Ok(program) = parser::parse(content) else {
             self.log(LogLevel::Warn, "failed to parse document");
             self.documents.insert(name, DocumentInfo::default());
             return;
@@ -266,5 +287,45 @@ impl Server {
 
         let document_info = analyze(&program);
         self.documents.insert(name, document_info);
+    }
+
+    fn set_diagnostics(&mut self, name: String, content: &str) {
+        let mut diagnostics: Vec<Diagnostic> = vec![];
+
+        match parser::parse(content) {
+            Ok(program) => {
+                let compiler = compiler::Compiler::new();
+                if let Err(err) = compiler.compile(&program) {
+                    diagnostics.push(Diagnostic {
+                        range: err.range,
+                        serverity: DiagnosticSeverity::Error as i32,
+                        message: err.to_string(),
+                    })
+                }
+            }
+            Err(err) => diagnostics.push(Diagnostic {
+                range: err.range,
+                serverity: DiagnosticSeverity::Error as i32,
+                message: err.to_string(),
+            }),
+        }
+
+        self.diagnostics.insert(name.clone(), diagnostics);
+        self.publish_diagnostics_for = Some(name);
+    }
+
+    fn get_push_diagnostics(&self) -> Option<Notification> {
+        let uri = self.publish_diagnostics_for.as_ref()?;
+        let diagnostics = self.diagnostics.get(uri)?;
+
+        let params = PublishDiagnosticsParams {
+            uri: uri.clone(),
+            diagnostics: diagnostics.clone(),
+        };
+
+        Some(Notification::new(
+            "textDocument/publishDiagnostics".to_string(),
+            params,
+        ))
     }
 }

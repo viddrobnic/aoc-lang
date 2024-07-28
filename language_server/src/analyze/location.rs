@@ -23,10 +23,6 @@ pub struct LocationEntry<T> {
 pub struct LocationData<T>(Vec<LocationEntry<T>>);
 
 impl<T> LocationData<T> {
-    pub fn new() -> Self {
-        Self(vec![])
-    }
-
     /// Add location entry. The way this data structure is built, entry's
     /// location must be after all other locations in the data strcture.
     pub fn push(&mut self, entry: LocationEntry<T>) -> Result<(), Error> {
@@ -89,7 +85,7 @@ mod test {
 
     #[test]
     fn bisect() {
-        let mut data = LocationData::<()>::new();
+        let mut data = LocationData::<()>::default();
         data.push(LocationEntry {
             location: Range {
                 start: Position::new(2, 2),

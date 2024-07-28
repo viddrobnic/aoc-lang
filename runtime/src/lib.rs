@@ -1,10 +1,10 @@
 use parser::ast;
 
+pub mod compiler;
 pub mod error;
 
 mod builtin;
 mod bytecode;
-mod compiler;
 mod object;
 mod vm;
 
