@@ -24,6 +24,7 @@ enum LogLevel {
 
 pub struct Server {
     log_file: Option<fs::File>,
+    running: bool,
     documents: HashMap<String, String>,
 }
 
@@ -52,6 +53,7 @@ impl Server {
 
         Self {
             log_file,
+            running: false,
             documents: HashMap::new(),
         }
     }
@@ -71,7 +73,8 @@ impl Server {
 
         self.log(LogLevel::Info, "Starting the server");
 
-        loop {
+        self.running = true;
+        while self.running {
             // It's fine to unwrap. If stdin/stdout pipe is broken, we can't
             // do anything else but fail.
             let message = Message::read(&mut stdin).unwrap();
@@ -97,6 +100,8 @@ impl Server {
                 }
             }
         }
+
+        self.log(LogLevel::Info, "Exiting the server");
     }
 
     fn handle_notification(&mut self, notification: Notification) -> Result<(), Error> {
@@ -137,6 +142,9 @@ impl Server {
 
                 self.documents.remove(&params.text_document.uri);
             }
+            "exit" => {
+                self.running = false;
+            }
             _ => (),
         }
 
@@ -151,6 +159,7 @@ impl Server {
 
         match req.method.as_ref() {
             "initialize" => Response::new_ok(req.id, self.get_capabilities()),
+            "shutdown" => Response::new_ok(req.id, serde_json::Value::Null),
             method => {
                 self.log(LogLevel::Warn, &format!("Got unknown method: {method}"));
                 Response::new_err(
