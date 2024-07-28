@@ -7,7 +7,7 @@ use std::{
 };
 
 use analyze::{analyze, DocumentInfo};
-use error::Error;
+use error::{Error, ErrorKind};
 use message::{initialize::*, *};
 use parser::position::Position;
 use text::{
@@ -88,10 +88,17 @@ impl Server {
 
             match message {
                 Message::Request(req) => {
-                    let resp = self.handle_request(req);
+                    let resp: Response = match self.handle_request(req) {
+                        Ok(resp) => resp,
+                        Err(err) => {
+                            self.log(LogLevel::Error, &format!("{}", err));
+                            err.into()
+                        }
+                    };
+
                     let msg: Message = resp.into();
                     msg.write(&mut stdout).unwrap();
-                    self.log(LogLevel::Debug, "Writtten response")
+                    self.log(LogLevel::Debug, "Writtten response");
                 }
                 Message::Notification(notification) => {
                     let res = self.handle_notification(notification);
@@ -111,7 +118,7 @@ impl Server {
         self.log(LogLevel::Info, "Exiting the server");
     }
 
-    fn handle_notification(&mut self, notification: Notification) -> Result<(), Error> {
+    fn handle_notification(&mut self, notification: Notification) -> Result<(), ErrorKind> {
         self.log(
             LogLevel::Debug,
             &format!("Got notification: {}", &notification.method),
@@ -157,18 +164,18 @@ impl Server {
         Ok(())
     }
 
-    fn handle_request(&mut self, req: Request) -> Response {
+    fn handle_request(&mut self, req: Request) -> Result<Response, Error> {
         self.log(
             LogLevel::Info,
             &format!("Got request, id: {}, method: {}", req.id, req.method),
         );
 
-        match req.method.as_ref() {
+        let resp = match req.method.as_ref() {
             "initialize" => Response::new_ok(req.id, self.get_capabilities()),
             "shutdown" => Response::new_ok(req.id, serde_json::Value::Null),
             "textDocument/definition" => {
                 // TODO: Handle errors better
-                let (req_id, params) = req.extract::<TextDocumentPositionParams>().unwrap();
+                let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
 
                 let doc_info = self.documents.get(&params.text_document.uri);
                 let mut res: Option<Location> = None;
@@ -195,7 +202,9 @@ impl Server {
                     "Unknown method".to_string(),
                 )
             }
-        }
+        };
+
+        Ok(resp)
     }
 
     fn get_capabilities(&self) -> InitializeResult {

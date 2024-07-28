@@ -4,7 +4,7 @@ use headers::Headers;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::error::Error;
+use crate::error::{Error, ErrorKind};
 
 pub mod initialize;
 pub mod text;
@@ -75,7 +75,7 @@ pub struct Notification {
     pub params: Value,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RequestId {
     String(String),
@@ -155,6 +155,23 @@ impl Message {
     }
 }
 
+impl From<Error> for Response {
+    fn from(value: Error) -> Self {
+        let err = match value.kind {
+            ErrorKind::ExtractError(err) => ResponseError {
+                code: ErrorCode::InvalidParams as i32,
+                message: format!("Invalid parameters: {}", err),
+            },
+        };
+
+        Self {
+            id: value.request_id,
+            result: None,
+            error: Some(err),
+        }
+    }
+}
+
 impl Response {
     pub fn new_ok<R: Serialize>(id: RequestId, result: R) -> Response {
         Response {
@@ -177,14 +194,19 @@ impl Response {
 
 impl Request {
     pub fn extract<P: DeserializeOwned>(self) -> Result<(RequestId, P), Error> {
-        let params = serde_json::from_value(self.params)?;
+        let params = serde_json::from_value(self.params).map_err(|err| Error {
+            request_id: self.id.clone(),
+            kind: ErrorKind::ExtractError(err),
+        })?;
+
         Ok((self.id, params))
     }
 }
 
 impl Notification {
-    pub fn extract<P: DeserializeOwned>(self) -> Result<P, Error> {
-        let params = serde_json::from_value(self.params)?;
+    pub fn extract<P: DeserializeOwned>(self) -> Result<P, ErrorKind> {
+        let params = serde_json::from_value(self.params).map_err(ErrorKind::ExtractError)?;
+
         Ok(params)
     }
 }
