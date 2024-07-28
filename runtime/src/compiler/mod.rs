@@ -476,7 +476,7 @@ impl Compiler {
 
         // Define argument symbols
         for param in &fn_literal.parameters {
-            self.symbol_table.define(param.to_string());
+            self.symbol_table.define(param.name.to_string());
         }
 
         // Compile body

@@ -103,7 +103,7 @@ impl SymbolTable {
         let symbol = self.resolve_at(idx - 1, name);
         match symbol {
             None => None,
-            Some(Symbol::Global(_)) => symbol,
+            Some(Symbol::Global(_)) | Some(Symbol::Builtin(_)) => symbol,
             Some(sym) => Some(self.define_free(idx, sym, name)),
         }
     }
@@ -120,7 +120,7 @@ impl SymbolTable {
 
 #[cfg(test)]
 mod test {
-    use crate::compiler::symbol_table::Symbol;
+    use crate::{builtin::Builtin, compiler::symbol_table::Symbol};
 
     use super::SymbolTable;
 
@@ -160,6 +160,7 @@ mod test {
         table.enter_scope();
 
         assert_eq!(table.resolve("a"), Some(Symbol::Global(0)));
+        assert_eq!(table.resolve("len"), Some(Symbol::Builtin(Builtin::Len)));
 
         table.define("b".to_string());
         assert_eq!(table.resolve("b"), Some(Symbol::Local(0)));

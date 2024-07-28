@@ -11,6 +11,26 @@ impl Position {
     pub fn new(line: usize, character: usize) -> Self {
         Self { line, character }
     }
+
+    pub fn cmp_range(&self, range: &Range) -> PositionOrdering {
+        if self.line < range.start.line {
+            return PositionOrdering::Before;
+        }
+
+        if self.line == range.start.line && self.character < range.start.character {
+            return PositionOrdering::Before;
+        }
+
+        if self.line > range.end.line {
+            return PositionOrdering::After;
+        }
+
+        if self.line == range.end.line && self.character >= range.end.character {
+            return PositionOrdering::After;
+        }
+
+        PositionOrdering::Inside
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
@@ -28,4 +48,11 @@ impl Range {
     pub fn new(start: Position, end: Position) -> Self {
         Self { start, end }
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum PositionOrdering {
+    Before,
+    Inside,
+    After,
 }

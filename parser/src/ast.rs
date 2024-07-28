@@ -86,9 +86,15 @@ pub struct For {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct FunctionParamter {
+    pub name: String,
+    pub range: Range,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct FunctionLiteral {
     pub name: Option<String>,
-    pub parameters: Vec<String>,
+    pub parameters: Vec<FunctionParamter>,
     pub body: Block,
 }
 
@@ -324,7 +330,13 @@ impl Display for NodeValue {
                     .collect::<Vec<_>>()
                     .join("\n");
 
-                write!(f, "fn({}) {{{}}}", parameters.join(", "), body)
+                let parameters = parameters
+                    .iter()
+                    .map(|par| par.name.clone())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                write!(f, "fn({}) {{{}}}", parameters, body)
             }
             NodeValue::FunctionCall(FunctionCall {
                 function,

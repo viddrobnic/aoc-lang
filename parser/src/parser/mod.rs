@@ -1,9 +1,8 @@
 use crate::{
-    ast::{self, InfixOperatorKind, NodeKind, PrefixOperatorKind},
+    ast::{self, FunctionParamter, InfixOperatorKind, NodeKind, PrefixOperatorKind},
     error::{Error, ErrorKind, Result},
     lexer::Lexer,
-    parser::precedence::Precedence,
-    parser::validate::*,
+    parser::{precedence::Precedence, validate::*},
     position::{Position, Range},
     token::{Token, TokenKind},
 };
@@ -569,7 +568,10 @@ impl Parser<'_> {
             TokenKind::RBracket,
             TokenKind::Comma,
             |_, token| match token.kind {
-                TokenKind::Ident(ident) => Ok(ident),
+                TokenKind::Ident(ident) => Ok(FunctionParamter {
+                    name: ident,
+                    range: token.range,
+                }),
                 _ => Err(Error {
                     kind: ErrorKind::InvalidFunctionParameter,
                     range: token.range,

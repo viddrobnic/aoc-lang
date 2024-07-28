@@ -1135,7 +1135,13 @@ fn fn_literal() -> Result<()> {
             ast::Node {
                 value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                     name: None,
-                    parameters: vec!["a".to_string()],
+                    parameters: vec![ast::FunctionParamter {
+                        name: "a".to_string(),
+                        range: Range {
+                            start: Position::new(0, 3),
+                            end: Position::new(0, 4),
+                        },
+                    }],
                     body: ast::Block {
                         nodes: vec![],
                         range: Range {
@@ -1155,7 +1161,23 @@ fn fn_literal() -> Result<()> {
             ast::Node {
                 value: ast::NodeValue::FunctionLiteral(ast::FunctionLiteral {
                     name: None,
-                    parameters: vec!["a".to_string(), "b".to_string()],
+                    // parameters: vec!["a".to_string(), "b".to_string()],
+                    parameters: vec![
+                        ast::FunctionParamter {
+                            name: "a".to_string(),
+                            range: Range {
+                                start: Position::new(0, 3),
+                                end: Position::new(0, 4),
+                            },
+                        },
+                        ast::FunctionParamter {
+                            name: "b".to_string(),
+                            range: Range {
+                                start: Position::new(0, 6),
+                                end: Position::new(0, 7),
+                            },
+                        },
+                    ],
                     body: ast::Block {
                         nodes: vec![],
                         range: Range {
