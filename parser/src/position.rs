@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Represents position inside code.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct Position {
     /// Line number, starting with 0.
     pub line: usize,
@@ -33,7 +35,7 @@ impl Position {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct Range {
     /// Range start position, inclusive.
     pub start: Position,

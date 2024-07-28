@@ -26,6 +26,8 @@ pub struct InitializeResult {
 pub struct ServerCapabilities {
     pub text_document_sync: TextDocumentSyncOptions,
     pub definition_provider: bool,
+    pub document_highlight_provider: bool,
+    pub references_provider: bool,
     // pub diagnostic_provider: DiagnosticOptions,
 }
 

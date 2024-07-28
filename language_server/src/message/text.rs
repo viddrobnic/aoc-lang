@@ -1,3 +1,4 @@
+use parser::position::{Position, Range};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,18 +37,6 @@ pub struct DidCloseTextDocumentParams {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Position {
-    pub line: usize,
-    pub character: usize,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Range {
-    pub start: Position,
-    pub end: Position,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Location {
     pub uri: String,
     pub range: Range,
@@ -60,20 +49,14 @@ pub struct TextDocumentPositionParams {
     pub position: Position,
 }
 
-impl From<parser::position::Position> for Position {
-    fn from(value: parser::position::Position) -> Self {
-        Self {
-            line: value.line,
-            character: value.character,
-        }
-    }
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentHighlight {
+    pub range: Range,
 }
 
-impl From<parser::position::Range> for Range {
-    fn from(value: parser::position::Range) -> Self {
-        Self {
-            start: value.start.into(),
-            end: value.end.into(),
-        }
+impl Location {
+    pub fn new(uri: String, range: Range) -> Self {
+        Self { uri, range }
     }
 }

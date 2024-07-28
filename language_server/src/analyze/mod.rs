@@ -1,26 +1,12 @@
+use document_info::{DefinitionInfo, DocumentInfo, ReferencesInfo};
 use location::{LocationData, LocationEntry};
 use parser::{ast, position::Range};
 use symbol_table::SymbolTable;
 
+pub mod document_info;
 pub mod location;
 
 mod symbol_table;
-
-#[derive(Debug, PartialEq, Eq, Default)]
-pub struct DefinitionInfo {
-    pub defined_at: Range,
-}
-
-#[derive(Debug, PartialEq, Eq, Default)]
-pub struct ReferencesInfo {
-    pub references: Vec<Range>,
-}
-
-#[derive(Debug, PartialEq, Eq, Default)]
-pub struct DocumentInfo {
-    pub definitions: LocationData<DefinitionInfo>,
-    pub references: LocationData<ReferencesInfo>,
-}
 
 pub fn analyze(program: &ast::Program) -> DocumentInfo {
     let analyzer = Analyzer::new();

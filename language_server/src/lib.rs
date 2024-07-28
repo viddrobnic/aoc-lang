@@ -6,14 +6,12 @@ use std::{
     path::PathBuf,
 };
 
-use analyze::{analyze, DocumentInfo};
+use analyze::{analyze, document_info::DocumentInfo};
 use error::{Error, ErrorKind};
 use message::{initialize::*, *};
-use parser::position::Position;
-use text::{
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, Location,
-    TextDocumentPositionParams,
-};
+use parser::position::PositionOrdering;
+use reference::ReferenceParams;
+use text::*;
 
 pub mod error;
 
@@ -174,22 +172,56 @@ impl Server {
             "initialize" => Response::new_ok(req.id, self.get_capabilities()),
             "shutdown" => Response::new_ok(req.id, serde_json::Value::Null),
             "textDocument/definition" => {
-                // TODO: Handle errors better
                 let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
 
                 let doc_info = self.documents.get(&params.text_document.uri);
                 let mut res: Option<Location> = None;
                 if let Some(doc_info) = doc_info {
                     res = doc_info
-                        .definitions
-                        .get(&Position {
-                            line: params.position.line,
-                            character: params.position.character,
-                        })
-                        .map(|def| Location {
-                            uri: params.text_document.uri.to_string(),
-                            range: def.entry.defined_at.into(),
-                        });
+                        .get_definition(&params.position)
+                        .map(|def| Location::new(params.text_document.uri.to_string(), def));
+                }
+
+                Response::new_ok(req_id, res)
+            }
+            "textDocument/documentHighlight" => {
+                let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
+
+                let doc_info = self.documents.get(&params.text_document.uri);
+                let mut res: Option<Vec<DocumentHighlight>> = None;
+                if let Some(doc_info) = doc_info {
+                    res = doc_info.get_references(&params.position).map(|ranges| {
+                        ranges
+                            .iter()
+                            .map(|rng| DocumentHighlight { range: *rng })
+                            .collect()
+                    });
+                }
+
+                Response::new_ok(req_id, res)
+            }
+            "textDocument/references" => {
+                let (req_id, params) = req.extract::<ReferenceParams>()?;
+                let doc_name = params.text_position.text_document.uri.clone();
+                let pos = params.text_position.position;
+
+                let doc_info = self.documents.get(&doc_name);
+                let mut res: Option<Vec<Location>> = None;
+                if let Some(doc_info) = doc_info {
+                    res = doc_info.get_references(&pos).map(|ranges| {
+                        ranges
+                            .iter()
+                            .filter_map(|rng| {
+                                if params.context.include_declaration
+                                    || pos.cmp_range(rng) != PositionOrdering::Inside
+                                {
+                                    Some(Location::new(doc_name.clone(), *rng))
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    });
                 }
 
                 Response::new_ok(req_id, res)
@@ -219,6 +251,8 @@ impl Server {
                     change: TextDocumentSyncKind::Full as u8,
                 },
                 definition_provider: true,
+                document_highlight_provider: true,
+                references_provider: true,
             },
         }
     }
