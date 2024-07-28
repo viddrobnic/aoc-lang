@@ -25,7 +25,8 @@ pub struct InitializeResult {
 #[serde(rename_all = "camelCase")]
 pub struct ServerCapabilities {
     pub text_document_sync: TextDocumentSyncOptions,
-    pub diagnostic_provider: DiagnosticOptions,
+    pub definition_provider: bool,
+    // pub diagnostic_provider: DiagnosticOptions,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

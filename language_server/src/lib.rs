@@ -6,11 +6,18 @@ use std::{
     path::PathBuf,
 };
 
+use analyze::{analyze, DocumentInfo};
 use error::Error;
 use message::{initialize::*, *};
-use text::{DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams};
+use parser::position::Position;
+use text::{
+    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, Location,
+    TextDocumentPositionParams,
+};
 
 pub mod error;
+
+mod analyze;
 mod message;
 
 #[derive(Clone, Copy)]
@@ -25,7 +32,7 @@ enum LogLevel {
 pub struct Server {
     log_file: Option<fs::File>,
     running: bool,
-    documents: HashMap<String, String>,
+    documents: HashMap<String, DocumentInfo>,
 }
 
 impl fmt::Display for LogLevel {
@@ -119,7 +126,7 @@ impl Server {
                     &format!("Setting contents for opened file: {}", params.uri),
                 );
 
-                self.documents.insert(params.uri, params.text);
+                self.set_document_info(params.uri, params.text);
             }
             "textDocument/didChange" => {
                 let mut params: DidChangeTextDocumentParams = notification.extract()?;
@@ -129,8 +136,7 @@ impl Server {
                 );
 
                 if let Some(content) = params.content_changes.pop() {
-                    self.documents
-                        .insert(params.text_document.uri, content.text);
+                    self.set_document_info(params.text_document.uri, content.text)
                 }
             }
             "textDocument/didClose" => {
@@ -160,6 +166,27 @@ impl Server {
         match req.method.as_ref() {
             "initialize" => Response::new_ok(req.id, self.get_capabilities()),
             "shutdown" => Response::new_ok(req.id, serde_json::Value::Null),
+            "textDocument/definition" => {
+                // TODO: Handle errors better
+                let (req_id, params) = req.extract::<TextDocumentPositionParams>().unwrap();
+
+                let doc_info = self.documents.get(&params.text_document.uri);
+                let mut res: Option<Location> = None;
+                if let Some(doc_info) = doc_info {
+                    res = doc_info
+                        .definitions
+                        .get(&Position {
+                            line: params.position.line,
+                            character: params.position.character,
+                        })
+                        .map(|def| Location {
+                            uri: params.text_document.uri.to_string(),
+                            range: def.entry.defined_at.into(),
+                        });
+                }
+
+                Response::new_ok(req_id, res)
+            }
             method => {
                 self.log(LogLevel::Warn, &format!("Got unknown method: {method}"));
                 Response::new_err(
@@ -182,11 +209,19 @@ impl Server {
                     open_close: true,
                     change: TextDocumentSyncKind::Full as u8,
                 },
-                diagnostic_provider: DiagnosticOptions {
-                    inter_file_dependencies: false,
-                    workspace_diagnostics: false,
-                },
+                definition_provider: true,
             },
         }
+    }
+
+    fn set_document_info(&mut self, name: String, content: String) {
+        let Ok(program) = parser::parse(&content) else {
+            self.log(LogLevel::Warn, "failed to parse document");
+            self.documents.insert(name, DocumentInfo::default());
+            return;
+        };
+
+        let document_info = analyze(&program);
+        self.documents.insert(name, document_info);
     }
 }

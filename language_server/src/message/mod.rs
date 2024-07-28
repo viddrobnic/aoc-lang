@@ -6,9 +6,10 @@ use serde_json::Value;
 
 use crate::error::Error;
 
-mod headers;
 pub mod initialize;
 pub mod text;
+
+mod headers;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
