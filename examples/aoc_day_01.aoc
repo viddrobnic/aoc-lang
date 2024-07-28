@@ -60,7 +60,7 @@ digit = fn(string, position) {
     if (d >= 0 & d < 10) {
         return d
     }
-    
+
     for (d = 0; d < len(digits); d = d + 1) {
         if (substr_is(string, position, digits[d])) {
             return d + 1
@@ -81,7 +81,6 @@ for (i = 0; i < len(data); i = i + 1) {
             n = d
             break
         }
-
     }
 
     // Last number
