@@ -13,9 +13,17 @@ pub struct ReferencesInfo {
 }
 
 #[derive(Debug, PartialEq, Eq, Default)]
+pub struct Documentation {
+    pub documentation: String,
+    pub definition: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct DocumentInfo {
     pub definitions: LocationData<DefinitionInfo>,
     pub references: LocationData<ReferencesInfo>,
+
+    pub documentation: LocationData<Documentation>,
 }
 
 impl DocumentInfo {
