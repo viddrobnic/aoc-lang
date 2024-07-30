@@ -7,6 +7,7 @@ use serde_json::Value;
 use crate::error::{Error, ErrorKind};
 
 pub mod diagnostics;
+pub mod hover;
 pub mod initialize;
 pub mod reference;
 pub mod text;

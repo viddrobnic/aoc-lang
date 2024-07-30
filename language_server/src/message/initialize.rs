@@ -28,7 +28,7 @@ pub struct ServerCapabilities {
     pub definition_provider: bool,
     pub document_highlight_provider: bool,
     pub references_provider: bool,
-    // pub hover_provider: bool,
+    pub hover_provider: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

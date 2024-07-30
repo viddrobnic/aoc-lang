@@ -9,6 +9,7 @@ use std::{
 use analyze::{analyze, document_info::DocumentInfo};
 use diagnostics::{Diagnostic, DiagnosticSeverity, PublishDiagnosticsParams};
 use error::{Error, ErrorKind};
+use hover::{Hover, MarkupContent, MarkupKind};
 use message::{initialize::*, *};
 use parser::position::PositionOrdering;
 use reference::ReferenceParams;
@@ -247,6 +248,25 @@ impl Server {
 
                 Response::new_ok(req_id, res)
             }
+            "textDocument/hover" => {
+                let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
+                let doc_name = params.text_document.uri.clone();
+                let pos = params.position;
+
+                let doc_info = self.documents.get(&doc_name);
+                let mut res: Option<Hover> = None;
+                if let Some(doc_info) = doc_info {
+                    res = doc_info.get_documentation(&pos).map(|doc| Hover {
+                        contents: MarkupContent {
+                            kind: MarkupKind::Markdown,
+                            value: doc.to_string(),
+                        },
+                    })
+                }
+
+                Response::new_ok(req_id, res)
+            }
+
             method => {
                 self.log(LogLevel::Warn, &format!("Got unknown method: {method}"));
                 Response::new_err(
@@ -274,6 +294,7 @@ impl Server {
                 definition_provider: true,
                 document_highlight_provider: true,
                 references_provider: true,
+                hover_provider: true,
             },
         }
     }

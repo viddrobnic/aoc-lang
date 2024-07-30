@@ -1,11 +1,16 @@
-use document_info::{DefinitionInfo, DocumentInfo, Documentation, ReferencesInfo};
-use location::LocationEntry;
-use parser::{ast, position::Range};
+use document_info::{DefinitionInfo, DocumentInfo, ReferencesInfo};
+use documentation::make_documentation_location_data;
+use location::{LocationData, LocationEntry};
+use parser::{
+    ast,
+    position::{Position, Range},
+};
 use symbol_table::SymbolTable;
 
 pub mod document_info;
 pub mod location;
 
+mod documentation;
 mod symbol_table;
 
 pub fn analyze(program: &ast::Program) -> DocumentInfo {
@@ -17,6 +22,8 @@ pub fn analyze(program: &ast::Program) -> DocumentInfo {
 struct Analyzer {
     symbol_table: SymbolTable,
     document_info: DocumentInfo,
+
+    documentation: LocationData<String>,
 }
 
 impl Analyzer {
@@ -24,10 +31,13 @@ impl Analyzer {
         Self {
             symbol_table: SymbolTable::new(),
             document_info: DocumentInfo::default(),
+            documentation: LocationData::default(),
         }
     }
 
     fn analyze(mut self, program: &ast::Program) -> DocumentInfo {
+        self.documentation = make_documentation_location_data(&program.comments);
+
         for node in &program.statements {
             self.analyze_node(node);
         }
@@ -57,7 +67,7 @@ impl Analyzer {
                 self.analyze_node(&infix.right);
             }
             ast::NodeValue::Assign(assign) => {
-                self.analyze_assign(&assign.ident, node);
+                self.analyze_assign(&assign.ident);
                 self.analyze_node(&assign.value);
             }
             ast::NodeValue::Index(index) => {
@@ -86,7 +96,7 @@ impl Analyzer {
                 self.symbol_table.enter_scope();
 
                 for arg in &fn_lit.parameters {
-                    self.define_ident(arg.name.to_string(), arg.range, None);
+                    self.define_ident(arg.name.to_string(), arg.range, false);
                 }
                 self.analyze_block(&fn_lit.body);
 
@@ -116,10 +126,10 @@ impl Analyzer {
         }
     }
 
-    fn analyze_assign(&mut self, ident: &ast::Node, assign_node: &ast::Node) {
+    fn analyze_assign(&mut self, ident: &ast::Node) {
         match &ident.value {
             ast::NodeValue::Identifier(name) => {
-                self.define_ident(name.to_string(), ident.range, Some(assign_node));
+                self.define_ident(name.to_string(), ident.range, true);
             }
             ast::NodeValue::Index(index) => {
                 self.analyze_node(&index.left);
@@ -127,7 +137,7 @@ impl Analyzer {
             }
             ast::NodeValue::ArrayLiteral(arr) => {
                 for node in arr {
-                    self.analyze_assign(node, assign_node);
+                    self.analyze_assign(node);
                 }
             }
 
@@ -164,7 +174,7 @@ impl Analyzer {
     // Adds definition to document info. Documentation is only added if node is part
     // of an ast::Asign. In this case assign_node should be Some(_). If assign_node is None,
     // no documentation info is added.
-    fn define_ident(&mut self, ident: String, location: Range, assign_node: Option<&ast::Node>) {
+    fn define_ident(&mut self, ident: String, location: Range, define_documentation: bool) {
         let defined_at = self.symbol_table.define(ident, location);
 
         // We are scanning the ast from top to bottom, which means that
@@ -193,17 +203,8 @@ impl Analyzer {
             .unwrap();
 
             // Add to documentation info if needed.
-            if let Some(assign_node) = assign_node {
-                self.document_info
-                    .documentation
-                    .push(LocationEntry {
-                        location,
-                        entry: Documentation {
-                            documentation: "TODO".to_string(),
-                            definition: assign_node.to_string(),
-                        },
-                    })
-                    .unwrap();
+            if define_documentation {
+                self.define_documentation(location);
             }
         } else {
             // The symbol is already defined, we are just mutating it.
@@ -214,6 +215,29 @@ impl Analyzer {
                 .references
                 .push(location);
         }
+    }
+
+    fn define_documentation(&mut self, location: Range) {
+        if location.start.line == 0 {
+            return;
+        }
+
+        let doc_pos = Position {
+            line: location.start.line - 1,
+            character: 0,
+        };
+
+        let Some(documentation) = self.documentation.get(&doc_pos) else {
+            return;
+        };
+
+        self.document_info
+            .documentation
+            .push(LocationEntry {
+                location,
+                entry: documentation.entry.clone(),
+            })
+            .unwrap();
     }
 }
 

@@ -13,17 +13,11 @@ pub struct ReferencesInfo {
 }
 
 #[derive(Debug, PartialEq, Eq, Default)]
-pub struct Documentation {
-    pub documentation: String,
-    pub definition: String,
-}
-
-#[derive(Debug, PartialEq, Eq, Default)]
 pub struct DocumentInfo {
     pub definitions: LocationData<DefinitionInfo>,
     pub references: LocationData<ReferencesInfo>,
 
-    pub documentation: LocationData<Documentation>,
+    pub documentation: LocationData<String>,
 }
 
 impl DocumentInfo {
@@ -38,5 +32,12 @@ impl DocumentInfo {
         self.references
             .get(&def_at.start)
             .map(|entry| &entry.entry.references)
+    }
+
+    pub fn get_documentation(&self, position: &Position) -> Option<&str> {
+        let def_at = self.get_definition(position)?;
+        self.documentation
+            .get(&def_at.start)
+            .map(|entry| entry.entry.as_ref())
     }
 }
