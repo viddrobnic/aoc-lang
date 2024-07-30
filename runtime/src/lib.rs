@@ -1,9 +1,9 @@
 use parser::ast;
 
+pub mod builtin;
 pub mod compiler;
 pub mod error;
 
-mod builtin;
 mod bytecode;
 mod object;
 mod vm;

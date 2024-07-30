@@ -35,9 +35,15 @@ impl DocumentInfo {
     }
 
     pub fn get_documentation(&self, position: &Position) -> Option<&str> {
-        let def_at = self.get_definition(position)?;
+        let pos = self
+            .get_definition(position)
+            .map(|range| range.start)
+            // Fallback to given position. A hack to avoid traversing the syntax tree on hover
+            // request and compute the builtin function docs on request.
+            .unwrap_or(*position);
+
         self.documentation
-            .get(&def_at.start)
+            .get(&pos)
             .map(|entry| entry.entry.as_ref())
     }
 }

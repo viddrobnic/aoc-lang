@@ -89,7 +89,233 @@ impl Builtin {
         Some(builtin)
     }
 
-    pub fn call(&self, args: &[Object], gc: &mut GarbageCollector) -> Result<Object, ErrorKind> {
+    pub fn documentation(&self) -> String {
+        let doc = match self {
+            Builtin::Len => {
+                r#"
+Returns length of the parameter. Parameter can be string, array or dictionary.
+
+Usage:
+```aoc
+len([1, 2, 3])  // 3
+```
+                "#
+            }
+            Builtin::Str => {
+                r#"
+Returns string representation of the parameter. Paremeter can be int, bool, float or char.
+
+Usage:
+```aoc
+str(10)    // "10"
+str(4.2)   // "4.2"
+str(true)  // "true"
+str(false) // "false"
+str('a')   // "a"
+```
+                "#
+            }
+            Builtin::Int => {
+                r#"
+Converts input to integer. Parameter can be float, string or char.
+
+Usage:
+```aoc
+int(4.2)  // 4
+int("12") // 12
+int('a')  // 97
+```
+                "#
+            }
+            Builtin::Char => {
+                r#"
+Converts int to char.
+
+Usage:
+```aoc
+char(97) // 'a'
+```
+                "#
+            }
+            Builtin::Float => {
+                r#"
+Converts parameter to float. Parameter can be int or string.
+
+Usage:
+```aoc
+float(4)     // 4.0
+float("4.2") // 4.2
+```
+                "#
+            }
+            Builtin::Bool => {
+                r#"
+Returns weather the parameter is truthy. Everything except
+`false` and `null` is truthy.
+
+Usage:
+```aoc
+bool(false) // false
+bool(null)  // false
+bool("")    // true
+```
+                "#
+            }
+            Builtin::IsNull => {
+                r#"
+Returns if parameter is null.
+
+Usage:
+```aoc
+is_null(null)  // true
+is_null(false) // false
+```
+                "#
+            }
+            Builtin::Floor => {
+                r#"
+Rounds down given float to the nearest integer.
+
+Usage:
+```aoc
+floor(4.9) // 4.0
+```
+                "#
+            }
+            Builtin::Ceil => {
+                r#"
+Rounds up given float to the nearest integer.
+
+Usage:
+```aoc
+ceil(4.1) // 5.0
+```
+                "#
+            }
+            Builtin::Round => {
+                r#"
+Rounds given float to the nearest integer.
+
+Usage:
+```aoc
+round(4.2) // 4.0
+round(4.5) // 5.0
+round(4.8) // 5.0
+```
+                "#
+            }
+            Builtin::TrimStart => {
+                r#"
+Removes leading whitespace from string.
+
+Usage:
+```aoc
+trim_start("  foo\n") // "foo\n"
+```
+                "#
+            }
+            Builtin::TrimEnd => {
+                r#"
+Removes trailing whitespace from string.
+
+Usage:
+```aoc
+trim_end("  foo\n") // "  foo"
+```
+                "#
+            }
+            Builtin::Trim => {
+                r#"
+Removes leading and trailing whitespace from string.
+
+Usage:
+```aoc
+trim("  foo\n") // "foo"
+```
+                "#
+            }
+            Builtin::Split => {
+                r#"
+Splits the given string by a given delimeter.
+
+Usage:
+```aoc
+split("foo", "")      // ["f", "o", "o"]
+split("foo bar", " ") // ["foo", "bar"]
+```
+                "#
+            }
+            Builtin::Push => {
+                r#"
+Adds element to the end of the array. Given array is mutated.
+
+Usage:
+```aoc
+arr = []
+push(arr, 1) // null
+arr          // [1]
+```
+                "#
+            }
+            Builtin::Pop => {
+                r#"
+Pops last element of the array and returns it. Given array is mutated.
+If the array is empty, function returns `null`.
+
+Usage:
+```aoc
+arr = [1]
+pop(arr) // 1
+arr      // []
+pop(arr) // null
+```
+                "#
+            }
+            Builtin::Del => {
+                r#"
+Deletes entry with given key in the dictionary. Deleted entry is returned.
+If no entry under the key exists, `null` is returned.
+
+Usage:
+```aoc
+dict = { "foo": "bar" }
+del(dict, "foo") // "bar"
+dict             // {}
+del(dict, "bar") // null
+```
+                "#
+            }
+            Builtin::Print => {
+                r#"
+Prints parameter to stdout. Parameter can be null, int, float, bool, string or char.
+
+Usage:
+```aoc
+print("Hello world!") // Hello world!
+```
+                "#
+            }
+            Builtin::Input => {
+                r#"
+Reads a single line from stdin. If EOF is reached, `null` is returned.
+The returned string doesn't contain trailing '\n'.
+
+Usage:
+```aoc
+input()
+```
+                "#
+            }
+        };
+
+        doc.to_string()
+    }
+
+    pub(crate) fn call(
+        &self,
+        args: &[Object],
+        gc: &mut GarbageCollector,
+    ) -> Result<Object, ErrorKind> {
         match self {
             Builtin::Len => call_len(args),
 

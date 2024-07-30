@@ -5,6 +5,7 @@ use parser::{
     ast,
     position::{Position, Range},
 };
+use runtime::builtin::Builtin;
 use symbol_table::SymbolTable;
 
 pub mod document_info;
@@ -147,6 +148,16 @@ impl Analyzer {
 
     fn resolve_ident(&mut self, ident: &str, location: Range) {
         let Some(defined_at) = self.symbol_table.resolve(ident) else {
+            // The ident has not yet been defined. If we are using a ident
+            // that is not defined, it's probably a builtin function. Add documentation for builtin
+            // function at this poistion.
+            //
+            // If we have a lot of builtin function calls, we will copy the documentation for each call.
+            // This could be optimized by dynamicaly checking if request hover position
+            // is inside builtin function (in the textDocument/hover handler).
+            // I won't do this (for now), because it's a toy language and there is a lot
+            // of other things I want to try, before starting with optimizations :)
+            self.define_builtin_documentation(ident, location);
             return;
         };
 
@@ -236,6 +247,20 @@ impl Analyzer {
             .push(LocationEntry {
                 location,
                 entry: documentation.entry.clone(),
+            })
+            .unwrap();
+    }
+
+    fn define_builtin_documentation(&mut self, ident: &str, location: Range) {
+        let Some(builtin) = Builtin::from_ident(ident) else {
+            return;
+        };
+
+        self.document_info
+            .documentation
+            .push(LocationEntry {
+                location,
+                entry: builtin.documentation(),
             })
             .unwrap();
     }
