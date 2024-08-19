@@ -1,6 +1,6 @@
 use parser::position::Range;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum DocumentSymbolKind {
     Function = 12,
     Variable = 13,

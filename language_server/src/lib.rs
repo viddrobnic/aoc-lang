@@ -8,6 +8,7 @@ use std::{
 
 use analyze::{analyze, document_info::DocumentInfo};
 use diagnostics::{Diagnostic, DiagnosticSeverity, PublishDiagnosticsParams};
+use document_symbol::{DocumentSymbol, DocumentSymbolParams};
 use error::{Error, ErrorKind};
 use hover::{Hover, MarkupContent, MarkupKind};
 use message::{initialize::*, *};
@@ -266,6 +267,18 @@ impl Server {
 
                 Response::new_ok(req_id, res)
             }
+            "textDocument/documentSymbol" => {
+                let (req_id, params) = req.extract::<DocumentSymbolParams>()?;
+                let doc_name = params.text_document.uri.clone();
+
+                let doc_info = self.documents.get(&doc_name);
+                let mut res: Option<Vec<DocumentSymbol>> = None;
+                if let Some(doc_info) = doc_info {
+                    res = Some(DocumentSymbol::map_tree(&doc_info.symbol_tree));
+                }
+
+                Response::new_ok(req_id, res)
+            }
 
             method => {
                 self.log(LogLevel::Warn, &format!("Got unknown method: {method}"));
@@ -295,6 +308,7 @@ impl Server {
                 document_highlight_provider: true,
                 references_provider: true,
                 hover_provider: true,
+                document_symbol_provider: true,
             },
         }
     }

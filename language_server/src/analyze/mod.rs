@@ -11,9 +11,9 @@ use symbol_table::SymbolTable;
 
 pub mod document_info;
 pub mod location;
+pub mod symbol_info;
 
 mod documentation;
-mod symbol_info;
 mod symbol_table;
 
 pub fn analyze(program: &ast::Program) -> DocumentInfo {
