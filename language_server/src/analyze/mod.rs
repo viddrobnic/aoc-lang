@@ -6,12 +6,14 @@ use parser::{
     position::{Position, Range},
 };
 use runtime::builtin::Builtin;
+use symbol_info::{DocumentSymbol, DocumentSymbolKind};
 use symbol_table::SymbolTable;
 
 pub mod document_info;
 pub mod location;
 
 mod documentation;
+mod symbol_info;
 mod symbol_table;
 
 pub fn analyze(program: &ast::Program) -> DocumentInfo {
@@ -22,17 +24,19 @@ pub fn analyze(program: &ast::Program) -> DocumentInfo {
 /// Analyzes symbols for go to definition, references, hover, ...
 struct Analyzer {
     symbol_table: SymbolTable,
-    document_info: DocumentInfo,
-
     documentation: LocationData<String>,
+    symbols: Vec<Vec<DocumentSymbol>>,
+
+    document_info: DocumentInfo,
 }
 
 impl Analyzer {
     fn new() -> Self {
         Self {
             symbol_table: SymbolTable::new(),
-            document_info: DocumentInfo::default(),
             documentation: LocationData::default(),
+            symbols: vec![vec![]],
+            document_info: DocumentInfo::default(),
         }
     }
 
@@ -43,7 +47,9 @@ impl Analyzer {
             self.analyze_node(node);
         }
 
-        self.document_info
+        let mut res = self.document_info;
+        res.symbol_tree = self.symbols.pop().unwrap();
+        res
     }
 
     fn analyze_node(&mut self, node: &ast::Node) {
@@ -95,6 +101,7 @@ impl Analyzer {
             ast::NodeValue::Return(ret) => self.analyze_node(ret),
             ast::NodeValue::FunctionLiteral(fn_lit) => {
                 self.symbol_table.enter_scope();
+                self.symbols.push(vec![]);
 
                 for arg in &fn_lit.parameters {
                     self.define_ident(arg.name.to_string(), arg.range, false);
@@ -102,6 +109,26 @@ impl Analyzer {
                 self.analyze_block(&fn_lit.body);
 
                 self.symbol_table.leave_scope();
+
+                let children = self.symbols.pop().unwrap();
+                if fn_lit.name.is_some() {
+                    // The function is named, which means that the last symbol on top of the
+                    // frame is the name of the function. We have to update the range, kind and children.
+                    let fn_sym = self.symbols.last_mut().unwrap().last_mut().unwrap();
+                    fn_sym.range.end = node.range.end;
+                    fn_sym.kind = DocumentSymbolKind::Function;
+                    fn_sym.children = children;
+                } else {
+                    // The function is not named => it is anonymous.
+                    // We add it on top of the current frame as anonymous symbol.
+                    self.symbols.last_mut().unwrap().push(DocumentSymbol {
+                        name: None,
+                        kind: DocumentSymbolKind::Function,
+                        name_range: node.range,
+                        range: node.range,
+                        children,
+                    });
+                }
             }
             ast::NodeValue::FunctionCall(fn_call) => {
                 self.analyze_node(&fn_call.function);
@@ -186,7 +213,7 @@ impl Analyzer {
     // of an ast::Asign. In this case assign_node should be Some(_). If assign_node is None,
     // no documentation info is added.
     fn define_ident(&mut self, ident: String, location: Range, define_documentation: bool) {
-        let defined_at = self.symbol_table.define(ident, location);
+        let defined_at = self.symbol_table.define(ident.clone(), location);
 
         // We are scanning the ast from top to bottom, which means that
         // location should be strictly increasing, and it's fine to unwrap.
@@ -217,6 +244,15 @@ impl Analyzer {
             if define_documentation {
                 self.define_documentation(location);
             }
+
+            // Add document symbol to tree of symbols
+            self.symbols.last_mut().unwrap().push(DocumentSymbol {
+                name: Some(ident),
+                kind: DocumentSymbolKind::Variable,
+                name_range: location,
+                range: location,
+                children: vec![],
+            })
         } else {
             // The symbol is already defined, we are just mutating it.
             // We update the existing references entry.
@@ -272,6 +308,7 @@ mod test {
 
     use crate::analyze::{
         location::{LocationData, LocationEntry},
+        symbol_info::{DocumentSymbol, DocumentSymbolKind},
         DefinitionInfo, ReferencesInfo,
     };
 
@@ -388,5 +425,89 @@ mod test {
 
         assert_eq!(doc.definitions, definitions);
         assert_eq!(doc.references, references);
+    }
+
+    #[test]
+    fn symbol_tree() {
+        let input = r#"
+            a = 10
+
+            fn() {
+                a = 20
+                b = 30
+            }
+
+            a = 20
+
+            foo = fn(bar) {
+                [a, b] = [2, 3]
+            }
+            "#;
+        let program = parser::parse(input).unwrap();
+        let doc = analyze(&program);
+
+        assert_eq!(
+            doc.symbol_tree,
+            vec![
+                DocumentSymbol {
+                    name: Some("a".to_string()),
+                    kind: DocumentSymbolKind::Variable,
+                    name_range: Range::new(Position::new(1, 12), Position::new(1, 13)),
+                    range: Range::new(Position::new(1, 12), Position::new(1, 13)),
+                    children: vec![],
+                },
+                DocumentSymbol {
+                    name: None,
+                    kind: DocumentSymbolKind::Function,
+                    name_range: Range::new(Position::new(3, 12), Position::new(6, 13)),
+                    range: Range::new(Position::new(3, 12), Position::new(6, 13)),
+                    children: vec![
+                        DocumentSymbol {
+                            name: Some("a".to_string()),
+                            kind: DocumentSymbolKind::Variable,
+                            name_range: Range::new(Position::new(4, 16), Position::new(4, 17)),
+                            range: Range::new(Position::new(4, 16), Position::new(4, 17)),
+                            children: vec![],
+                        },
+                        DocumentSymbol {
+                            name: Some("b".to_string()),
+                            kind: DocumentSymbolKind::Variable,
+                            name_range: Range::new(Position::new(5, 16), Position::new(5, 17)),
+                            range: Range::new(Position::new(5, 16), Position::new(5, 17)),
+                            children: vec![],
+                        }
+                    ]
+                },
+                DocumentSymbol {
+                    name: Some("foo".to_string()),
+                    kind: DocumentSymbolKind::Function,
+                    name_range: Range::new(Position::new(10, 12), Position::new(10, 15)),
+                    range: Range::new(Position::new(10, 12), Position::new(12, 13)),
+                    children: vec![
+                        DocumentSymbol {
+                            name: Some("bar".to_string()),
+                            kind: DocumentSymbolKind::Variable,
+                            name_range: Range::new(Position::new(10, 21), Position::new(10, 24)),
+                            range: Range::new(Position::new(10, 21), Position::new(10, 24)),
+                            children: vec![],
+                        },
+                        DocumentSymbol {
+                            name: Some("a".to_string()),
+                            kind: DocumentSymbolKind::Variable,
+                            name_range: Range::new(Position::new(11, 17), Position::new(11, 18)),
+                            range: Range::new(Position::new(11, 17), Position::new(11, 18)),
+                            children: vec![],
+                        },
+                        DocumentSymbol {
+                            name: Some("b".to_string()),
+                            kind: DocumentSymbolKind::Variable,
+                            name_range: Range::new(Position::new(11, 20), Position::new(11, 21)),
+                            range: Range::new(Position::new(11, 20), Position::new(11, 21)),
+                            children: vec![],
+                        }
+                    ]
+                },
+            ]
+        );
     }
 }

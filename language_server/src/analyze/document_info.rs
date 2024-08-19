@@ -1,6 +1,6 @@
 use parser::position::{Position, Range};
 
-use super::location::LocationData;
+use super::{location::LocationData, symbol_info::DocumentSymbol};
 
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct DefinitionInfo {
@@ -18,6 +18,16 @@ pub struct DocumentInfo {
     pub references: LocationData<ReferencesInfo>,
 
     pub documentation: LocationData<String>,
+
+    // TODO NOTE:
+    // Document symbols hierarchy are gotten by just recursively mapping the vec of document symbols + filtering out not named symbols.
+    //
+    // Autocomplete is implemented by iterating the vec of symbols:
+    // - symbol is before current position: add the name to possible autocomplete values
+    // - current position is inside symbol: add the name of the possible autocomplete values and
+    //   recursively call autocomplete on children of the symbol
+    // - symbol is after current position: exit the loop
+    pub symbol_tree: Vec<DocumentSymbol>,
 }
 
 impl DocumentInfo {
