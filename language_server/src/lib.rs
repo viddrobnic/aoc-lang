@@ -7,6 +7,7 @@ use std::{
 };
 
 use analyze::{analyze, document_info::DocumentInfo};
+use completion::CompletionList;
 use diagnostics::{Diagnostic, DiagnosticSeverity, PublishDiagnosticsParams};
 use document_symbol::{DocumentSymbol, DocumentSymbolParams};
 use error::{Error, ErrorKind};
@@ -15,12 +16,14 @@ use message::{initialize::*, *};
 use parser::position::PositionOrdering;
 use reference::ReferenceParams;
 use runtime::compiler;
+use snippet::extend_completions;
 use text::*;
 
 pub mod error;
 
 mod analyze;
 mod message;
+mod snippet;
 
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
@@ -280,6 +283,22 @@ impl Server {
                 Response::new_ok(req_id, res)
             }
 
+            "textDocument/completion" => {
+                let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
+
+                self.log(LogLevel::Debug, &format!("Params: {:?}", params));
+
+                let mut completions = vec![];
+                extend_completions(&mut completions);
+
+                let res = CompletionList {
+                    is_incomplete: false,
+                    items: completions,
+                };
+
+                Response::new_ok(req_id, res)
+            }
+
             method => {
                 self.log(LogLevel::Warn, &format!("Got unknown method: {method}"));
                 Response::new_err(
@@ -309,6 +328,7 @@ impl Server {
                 references_provider: true,
                 hover_provider: true,
                 document_symbol_provider: true,
+                completion_provider: CompletionOptions {},
             },
         }
     }

@@ -6,6 +6,7 @@ use serde_json::Value;
 
 use crate::error::{Error, ErrorKind};
 
+pub mod completion;
 pub mod diagnostics;
 pub mod document_symbol;
 pub mod hover;

@@ -30,6 +30,7 @@ pub struct ServerCapabilities {
     pub references_provider: bool,
     pub hover_provider: bool,
     pub document_symbol_provider: bool,
+    pub completion_provider: CompletionOptions,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,6 +39,9 @@ pub struct TextDocumentSyncOptions {
     pub open_close: bool,
     pub change: u8,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompletionOptions {}
 
 #[derive(Debug)]
 #[allow(dead_code)]
