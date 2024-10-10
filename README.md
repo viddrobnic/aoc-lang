@@ -8,7 +8,7 @@ For the language to be almost operational it should have:
 
 - [x] an interpreter,
 - [x] syntax highlighting,
-- [ ] basic LSP.
+- [x] basic LSP.
 
 ## Usage
 
@@ -67,6 +67,33 @@ If you are using some other editor, you are on your own...
    ```
 5. Restart neovim and open an `.aoc` file :)
 
+### LSP
+
+Language server can be started by running `aoc-lang lsp`. If you are using
+neovim with [lspconfig](https://github.com/neovim/nvim-lspconfig), you can
+configure the LSP by adding the following configuration:
+
+```lua
+local configs = require 'lspconfig.configs'
+
+if not configs.aoc then
+   configs.aoc = {
+     default_config = {
+       name = 'AOC LSP',
+       cmd = { '/path/to/aoc-lang', 'lsp' },
+       root_dir = lspconfig.util.root_pattern('.git'),
+       filetypes = { 'aoc' },
+     },
+   }
+end
+lspconfig.aoc.setup {
+   capabilities = capabilities,
+   on_attach = on_attach,
+}
+```
+
+The language server should get started automatically when you open a `.aoc` file.
+
 ## Language features
 
 AoC language supports the following features:
@@ -98,14 +125,14 @@ AoC language supports the following features:
 For more detailed overview of the syntax, see `examples` directory,
 which contains examples of code with comments.
 
-## Wishlist:
+## Language server features
 
-### LSP
+AoC LSP has the following features:
 
-I didn't look into how LSP implementation is done yet, so I don't know how hard
-it will be. But I can still write a wishlist :)
-
-- [ ] diagnostics
-- [ ] go to definition
-- [ ] basic autocomplete
-- [ ] formatting
+- diagnostics
+- go to definition
+- list references
+- highlight
+- hover
+- list document symbols
+- auto-complete suggestions

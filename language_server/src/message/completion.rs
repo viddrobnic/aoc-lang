@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+use crate::{
+    analyze::symbol_info::{DocumentSymbol, DocumentSymbolKind},
+    hover::MarkupContent,
+};
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompletionList {
@@ -20,6 +25,9 @@ pub struct CompletionItem {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_text_format: Option<i32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub documentation: Option<MarkupContent>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -57,4 +65,47 @@ pub enum CompletionItemKind {
 pub enum InsertTextFormat {
     PlainText = 1,
     Snippet = 2,
+}
+
+impl From<&DocumentSymbol> for Option<CompletionItem> {
+    fn from(sym: &DocumentSymbol) -> Self {
+        let Some(name) = &sym.name else { return None };
+
+        let kind = match sym.kind {
+            DocumentSymbolKind::Function => CompletionItemKind::Function,
+            DocumentSymbolKind::Variable => CompletionItemKind::Variable,
+        };
+
+        let (text, format) = match sym.kind {
+            DocumentSymbolKind::Function => {
+                let mut text = format!("{name}(");
+
+                if let Some(params) = &sym.parameters {
+                    let params_str = params
+                        .iter()
+                        .enumerate()
+                        .map(|(i, param)| format!("${{{}:{}}}", i + 1, param))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    text.push_str(&params_str);
+                } else {
+                    text.push_str("$1");
+                }
+
+                text.push_str(")$0");
+
+                (text, InsertTextFormat::Snippet)
+            }
+            DocumentSymbolKind::Variable => (name.clone(), InsertTextFormat::PlainText),
+        };
+
+        Some(CompletionItem {
+            label: name.clone(),
+            kind: Some(kind as i32),
+            insert_text: Some(text),
+            insert_text_format: Some(format as i32),
+            documentation: None,
+        })
+    }
 }

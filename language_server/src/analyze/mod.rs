@@ -111,12 +111,19 @@ impl Analyzer {
                 self.symbol_table.leave_scope();
 
                 let children = self.symbols.pop().unwrap();
+                let parameters: Vec<_> = fn_lit
+                    .parameters
+                    .iter()
+                    .map(|param| param.name.clone())
+                    .collect();
+
                 if fn_lit.name.is_some() {
                     // The function is named, which means that the last symbol on top of the
                     // frame is the name of the function. We have to update the range, kind and children.
                     let fn_sym = self.symbols.last_mut().unwrap().last_mut().unwrap();
                     fn_sym.range.end = node.range.end;
                     fn_sym.kind = DocumentSymbolKind::Function;
+                    fn_sym.parameters = Some(parameters);
                     fn_sym.children = children;
                 } else {
                     // The function is not named => it is anonymous.
@@ -124,6 +131,7 @@ impl Analyzer {
                     self.symbols.last_mut().unwrap().push(DocumentSymbol {
                         name: None,
                         kind: DocumentSymbolKind::Function,
+                        parameters: Some(parameters),
                         name_range: node.range,
                         range: node.range,
                         children,
@@ -249,6 +257,7 @@ impl Analyzer {
             self.symbols.last_mut().unwrap().push(DocumentSymbol {
                 name: Some(ident),
                 kind: DocumentSymbolKind::Variable,
+                parameters: None,
                 name_range: location,
                 range: location,
                 children: vec![],
@@ -452,6 +461,7 @@ mod test {
                 DocumentSymbol {
                     name: Some("a".to_string()),
                     kind: DocumentSymbolKind::Variable,
+                    parameters: None,
                     name_range: Range::new(Position::new(1, 12), Position::new(1, 13)),
                     range: Range::new(Position::new(1, 12), Position::new(1, 13)),
                     children: vec![],
@@ -459,12 +469,14 @@ mod test {
                 DocumentSymbol {
                     name: None,
                     kind: DocumentSymbolKind::Function,
+                    parameters: Some(vec![]),
                     name_range: Range::new(Position::new(3, 12), Position::new(6, 13)),
                     range: Range::new(Position::new(3, 12), Position::new(6, 13)),
                     children: vec![
                         DocumentSymbol {
                             name: Some("a".to_string()),
                             kind: DocumentSymbolKind::Variable,
+                            parameters: None,
                             name_range: Range::new(Position::new(4, 16), Position::new(4, 17)),
                             range: Range::new(Position::new(4, 16), Position::new(4, 17)),
                             children: vec![],
@@ -472,6 +484,7 @@ mod test {
                         DocumentSymbol {
                             name: Some("b".to_string()),
                             kind: DocumentSymbolKind::Variable,
+                            parameters: None,
                             name_range: Range::new(Position::new(5, 16), Position::new(5, 17)),
                             range: Range::new(Position::new(5, 16), Position::new(5, 17)),
                             children: vec![],
@@ -481,12 +494,14 @@ mod test {
                 DocumentSymbol {
                     name: Some("foo".to_string()),
                     kind: DocumentSymbolKind::Function,
+                    parameters: Some(vec!["bar".to_string()]),
                     name_range: Range::new(Position::new(10, 12), Position::new(10, 15)),
                     range: Range::new(Position::new(10, 12), Position::new(12, 13)),
                     children: vec![
                         DocumentSymbol {
                             name: Some("bar".to_string()),
                             kind: DocumentSymbolKind::Variable,
+                            parameters: None,
                             name_range: Range::new(Position::new(10, 21), Position::new(10, 24)),
                             range: Range::new(Position::new(10, 21), Position::new(10, 24)),
                             children: vec![],
@@ -494,6 +509,7 @@ mod test {
                         DocumentSymbol {
                             name: Some("a".to_string()),
                             kind: DocumentSymbolKind::Variable,
+                            parameters: None,
                             name_range: Range::new(Position::new(11, 17), Position::new(11, 18)),
                             range: Range::new(Position::new(11, 17), Position::new(11, 18)),
                             children: vec![],
@@ -501,6 +517,7 @@ mod test {
                         DocumentSymbol {
                             name: Some("b".to_string()),
                             kind: DocumentSymbolKind::Variable,
+                            parameters: None,
                             name_range: Range::new(Position::new(11, 20), Position::new(11, 21)),
                             range: Range::new(Position::new(11, 20), Position::new(11, 21)),
                             children: vec![],

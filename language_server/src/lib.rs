@@ -7,23 +7,21 @@ use std::{
 };
 
 use analyze::{analyze, document_info::DocumentInfo};
-use completion::CompletionList;
 use diagnostics::{Diagnostic, DiagnosticSeverity, PublishDiagnosticsParams};
 use document_symbol::{DocumentSymbol, DocumentSymbolParams};
 use error::{Error, ErrorKind};
 use hover::{Hover, MarkupContent, MarkupKind};
-use message::{initialize::*, *};
+use message::{completion::CompletionList, initialize::*, *};
 use parser::position::PositionOrdering;
 use reference::ReferenceParams;
 use runtime::compiler;
-use snippet::extend_completions;
 use text::*;
 
 pub mod error;
 
 mod analyze;
+mod completion;
 mod message;
-mod snippet;
 
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
@@ -285,12 +283,16 @@ impl Server {
 
             "textDocument/completion" => {
                 let (req_id, params) = req.extract::<TextDocumentPositionParams>()?;
+                let doc_name = params.text_document.uri.clone();
 
-                self.log(LogLevel::Debug, &format!("Params: {:?}", params));
-
+                let doc_info = self.documents.get(&doc_name);
                 let mut completions = vec![];
-                extend_completions(&mut completions);
+                if let Some(doc_info) = doc_info {
+                    completions = doc_info.get_completion_items(&params.position);
+                }
 
+                completion::extend_snippets(&mut completions);
+                completion::extend_builtin(&mut completions);
                 let res = CompletionList {
                     is_incomplete: false,
                     items: completions,

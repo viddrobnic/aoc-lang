@@ -17,3 +17,12 @@ pub enum MarkupKind {
     PlainText,
     Markdown,
 }
+
+impl MarkupContent {
+    pub fn from_markdown(md: String) -> Self {
+        Self {
+            kind: MarkupKind::Markdown,
+            value: md,
+        }
+    }
+}

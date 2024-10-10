@@ -1,4 +1,6 @@
-use parser::position::{Position, Range};
+use parser::position::{Position, PositionOrdering, Range};
+
+use crate::message::completion::CompletionItem;
 
 use super::{location::LocationData, symbol_info::DocumentSymbol};
 
@@ -19,14 +21,6 @@ pub struct DocumentInfo {
 
     pub documentation: LocationData<String>,
 
-    // TODO NOTE:
-    // Document symbols hierarchy are gotten by just recursively mapping the vec of document symbols + filtering out not named symbols.
-    //
-    // Autocomplete is implemented by iterating the vec of symbols:
-    // - symbol is before current position: add the name to possible autocomplete values
-    // - current position is inside symbol: add the name of the possible autocomplete values and
-    //   recursively call autocomplete on children of the symbol
-    // - symbol is after current position: exit the loop
     pub symbol_tree: Vec<DocumentSymbol>,
 }
 
@@ -55,5 +49,35 @@ impl DocumentInfo {
         self.documentation
             .get(&pos)
             .map(|entry| entry.entry.as_ref())
+    }
+
+    pub fn get_completion_items(&self, position: &Position) -> Vec<CompletionItem> {
+        let mut items = vec![];
+        get_completion_items(position, &self.symbol_tree, &mut items);
+        items
+    }
+}
+
+fn get_completion_items(
+    position: &Position,
+    symbol_tree: &[DocumentSymbol],
+    items: &mut Vec<CompletionItem>,
+) {
+    for symbol in symbol_tree {
+        match position.cmp_range(&symbol.range) {
+            PositionOrdering::Before => return,
+            PositionOrdering::Inside => {
+                if let Some(it) = symbol.into() {
+                    items.push(it)
+                }
+
+                get_completion_items(position, &symbol.children, items);
+            }
+            PositionOrdering::After => {
+                if let Some(it) = symbol.into() {
+                    items.push(it)
+                }
+            }
+        }
     }
 }
