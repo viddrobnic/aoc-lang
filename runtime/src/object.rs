@@ -63,6 +63,7 @@ pub enum HashKey {
     Integer(i64),
     Boolean(bool),
     String(Rc<String>),
+    Char(u8),
 }
 
 impl TryFrom<Object> for HashKey {
@@ -73,6 +74,7 @@ impl TryFrom<Object> for HashKey {
             Object::String(str) => Ok(Self::String(str)),
             Object::Integer(i) => Ok(Self::Integer(i)),
             Object::Boolean(b) => Ok(Self::Boolean(b)),
+            Object::Char(c) => Ok(Self::Char(c)),
 
             _ => Err(ErrorKind::NotHashable(value.into())),
         }
