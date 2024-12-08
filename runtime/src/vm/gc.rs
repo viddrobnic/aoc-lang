@@ -8,7 +8,8 @@ use std::{
 
 use crate::object::Object;
 
-const MAX_OBJECTS: usize = 1024;
+const MAX_OBJECTS: usize = 10_000;
+const MIN_INSTRUCTIONS: usize = 500;
 
 #[derive(Debug, Clone)]
 pub struct Ref<T> {
@@ -34,11 +35,19 @@ impl Debug for Owner {
 #[derive(Debug, Default)]
 pub struct GarbageCollector {
     owners: HashMap<usize, Owner>,
+    nr_instructions: usize,
 }
 
 impl GarbageCollector {
-    pub fn should_free(&self) -> bool {
-        self.owners.len() > MAX_OBJECTS
+    pub fn should_free(&mut self) -> bool {
+        self.nr_instructions += 1;
+
+        if self.owners.len() > MAX_OBJECTS && self.nr_instructions > MIN_INSTRUCTIONS {
+            self.nr_instructions = 0;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn allocate<T: 'static>(&mut self, val: T) -> Ref<T> {
