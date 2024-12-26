@@ -1,0 +1,26 @@
+// A program that outputs itself.
+// When running aoc-lang run quine.aoc > new.aoc
+// new.aoc should be exactly the same as quine.aoc
+escaped = fn(string) {
+    res = ""
+    chars = split(string, "")
+    for (i = 0; i < len(chars); i = i + 1) {
+        c = chars[i]
+        if (c == "\\") {
+            res = res + "\\\\"
+        } else if (c == "\"") {
+            res = res + "\\\""
+        } else if (c == "\n") {
+            res = res + "\\n"
+        } else {
+            res = res + c
+        }
+    }
+
+    return res
+}
+
+partTwo = "res = partOne + escaped(partOne) + \"\\\"\\n\" + partTwo\nprint(res)"
+partOne = "// A program that outputs itself.\n// When running aoc-lang run quine.aoc > new.aoc\n// new.aoc should be exactly the same as quine.aoc\nescaped = fn(string) {\n    res = \"\"\n    chars = split(string, \"\")\n    for (i = 0; i < len(chars); i = i + 1) {\n        c = chars[i]\n        if (c == \"\\\\\") {\n            res = res + \"\\\\\\\\\"\n        } else if (c == \"\\\"\") {\n            res = res + \"\\\\\\\"\"\n        } else if (c == \"\\n\") {\n            res = res + \"\\\\n\"\n        } else {\n            res = res + c\n        }\n    }\n\n    return res\n}\n\npartTwo = \"res = partOne + escaped(partOne) + \\\"\\\\\\\"\\\\n\\\" + partTwo\\nprint(res)\"\npartOne = \""
+res = partOne + escaped(partOne) + "\"\n" + partTwo
+print(res)
